@@ -1,7 +1,7 @@
 class_name DigitalSchoolClock
 extends Node3D
 
-@export var use_24_hour := false
+@export var use_24_hour := true
 @export var show_seconds := false
 @export var fallback_text := "--:--"
 @export var text_color := Color("d56358")

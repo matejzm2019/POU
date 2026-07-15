@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="SubjectData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/homework/subject_data.gd" id="1_subject"]
+[ext_resource type="Script" path="res://data/homework/homework_question.gd" id="2_question"]
+
+[sub_resource type="Resource" id="Question_1"]
+script = ExtResource("2_question")
+prompt = "Akú hodnotu má binárne číslo 1010 v desiatkovej sústave?"
+choices = PackedStringArray("8", "9", "10", "12")
+correct_index = 2
+
+[sub_resource type="Resource" id="Question_2"]
+script = ExtResource("2_question")
+prompt = "Ktorým znakom sa v tabuľkovom procesore začína vzorec?"
+choices = PackedStringArray("=", "#", "@", "&")
+correct_index = 0
+
+[sub_resource type="Resource" id="Question_3"]
+script = ExtResource("2_question")
+prompt = "Čo je phishing?"
+choices = PackedStringArray("Záloha súborov", "Komprimovanie obrázkov", "Aktualizácia operačného systému", "Podvodná správa snažiaca sa získať prihlasovacie údaje")
+correct_index = 3
+
+[resource]
+script = ExtResource("1_subject")
+subject_id = "aplikovana_informatika"
+display_name = "Aplikovaná informatika"
+room_code = "AI-302"
+teacher_id = "teacher_6"
+accent_color = Color(0.204, 0.306, 0.235, 1)
+homework_sets = Array[ExtResource("2_question")]([SubResource("Question_1"), SubResource("Question_2"), SubResource("Question_3")])

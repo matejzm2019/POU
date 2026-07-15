@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="SubjectData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/homework/subject_data.gd" id="1_subject"]
+[ext_resource type="Script" path="res://data/homework/homework_question.gd" id="2_question"]
+
+[sub_resource type="Resource" id="Question_1"]
+script = ExtResource("2_question")
+prompt = "Ktoré slovo je synonymom slova „pekný“?"
+choices = PackedStringArray("pomalý", "krásny", "hlučný", "úzky")
+correct_index = 1
+
+[sub_resource type="Resource" id="Question_2"]
+script = ExtResource("2_question")
+prompt = "Ktorá otázka patrí ku genitívu?"
+choices = PackedStringArray("kto, čo", "komu, čomu", "bez koho, čoho", "s kým, s čím")
+correct_index = 2
+
+[sub_resource type="Resource" id="Question_3"]
+script = ExtResource("2_question")
+prompt = "Ktoré z týchto slov je vybrané slovo po B?"
+choices = PackedStringArray("bystrý", "bič", "bicykel", "bivak")
+correct_index = 0
+
+[resource]
+script = ExtResource("1_subject")
+subject_id = "slovensky_jazyk"
+display_name = "Slovenský jazyk"
+room_code = "SJ-201"
+teacher_id = "teacher_3"
+accent_color = Color(0.31, 0.231, 0.333, 1)
+homework_sets = Array[ExtResource("2_question")]([SubResource("Question_1"), SubResource("Question_2"), SubResource("Question_3")])

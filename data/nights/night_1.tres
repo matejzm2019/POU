@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1_data")
 night_number = 1
-display_name = "First Detention"
+display_name = "Prvá nočná hodina"
 start_hour = 23
 start_minute = 0
 end_hour = 6
 end_minute = 0
-real_world_duration_seconds = 480.0
-required_homework_count = 2
+real_world_duration_seconds = 600.0
+required_homework_count = 21
 optional_special_event_ids = PackedStringArray("detention_arrival")
 active_enemy_ids = PackedStringArray()
 enemy_speed_multiplier = 1.0
@@ -19,4 +19,4 @@ enemy_vision_multiplier = 1.0
 enemy_hearing_multiplier = 1.0
 headmistress_active = false
 chase_music_intensity = 0.0
-difficulty_description = "No enemies are active. Learn the school and watch the clocks."
+difficulty_description = "Žiadny učiteľ nehliadkuje. Nauč sa rozloženie školy a dokonči úlohy."

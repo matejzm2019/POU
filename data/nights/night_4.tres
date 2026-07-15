@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1_data")
 night_number = 4
-display_name = "Faculty Meeting"
+display_name = "Porada zborovne"
 start_hour = 23
 start_minute = 30
 end_hour = 6
 end_minute = 0
 real_world_duration_seconds = 660.0
-required_homework_count = 5
+required_homework_count = 21
 optional_special_event_ids = PackedStringArray("east_wing_outage")
 active_enemy_ids = PackedStringArray("teacher_1", "teacher_2", "teacher_3")
 enemy_speed_multiplier = 1.1
@@ -19,4 +19,4 @@ enemy_vision_multiplier = 1.1
 enemy_hearing_multiplier = 1.08
 headmistress_active = false
 chase_music_intensity = 0.5
-difficulty_description = "Three patrols overlap. Safe routes are becoming scarce."
+difficulty_description = "Tri hliadky sa prekrývajú. Bezpečných trás je čoraz menej."

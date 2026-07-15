@@ -15,13 +15,13 @@ func _ready() -> void:
 
 
 func setup(data: NightData, completion_seconds: float) -> void:
-	%CompletedNight.text = "NIGHT %d COMPLETE" % data.night_number
+	%CompletedNight.text = "NOC %d DOKONČENÁ" % data.night_number
 	%NightName.text = data.display_name.to_upper()
-	%CompletionTime.text = "SURVIVED IN %s" % _format_duration(completion_seconds)
+	%CompletionTime.text = "PREŽITÝ ČAS %s" % _format_duration(completion_seconds)
 	_next_night = data.night_number + 1 if data.night_number < 8 else 0
 	%NextButton.visible = _next_night > 0
 	if _next_night > 0:
-		%NextButton.text = "CONTINUE TO NIGHT %d" % _next_night
+		%NextButton.text = "POKRAČOVAŤ NA NOC %d" % _next_night
 		%NextButton.grab_focus()
 	else:
 		%NightSelectButton.grab_focus()

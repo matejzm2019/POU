@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://systems/door.gd" id="1_door"]
 
@@ -8,10 +8,13 @@ roughness = 0.82
 
 [sub_resource type="BoxMesh" id="Mesh_door"]
 material = SubResource("Material_door")
-size = Vector3(1.4, 2.8, 0.12)
+size = Vector3(1.8, 2.9, 0.12)
 
 [sub_resource type="BoxShape3D" id="Shape_door"]
-size = Vector3(1.4, 2.8, 0.12)
+size = Vector3(1.8, 2.9, 0.12)
+
+[sub_resource type="BoxShape3D" id="Shape_interaction"]
+size = Vector3(1.9, 2.9, 0.5)
 
 [sub_resource type="StandardMaterial3D" id="Material_handle"]
 albedo_color = Color(0.48, 0.42, 0.25, 1)
@@ -26,19 +29,28 @@ height = 0.16
 [node name="ClassroomDoor" type="Node3D"]
 script = ExtResource("1_door")
 
-[node name="Leaf" type="AnimatableBody3D" parent="."]
-position = Vector3(-0.7, 1.4, 0)
+[node name="Hinge" type="AnimatableBody3D" parent="."]
 
-[node name="Mesh" type="MeshInstance3D" parent="Leaf"]
+[node name="Mesh" type="MeshInstance3D" parent="Hinge"]
+position = Vector3(-0.9, 1.45, 0)
 mesh = SubResource("Mesh_door")
 
-[node name="Collision" type="CollisionShape3D" parent="Leaf"]
+[node name="Collision" type="CollisionShape3D" parent="Hinge"]
+position = Vector3(-0.9, 1.45, 0)
 shape = SubResource("Shape_door")
 
-[node name="HandleFront" type="MeshInstance3D" parent="Leaf"]
-position = Vector3(-0.48, 0, -0.13)
+[node name="HandleFront" type="MeshInstance3D" parent="Hinge"]
+position = Vector3(-1.38, 1.45, -0.13)
 mesh = SubResource("Mesh_handle")
 
-[node name="HandleBack" type="MeshInstance3D" parent="Leaf"]
-position = Vector3(-0.48, 0, 0.13)
+[node name="HandleBack" type="MeshInstance3D" parent="Hinge"]
+position = Vector3(-1.38, 1.45, 0.13)
 mesh = SubResource("Mesh_handle")
+
+[node name="InteractionZone" type="Area3D" parent="."]
+position = Vector3(-0.9, 1.45, 0)
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionZone"]
+shape = SubResource("Shape_interaction")

@@ -72,7 +72,7 @@ theme_override_constants/separation = 12
 layout_mode = 2
 theme_override_colors/font_color = Color(0.47, 0.67, 0.59, 1)
 theme_override_font_sizes/font_size = 14
-text = "BLACKWOOD SECONDARY  /  AFTER-HOURS ACCESS"
+text = "STREDNÁ ODBORNÁ ŠKOLA  /  NOČNÝ PRÍSTUP"
 
 [node name="UpperSpacer" type="Control" parent="Content/Stack"]
 layout_mode = 2
@@ -83,21 +83,21 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.52, 0.7, 0.63, 1)
 theme_override_font_sizes/font_size = 18
-text = "NIGHT 1"
+text = "NOC 1"
 
 [node name="TitleLabel" type="Label" parent="Content/Stack"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.87, 0.89, 0.85, 1)
 theme_override_font_sizes/font_size = 46
-text = "THE SCHOOL IS SETTLING"
+text = "ŠKOLA SA PONÁRA DO TMY"
 
 [node name="StatusLabel" type="Label" parent="Content/Stack"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.58, 0.63, 0.61, 1)
 theme_override_font_sizes/font_size = 17
-text = "Preparing detention"
+text = "Pripravuje sa nočné vyučovanie"
 
 [node name="ProgressRow" type="HBoxContainer" parent="Content/Stack"]
 layout_mode = 2
@@ -131,7 +131,7 @@ theme_override_styles/panel = SubResource("Style_tip")
 layout_mode = 2
 theme_override_colors/font_color = Color(0.49, 0.55, 0.53, 1)
 theme_override_font_sizes/font_size = 14
-text = "  DETENTION RULE 01\n  If a classroom door is closed, leave it closed."
+text = "  PRAVIDLO 01\n  Nesprávna odpoveď zhasne svetlá. Utekaj."
 vertical_alignment = 1
 
 [node name="LowerSpacer" type="Control" parent="Content/Stack"]
@@ -142,5 +142,5 @@ size_flags_vertical = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(0.27, 0.32, 0.31, 1)
 theme_override_font_sizes/font_size = 12
-text = "DO NOT TURN OFF THE LIGHTS"
+text = "NEODPOVEDAJ NESPRÁVNE"
 horizontal_alignment = 2

@@ -2,7 +2,7 @@ class_name NightData
 extends Resource
 
 @export_range(1, 8, 1) var night_number := 1
-@export var display_name := "First Detention"
+@export var display_name := "Prvá nočná hodina"
 @export_group("School Time")
 @export_range(0, 23, 1) var start_hour := 23
 @export_range(0, 59, 1) var start_minute := 0
@@ -19,7 +19,7 @@ extends Resource
 @export_range(0.0, 5.0, 0.05) var enemy_hearing_multiplier := 1.0
 @export var headmistress_active := false
 @export_range(0.0, 1.0, 0.05) var chase_music_intensity := 0.0
-@export_multiline var difficulty_description := "No threats are active. Learn the school."
+@export_multiline var difficulty_description := "Žiadna hliadka nie je aktívna. Nauč sa rozloženie školy."
 
 
 func start_time_seconds() -> float:

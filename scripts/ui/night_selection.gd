@@ -34,8 +34,8 @@ func _populate_nights() -> void:
 		var locked := not SaveManager.is_night_unlocked(data.night_number)
 		button.name = "NightButton%d" % data.night_number
 		button.visible = true
-		button.text = "NIGHT %d%s\n%s" % [data.night_number, "  •  LOCKED" if locked else "", data.display_name]
-		button.tooltip_text = data.difficulty_description if not locked else "Locked: complete Night %d first." % (data.night_number - 1)
+		button.text = "NOC %d%s\n%s" % [data.night_number, "  •  ZAMKNUTÁ" if locked else "", data.display_name]
+		button.tooltip_text = data.difficulty_description if not locked else "Zamknuté: najprv dokonči noc %d." % (data.night_number - 1)
 		button.button_group = _button_group
 		button.set_meta("night_number", data.night_number)
 		button.set_meta("locked", locked)
@@ -60,7 +60,7 @@ func _select_night(night_number: int) -> void:
 	for button in _buttons:
 		button.button_pressed = int(button.get_meta("night_number")) == night_number
 	_preview_night(night_number)
-	_start_button.text = "BEGIN NIGHT %d" % night_number
+	_start_button.text = "ZAČAŤ NOC %d" % night_number
 
 
 func _preview_night(night_number: int) -> void:
@@ -68,16 +68,17 @@ func _preview_night(night_number: int) -> void:
 	if data == null:
 		return
 	_displayed_night = night_number
-	%NightNumber.text = "NIGHT %d" % night_number
+	%NightNumber.text = "NOC %d" % night_number
 	%NightName.text = data.display_name.to_upper()
 	%Difficulty.text = data.difficulty_description
-	%Schedule.text = "%s  —  %s" % [SchoolTime.format_time(data.start_time_seconds(), false, false), SchoolTime.format_time(data.end_time_seconds(), false, false)]
-	%Duration.text = "%d MIN REAL TIME" % roundi(data.real_world_duration_seconds / 60.0)
-	%Threats.text = "%d ACTIVE TEACHER%s" % [data.active_enemy_ids.size(), "" if data.active_enemy_ids.size() == 1 else "S"]
-	%Headmistress.text = "HEADMISTRESS ACTIVE" if data.headmistress_active else "HEADMISTRESS ABSENT"
-	%LockStatus.text = "AVAILABLE" if SaveManager.is_night_unlocked(night_number) else "LOCKED"
+	%Schedule.text = "%s  —  %s" % [SchoolTime.format_time(data.start_time_seconds(), true, false), SchoolTime.format_time(data.end_time_seconds(), true, false)]
+	%Duration.text = "%d MINÚT SKUTOČNÉHO ČASU" % roundi(data.real_world_duration_seconds / 60.0)
+	var teacher_count := data.active_enemy_ids.size()
+	%Threats.text = "%d AKTÍVNY UČITEĽ" % teacher_count if teacher_count == 1 else ("%d AKTÍVNI UČITELIA" % teacher_count if teacher_count >= 2 and teacher_count <= 4 else "%d AKTÍVNYCH UČITEĽOV" % teacher_count)
+	%Headmistress.text = "RIADITEĽKA AKTÍVNA" if data.headmistress_active else "RIADITEĽKA NEPRÍTOMNÁ"
+	%LockStatus.text = "DOSTUPNÁ" if SaveManager.is_night_unlocked(night_number) else "ZAMKNUTÁ"
 	_start_button.disabled = not SaveManager.is_night_unlocked(night_number)
-	_start_button.text = "BEGIN NIGHT %d" % night_number
+	_start_button.text = "ZAČAŤ NOC %d" % night_number
 
 
 func _start_selected_night() -> void:

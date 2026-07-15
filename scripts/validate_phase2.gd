@@ -6,6 +6,7 @@ var _pause_events: Array[bool] = []
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_run.call_deferred()
 
 
@@ -30,7 +31,7 @@ func _validate_phase2() -> void:
 
 func _validate_night_resources() -> void:
 	var nights := NightManager.get_all_nights()
-	var expected_counts := [0, 1, 2, 3, 4, 5, 6, 6]
+	var expected_counts := [0, 1, 2, 3, 4, 5, 6, 7]
 	_check(nights.size() == 8, "Expected eight NightData resources.")
 	for index in mini(nights.size(), 8):
 		var data := nights[index]
@@ -40,6 +41,7 @@ func _validate_night_resources() -> void:
 			_check(data.active_enemy_ids[enemy_index] == "teacher_%d" % (enemy_index + 1), "Night %d has an incorrect enemy ID order." % data.night_number)
 		_check(data.headmistress_active == (data.night_number == 8), "Night %d headmistress flag is incorrect." % data.night_number)
 		_check(data.real_world_duration_seconds > 0.0, "Night %d duration must be positive." % data.night_number)
+	_check(is_equal_approx(nights[0].real_world_duration_seconds, 600.0), "Night 1 must last exactly ten real minutes.")
 
 
 func _validate_school_time() -> void:
@@ -106,10 +108,13 @@ func _validate_natural_completion() -> void:
 	data.real_world_duration_seconds = original_duration
 	_check(NightManager.start_night(), "Natural-completion test could not start Night 1.")
 	var deadline := Time.get_ticks_msec() + 1500
-	while Time.get_ticks_msec() < deadline and NightManager.is_night_running:
+	while Time.get_ticks_msec() < deadline and NightManager.is_night_running and not NightManager.is_morning:
 		await get_tree().process_frame
-	_check(not NightManager.is_night_running, "NightManager did not complete at the configured end time.")
-	_check(SaveManager.get_highest_unlocked_night() == 2, "Natural completion did not unlock Night 2.")
+	_check(NightManager.is_night_running and NightManager.is_morning, "The configured end time did not reach the playable morning state.")
+	_check(SaveManager.get_highest_unlocked_night() == 1, "Morning unlocked Night 2 before the player used the exit.")
+	_check(NightManager.complete_current_night(), "The simulated morning exit could not complete Night 1.")
+	_check(not NightManager.is_night_running, "NightManager kept running after the morning exit.")
+	_check(SaveManager.get_highest_unlocked_night() == 2, "The morning exit did not unlock Night 2.")
 	SaveManager.reset_progress()
 
 
@@ -124,7 +129,7 @@ func _validate_selection_locking() -> void:
 	_check(night_eight != null and bool(night_eight.get_meta("locked")), "Night 8 should be visibly locked in a default save.")
 	night_eight.grab_focus()
 	await get_tree().process_frame
-	_check(selection.get_node("%NightName").text == "THE HEADMISTRESS", "Locked Night 8 details are not keyboard-accessible.")
+	_check(selection.get_node("%NightName").text == "RIADITEĽKA", "Locked Night 8 details are not keyboard-accessible.")
 	_check((selection.get_node("%StartNightButton") as Button).disabled, "Locked Night 8 can be started.")
 	night_eight.pressed.emit()
 	_check(int(SaveManager.data.get("last_selected_night", 1)) == 1, "Locked Night 8 was selected.")
@@ -183,7 +188,7 @@ func _validate_main_flow_and_clocks() -> void:
 	_check(digital != null, "Digital classroom clock is missing.")
 	_check(analog != null, "Analog classroom clock is missing.")
 	if digital != null:
-		_check(digital.get_node("Display").text == NightManager.get_formatted_time(false, false), "Digital clock is not synchronized.")
+		_check(digital.get_node("Display").text == NightManager.get_formatted_time(true, false), "Digital clock is not synchronized.")
 	if analog != null:
 		var total := NightManager.current_in_game_time
 		var expected_hour := -TAU * fposmod(total / 3600.0, 12.0) / 12.0
@@ -230,6 +235,21 @@ func _validate_main_flow_and_clocks() -> void:
 		while Time.get_ticks_msec() < deadline and (NightManager.current_night_number != 2 or not NightManager.is_night_running):
 			await get_tree().process_frame
 		_check(NightManager.current_night_number == 2 and NightManager.is_night_running, "Continue to Night 2 did not start the unlocked night.")
+		var night_two_level := main.find_child("TestSchool", false, false)
+		var night_two_player := night_two_level.find_child("Player", true, false) as FirstPersonController if night_two_level != null else null
+		_check(night_two_player != null, "Night 2 player is missing for pause-menu routing validation.")
+		if night_two_player != null:
+			var pause_event := InputEventAction.new()
+			pause_event.action = "ui_cancel"
+			pause_event.pressed = true
+			night_two_player._input(pause_event)
+			await get_tree().process_frame
+			var hud := night_two_player.find_child("HUD", false, false) as GameHUD
+			(hud.get_node("%MainMenuButton") as Button).pressed.emit()
+			await get_tree().process_frame
+			await get_tree().process_frame
+			_check(not get_tree().paused and not NightManager.is_night_running, "Main menu button did not safely stop the paused night.")
+			_check(main.find_child("MainMenu", false, false) != null, "Pause menu did not return to the main menu.")
 	var selection := (load("res://ui/night_selection/night_selection.tscn") as PackedScene).instantiate() as NightSelectionScreen
 	add_child(selection)
 	await get_tree().process_frame

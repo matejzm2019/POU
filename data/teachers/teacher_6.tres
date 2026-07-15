@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TeacherData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/teachers/teacher_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+teacher_id = "teacher_6"
+display_name = "Miloš Palaj"
+subject_id = "aplikovana_informatika"
+walk_speed = 1.95
+chase_speed = 4.3
+hearing_range = 17.0
+vision_range = 20.0
+active_nights = PackedInt32Array(7, 8)

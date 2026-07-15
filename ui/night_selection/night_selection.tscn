@@ -158,13 +158,13 @@ size_flags_horizontal = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(0.48, 0.7, 0.61, 1)
 theme_override_font_sizes/font_size = 14
-text = "DETENTION RECORDS  /  ACCESS CONTROL"
+text = "ZÁZNAMY NOČNEJ ŠKOLY  /  KONTROLA PRÍSTUPU"
 
 [node name="Title" type="Label" parent="SafeArea/Stack/Header/Titles"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 36
-text = "SELECT A NIGHT"
+text = "VYBER NOC"
 
 [node name="BackButton" type="Button" parent="SafeArea/Stack/Header"]
 unique_name_in_owner = true
@@ -175,7 +175,7 @@ theme_override_styles/normal = SubResource("Style_secondary")
 theme_override_styles/hover = SubResource("Style_night_hover")
 theme_override_styles/pressed = SubResource("Style_night_pressed")
 theme_override_styles/focus = SubResource("Style_focus")
-text = "BACK"
+text = "SPÄŤ"
 
 [node name="Content" type="HBoxContainer" parent="SafeArea/Stack"]
 layout_mode = 2
@@ -217,7 +217,7 @@ theme_override_styles/hover = SubResource("Style_night_hover")
 theme_override_styles/pressed = SubResource("Style_night_pressed")
 theme_override_styles/disabled = SubResource("Style_night_disabled")
 theme_override_styles/focus = SubResource("Style_focus")
-text = "NIGHT"
+text = "NOC"
 alignment = 0
 
 [node name="DetailsPanel" type="PanelContainer" parent="SafeArea/Stack/Content"]
@@ -245,21 +245,21 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.47, 0.69, 0.6, 1)
 theme_override_font_sizes/font_size = 14
-text = "NIGHT 1"
+text = "NOC 1"
 
 [node name="LockStatus" type="Label" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details/StatusRow"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.56, 0.83, 0.69, 1)
 theme_override_font_sizes/font_size = 13
-text = "AVAILABLE"
+text = "DOSTUPNÁ"
 
 [node name="NightName" type="Label" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 27
-text = "FIRST DETENTION"
+text = "PRVÁ NOČNÁ HODINA"
 autowrap_mode = 2
 
 [node name="Rule" type="HSeparator" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
@@ -270,41 +270,41 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.63, 0.67, 0.65, 1)
 theme_override_font_sizes/font_size = 15
-text = "Learn the school and watch the clocks."
+text = "Dokonči úlohy a sleduj školské hodiny."
 autowrap_mode = 2
 
 [node name="ScheduleLabel" type="Label" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.48, 0.44, 1)
 theme_override_font_sizes/font_size = 11
-text = "SCHOOL HOURS"
+text = "ŠKOLSKÝ ČAS"
 
 [node name="Schedule" type="Label" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.8, 0.77, 1)
 theme_override_font_sizes/font_size = 18
-text = "11:00 PM — 6:00 AM"
+text = "23:00 — 06:00"
 
 [node name="Duration" type="Label" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.48, 0.56, 0.53, 1)
-text = "8 MIN REAL TIME"
+text = "8 MINÚT SKUTOČNÉHO ČASU"
 
 [node name="Threats" type="Label" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.72, 0.7, 1)
 theme_override_font_sizes/font_size = 15
-text = "0 ACTIVE TEACHERS"
+text = "0 AKTÍVNYCH UČITEĽOV"
 
 [node name="Headmistress" type="Label" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.49, 0.56, 0.53, 1)
 theme_override_font_sizes/font_size = 14
-text = "HEADMISTRESS ABSENT"
+text = "RIADITEĽKA NEPRÍTOMNÁ"
 
 [node name="Spacer" type="Control" parent="SafeArea/Stack/Content/DetailsPanel/Margin/Details"]
 layout_mode = 2
@@ -319,11 +319,11 @@ theme_override_styles/normal = SubResource("Style_primary")
 theme_override_styles/hover = SubResource("Style_primary_hover")
 theme_override_styles/pressed = SubResource("Style_night_pressed")
 theme_override_styles/focus = SubResource("Style_focus")
-text = "BEGIN NIGHT 1"
+text = "ZAČAŤ NOC 1"
 
 [node name="Footer" type="Label" parent="SafeArea/Stack"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.36, 0.34, 1)
 theme_override_font_sizes/font_size = 12
-text = "ARROW KEYS / TAB TO NAVIGATE  •  ENTER TO SELECT  •  ESC TO RETURN"
+text = "ŠÍPKY / TAB: POHYB  •  ENTER: VYBRAŤ  •  ESC: SPÄŤ"
 horizontal_alignment = 1

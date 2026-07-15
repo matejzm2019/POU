@@ -5,6 +5,7 @@ const LOADING_SCENE := preload("res://ui/loading_screen.tscn")
 const NIGHT_SELECTION_SCENE := preload("res://ui/night_selection/night_selection.tscn")
 const NIGHT_COMPLETE_SCENE := preload("res://ui/night_complete.tscn")
 const SCHOOL_PATH := "res://levels/test_school.tscn"
+const JUMPSCARE_DURATION := 2.4
 
 var _active_screen: Node
 var _loading := false
@@ -12,12 +13,16 @@ var _loading := false
 
 func _ready() -> void:
 	NightManager.night_completed.connect(_on_night_completed)
+	NightManager.night_failed.connect(_on_night_failed)
+	SchoolGameManager.main_menu_requested.connect(_show_menu)
 	_show_menu()
 
 
 func _show_menu() -> void:
+	get_tree().paused = false
 	_loading = false
 	NightManager.stop_night()
+	AudioManager.play_menu()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var menu := MENU_SCENE.instantiate() as MainMenu
 	_replace_screen(menu)
@@ -32,6 +37,7 @@ func _start_new_game() -> void:
 
 func _show_night_selection() -> void:
 	NightManager.stop_night()
+	AudioManager.play_menu()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var selection := NIGHT_SELECTION_SCENE.instantiate() as NightSelectionScreen
 	_replace_screen(selection)
@@ -50,11 +56,11 @@ func _load_school(night_number: int) -> void:
 	var loading := LOADING_SCENE.instantiate() as LoadingScreen
 	_replace_screen(loading)
 	loading.set_night(night_number, night_data.display_name)
-	loading.set_status("Unlocking the east wing")
+	loading.set_status("Odomykajú sa školské chodby")
 
 	var request_error := ResourceLoader.load_threaded_request(SCHOOL_PATH)
 	if request_error != OK:
-		loading.show_error("Could not begin loading the school.")
+		loading.show_error("Načítavanie školy sa nepodarilo spustiť.")
 		_loading = false
 		return
 
@@ -66,19 +72,20 @@ func _load_school(night_number: int) -> void:
 		if status == ResourceLoader.THREAD_LOAD_LOADED:
 			break
 		if status == ResourceLoader.THREAD_LOAD_FAILED or status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-			loading.show_error("The school scene could not be loaded.")
+			loading.show_error("Scénu školy sa nepodarilo načítať.")
 			_loading = false
 			return
 		await get_tree().process_frame
 
 	var school := ResourceLoader.load_threaded_get(SCHOOL_PATH) as PackedScene
 	if school == null:
-		loading.show_error("The loaded school resource is invalid.")
+		loading.show_error("Načítaný zdroj školy je neplatný.")
 		_loading = false
 		return
 	loading.set_progress(1.0)
-	loading.set_status("Detention begins")
+	loading.set_status("Nočné vyučovanie sa začína")
 	await get_tree().create_timer(0.3).timeout
+	AudioManager.play_ambient()
 	_replace_screen(school.instantiate())
 	NightManager.start_night()
 	_loading = false
@@ -86,12 +93,18 @@ func _load_school(night_number: int) -> void:
 
 func _on_night_completed(night_data: NightData, completion_seconds: float) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	AudioManager.play_menu()
 	var screen := NIGHT_COMPLETE_SCENE.instantiate() as NightCompleteScreen
 	_replace_screen(screen)
 	screen.setup(night_data, completion_seconds)
 	screen.next_night_requested.connect(_load_school)
 	screen.night_selection_requested.connect(_show_night_selection)
 	screen.main_menu_requested.connect(_show_menu)
+
+
+func _on_night_failed(night_data: NightData, _reason: String) -> void:
+	await get_tree().create_timer(JUMPSCARE_DURATION).timeout
+	_load_school(night_data.night_number)
 
 
 func _replace_screen(next_screen: Node) -> void:

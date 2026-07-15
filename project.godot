@@ -10,16 +10,18 @@ config_version=5
 
 [application]
 
-config/name="Detention: After Hours"
-config/description="A first-person school horror game."
+config/name="Nočná škola"
+config/description="Slovenská hororová hra zo strednej školy."
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
 
+AudioManager="*res://systems/audio/audio_manager.gd"
 SaveManager="*res://systems/save/save_manager.gd"
 NightManager="*res://systems/night/night_manager.gd"
+SchoolGameManager="*res://systems/school_game_manager.gd"
 
 [display]
 

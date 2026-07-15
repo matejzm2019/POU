@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="SubjectData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/homework/subject_data.gd" id="1_subject"]
+[ext_resource type="Script" path="res://data/homework/homework_question.gd" id="2_question"]
+
+[sub_resource type="Resource" id="Question_1"]
+script = ExtResource("2_question")
+prompt = "Koľko je 7 × 8?"
+choices = PackedStringArray("48", "54", "56", "64")
+correct_index = 2
+
+[sub_resource type="Resource" id="Question_2"]
+script = ExtResource("2_question")
+prompt = "Vyrieš rovnicu: 2x + 6 = 14."
+choices = PackedStringArray("x = 3", "x = 4", "x = 6", "x = 10")
+correct_index = 1
+
+[sub_resource type="Resource" id="Question_3"]
+script = ExtResource("2_question")
+prompt = "Aký je obsah trojuholníka so základňou 10 cm a výškou 6 cm?"
+choices = PackedStringArray("16 cm²", "24 cm²", "30 cm²", "60 cm²")
+correct_index = 2
+
+[resource]
+script = ExtResource("1_subject")
+subject_id = "matematika"
+display_name = "Matematika"
+room_code = "M-102"
+teacher_id = "teacher_2"
+accent_color = Color(0.24, 0.322, 0.42, 1)
+homework_sets = Array[ExtResource("2_question")]([SubResource("Question_1"), SubResource("Question_2"), SubResource("Question_3")])

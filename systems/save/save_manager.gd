@@ -116,6 +116,18 @@ func select_night(night_number: int) -> bool:
 	return save_now()
 
 
+func get_setting(key: String, fallback: Variant = null) -> Variant:
+	var settings := data.get("settings", {}) as Dictionary
+	return settings.get(key, fallback)
+
+
+func set_setting(key: String, value: Variant) -> bool:
+	var settings := data.get("settings", {}) as Dictionary
+	settings[key] = value
+	data["settings"] = settings
+	return save_now()
+
+
 func complete_night(night_number: int, completion_seconds: float) -> void:
 	if night_number < 1 or night_number > 8:
 		return

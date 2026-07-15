@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TeacherData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/teachers/teacher_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+teacher_id = "teacher_4"
+display_name = "Mária Šumná"
+subject_id = "elektrotechnika"
+walk_speed = 1.85
+chase_speed = 4.1
+hearing_range = 16.0
+vision_range = 19.0
+active_nights = PackedInt32Array(5, 6, 7, 8)

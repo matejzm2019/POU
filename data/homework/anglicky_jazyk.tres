@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="SubjectData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/homework/subject_data.gd" id="1_subject"]
+[ext_resource type="Script" path="res://data/homework/homework_question.gd" id="2_question"]
+
+[sub_resource type="Resource" id="Question_1"]
+script = ExtResource("2_question")
+prompt = "Vyber minulý čas slovesa „go“."
+choices = PackedStringArray("goed", "went", "gone", "going")
+correct_index = 1
+
+[sub_resource type="Resource" id="Question_2"]
+script = ExtResource("2_question")
+prompt = "Čo znamená anglické slovo „school“?"
+choices = PackedStringArray("škola", "nemocnica", "stanica", "obchod")
+correct_index = 0
+
+[sub_resource type="Resource" id="Question_3"]
+script = ExtResource("2_question")
+prompt = "Ktorá veta je správne v predprítomnom čase?"
+choices = PackedStringArray("I finish my homework yesterday.", "I am finish my homework.", "I have finished my homework.", "I has finished my homework.")
+correct_index = 2
+
+[resource]
+script = ExtResource("1_subject")
+subject_id = "anglicky_jazyk"
+display_name = "Anglický jazyk"
+room_code = "AJ-401"
+teacher_id = "teacher_7"
+accent_color = Color(0.42, 0.25, 0.26, 1)
+homework_sets = Array[ExtResource("2_question")]([SubResource("Question_1"), SubResource("Question_2"), SubResource("Question_3")])

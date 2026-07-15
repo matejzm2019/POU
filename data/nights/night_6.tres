@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1_data")
 night_number = 6
-display_name = "No Excuses"
+display_name = "Bez výhovoriek"
 start_hour = 0
 start_minute = 0
 end_hour = 6
 end_minute = 0
 real_world_duration_seconds = 780.0
-required_homework_count = 7
+required_homework_count = 21
 optional_special_event_ids = PackedStringArray("locked_stairwell")
 active_enemy_ids = PackedStringArray("teacher_1", "teacher_2", "teacher_3", "teacher_4", "teacher_5")
 enemy_speed_multiplier = 1.2
@@ -19,4 +19,4 @@ enemy_vision_multiplier = 1.18
 enemy_hearing_multiplier = 1.18
 headmistress_active = false
 chase_music_intensity = 0.78
-difficulty_description = "Five teachers hunt through a shorter, harsher night."
+difficulty_description = "Päť učiteľov loví počas kratšej a tvrdšej noci."

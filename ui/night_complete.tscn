@@ -108,7 +108,7 @@ theme_override_constants/separation = 13
 layout_mode = 2
 theme_override_colors/font_color = Color(0.48, 0.72, 0.61, 1)
 theme_override_font_sizes/font_size = 14
-text = "BLACKWOOD SECONDARY  /  MORNING REPORT"
+text = "STREDNÁ ODBORNÁ ŠKOLA  /  RANNÝ ZÁZNAM"
 horizontal_alignment = 1
 
 [node name="CompletedNight" type="Label" parent="Panel/Margin/Stack"]
@@ -116,7 +116,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.89, 0.92, 0.87, 1)
 theme_override_font_sizes/font_size = 39
-text = "NIGHT 1 COMPLETE"
+text = "NOC 1 DOKONČENÁ"
 horizontal_alignment = 1
 
 [node name="NightName" type="Label" parent="Panel/Margin/Stack"]
@@ -124,7 +124,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.71, 0.62, 1)
 theme_override_font_sizes/font_size = 20
-text = "FIRST DETENTION"
+text = "PRVÁ NOČNÁ HODINA"
 horizontal_alignment = 1
 
 [node name="Rule" type="HSeparator" parent="Panel/Margin/Stack"]
@@ -134,14 +134,14 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.64, 0.68, 0.65, 1)
 theme_override_font_sizes/font_size = 16
-text = "The morning bell rings. Your progress has been saved."
+text = "Zazvonil ranný zvonček. Tvoj postup bol uložený."
 horizontal_alignment = 1
 
 [node name="CompletionTime" type="Label" parent="Panel/Margin/Stack"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.39, 0.55, 0.49, 1)
-text = "SURVIVED IN 00:00"
+text = "PREŽITÝ ČAS 00:00"
 horizontal_alignment = 1
 
 [node name="Spacer" type="Control" parent="Panel/Margin/Stack"]
@@ -157,7 +157,7 @@ theme_override_styles/normal = SubResource("Style_primary")
 theme_override_styles/hover = SubResource("Style_hover")
 theme_override_styles/pressed = SubResource("Style_primary")
 theme_override_styles/focus = SubResource("Style_focus")
-text = "CONTINUE TO NIGHT 2"
+text = "POKRAČOVAŤ NA NOC 2"
 
 [node name="NightSelectButton" type="Button" parent="Panel/Margin/Stack"]
 unique_name_in_owner = true
@@ -167,7 +167,7 @@ theme_override_styles/normal = SubResource("Style_secondary")
 theme_override_styles/hover = SubResource("Style_hover")
 theme_override_styles/pressed = SubResource("Style_primary")
 theme_override_styles/focus = SubResource("Style_focus")
-text = "NIGHT SELECT"
+text = "VÝBER NOCI"
 
 [node name="MainMenuButton" type="Button" parent="Panel/Margin/Stack"]
 unique_name_in_owner = true
@@ -177,11 +177,11 @@ theme_override_styles/normal = SubResource("Style_secondary")
 theme_override_styles/hover = SubResource("Style_hover")
 theme_override_styles/pressed = SubResource("Style_primary")
 theme_override_styles/focus = SubResource("Style_focus")
-text = "MAIN MENU"
+text = "HLAVNÉ MENU"
 
 [node name="DebugNote" type="Label" parent="Panel/Margin/Stack"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.36, 0.34, 1)
 theme_override_font_sizes/font_size = 11
-text = "PHASE 2 PLACEHOLDER COMPLETION SCREEN"
+text = "DOČASNÁ OBRAZOVKA DOKONČENEJ NOCI"
 horizontal_alignment = 1

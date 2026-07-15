@@ -7,7 +7,7 @@ extends Control
 @onready var _night_label: Label = %NightLabel
 @onready var _title_label: Label = %TitleLabel
 
-var _status := "Preparing detention"
+var _status := "Pripravuje sa nočné vyučovanie"
 var _elapsed := 0.0
 
 
@@ -33,7 +33,7 @@ func set_status(text: String) -> void:
 
 
 func set_night(night_number: int, display_name: String) -> void:
-	_night_label.text = "NIGHT %d" % night_number
+	_night_label.text = "NOC %d" % night_number
 	_title_label.text = display_name.to_upper()
 
 

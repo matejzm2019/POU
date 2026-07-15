@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="GameAudioData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/audio/game_audio_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+menu_volume_db = -15.0
+ambient_volume_db = -19.0
+footstep_volume_db = -7.0

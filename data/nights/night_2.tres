@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1_data")
 night_number = 2
-display_name = "The Hall Monitor"
+display_name = "Prvý dozor"
 start_hour = 23
 start_minute = 15
 end_hour = 6
 end_minute = 0
 real_world_duration_seconds = 540.0
-required_homework_count = 3
+required_homework_count = 21
 optional_special_event_ids = PackedStringArray("first_patrol")
 active_enemy_ids = PackedStringArray("teacher_1")
 enemy_speed_multiplier = 1.0
@@ -19,4 +19,4 @@ enemy_vision_multiplier = 1.0
 enemy_hearing_multiplier = 1.0
 headmistress_active = false
 chase_music_intensity = 0.2
-difficulty_description = "One teacher patrols the halls. Stay quiet and keep moving."
+difficulty_description = "Jeden učiteľ hliadkuje na chodbách. Buď ticho a nezastavuj sa."

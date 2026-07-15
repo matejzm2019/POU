@@ -165,7 +165,7 @@ theme_override_constants/separation = 8
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.77, 0.68, 1)
 theme_override_font_sizes/font_size = 15
-text = "MONDAY  •  11:47 PM  •  EAST WING"
+text = "PONDELOK  •  23:47  •  VÝCHODNÉ KRÍDLO"
 
 [node name="UpperSpacer" type="Control" parent="SafeArea/Columns/Identity"]
 layout_mode = 2
@@ -175,7 +175,7 @@ size_flags_vertical = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(0.56, 0.66, 0.63, 1)
 theme_override_font_sizes/font_size = 18
-text = "YOU WERE WARNED NOT TO STAY LATE"
+text = "VAROVALI ŤA, ABY SI NEZOSTÁVAL DLHO"
 
 [node name="Title" type="Label" parent="SafeArea/Columns/Identity"]
 layout_mode = 2
@@ -184,13 +184,13 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_x = 4
 theme_override_constants/shadow_offset_y = 5
 theme_override_font_sizes/font_size = 68
-text = "DETENTION"
+text = "NOČNÁ"
 
 [node name="Subtitle" type="Label" parent="SafeArea/Columns/Identity"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.73, 0.62, 1)
 theme_override_font_sizes/font_size = 24
-text = "AFTER HOURS"
+text = "ŠKOLA"
 
 [node name="Story" type="Label" parent="SafeArea/Columns/Identity"]
 custom_minimum_size = Vector2(440, 0)
@@ -198,7 +198,7 @@ layout_mode = 2
 size_flags_horizontal = 0
 theme_override_colors/font_color = Color(0.63, 0.66, 0.64, 1)
 theme_override_font_sizes/font_size = 16
-text = "Eight nights. Locked classrooms.\nEvery clock is watching."
+text = "Osem nocí. Zamknuté učebne.\nKaždé hodiny ťa sledujú."
 
 [node name="LowerSpacer" type="Control" parent="SafeArea/Columns/Identity"]
 layout_mode = 2
@@ -208,7 +208,7 @@ size_flags_vertical = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(0.44, 0.55, 0.52, 1)
 theme_override_font_sizes/font_size = 13
-text = "PHASE 2  /  NIGHT SYSTEM BUILD"
+text = "SLOVENSKÁ VERZIA  /  DOMÁCE ÚLOHY A PRENASLEDOVANIE"
 
 [node name="MenuPanel" type="PanelContainer" parent="SafeArea/Columns"]
 custom_minimum_size = Vector2(420, 0)
@@ -230,13 +230,13 @@ theme_override_constants/separation = 10
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.69, 0.62, 1)
 theme_override_font_sizes/font_size = 14
-text = "MAIN OFFICE / NIGHT ACCESS"
+text = "HLAVNÁ KANCELÁRIA  /  NOČNÝ VSTUP"
 
 [node name="MenuTitle" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.89, 0.85, 1)
 theme_override_font_sizes/font_size = 30
-text = "SIGN IN"
+text = "PRIHLÁSENIE"
 
 [node name="Divider" type="HSeparator" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
 layout_mode = 2
@@ -256,33 +256,33 @@ theme_override_styles/normal = SubResource("Style_button")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "BEGIN NIGHT 1"
+text = "ZAČAŤ NOC 1"
 alignment = 0
 
 [node name="ContinueButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Continue from the last valid selected night."
+tooltip_text = "Pokračovať v poslednej dostupnej vybratej noci."
 theme_override_colors/font_color = Color(0.74, 0.82, 0.78, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "CONTINUE NIGHT 1"
+text = "POKRAČOVAŤ V NOCI 1"
 alignment = 0
 
 [node name="NightSelectButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Review unlocked nights and their configurations."
+tooltip_text = "Zobraziť odomknuté noci a ich náročnosť."
 theme_override_colors/font_color = Color(0.74, 0.82, 0.78, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "NIGHT SELECT"
+text = "VÝBER NOCI"
 alignment = 0
 
 [node name="Row" type="HBoxContainer" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
@@ -298,7 +298,7 @@ theme_override_styles/normal = SubResource("Style_small_button")
 theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "SETTINGS"
+text = "NASTAVENIA"
 
 [node name="CreditsButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options/Row"]
 unique_name_in_owner = true
@@ -309,7 +309,7 @@ theme_override_styles/normal = SubResource("Style_small_button")
 theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "CREDITS"
+text = "AUTORI"
 
 [node name="QuitButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
 unique_name_in_owner = true
@@ -321,13 +321,13 @@ theme_override_styles/normal = SubResource("Style_small_button")
 theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "LEAVE SCHOOL"
+text = "ODÍSŤ ZO ŠKOLY"
 
 [node name="Hint" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.4, 0.39, 1)
 theme_override_font_sizes/font_size = 12
-text = "ENTER TO SELECT  /  ESC TO GO BACK"
+text = "ENTER: VYBRAŤ  /  ESC: SPÄŤ"
 horizontal_alignment = 1
 
 [node name="SettingsPanel" type="Control" parent="."]
@@ -379,12 +379,12 @@ theme_override_constants/separation = 16
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 30
-text = "SETTINGS"
+text = "NASTAVENIA"
 
 [node name="Note" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.46, 0.61, 0.55, 1)
-text = "PHASE 2 PREVIEW — settings controls arrive in a later phase."
+text = "Nastavenia sú zatiaľ iba vizuálny náhľad."
 
 [node name="Rule" type="HSeparator" parent="SettingsPanel/Panel/Margin/Content"]
 layout_mode = 2
@@ -393,19 +393,19 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
 theme_override_font_sizes/font_size = 17
-text = "MOUSE SENSITIVITY                         0.08"
+text = "CITLIVOSŤ MYŠI                              0.08"
 
 [node name="Volume" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
 theme_override_font_sizes/font_size = 17
-text = "MASTER VOLUME                              80%"
+text = "HLAVNÁ HLASITOSŤ                            80%"
 
 [node name="Display" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
 theme_override_font_sizes/font_size = 17
-text = "DISPLAY                                  1280 × 720"
+text = "ROZLÍŠENIE                               1280 × 720"
 
 [node name="Spacer" type="Control" parent="SettingsPanel/Panel/Margin/Content"]
 layout_mode = 2
@@ -418,7 +418,7 @@ theme_override_styles/normal = SubResource("Style_button")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "BACK"
+text = "SPÄŤ"
 
 [node name="CreditsPanel" type="Control" parent="."]
 unique_name_in_owner = true
@@ -469,7 +469,7 @@ theme_override_constants/separation = 14
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 30
-text = "CREDITS"
+text = "AUTORI"
 
 [node name="Rule" type="HSeparator" parent="CreditsPanel/Panel/Margin/Content"]
 layout_mode = 2
@@ -478,17 +478,17 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.74, 0.72, 1)
 theme_override_font_sizes/font_size = 18
-text = "DETENTION: AFTER HOURS"
+text = "NOČNÁ ŠKOLA"
 
 [node name="Build" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.59, 0.54, 1)
-text = "Phase 2 night-system prototype built with Godot 4 and GDScript."
+text = "Slovenská hororová hra vytvorená v Godot 4 a GDScripte."
 
 [node name="Tools" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.58, 0.62, 0.6, 1)
-text = "Engine: Godot Engine\nPlaceholder geometry: generated in-project\nTypeface: Godot default"
+text = "Jadro: Godot Engine\nDočasná geometria: vytvorená v projekte\nPísmo: predvolené písmo Godot"
 
 [node name="Spacer" type="Control" parent="CreditsPanel/Panel/Margin/Content"]
 layout_mode = 2
@@ -501,4 +501,4 @@ theme_override_styles/normal = SubResource("Style_button")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
 theme_override_styles/focus = SubResource("Style_button_focus")
-text = "BACK"
+text = "SPÄŤ"

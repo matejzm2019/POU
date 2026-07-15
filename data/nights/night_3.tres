@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1_data")
 night_number = 3
-display_name = "Double Period"
+display_name = "Dvojitá hliadka"
 start_hour = 23
 start_minute = 30
 end_hour = 6
 end_minute = 0
 real_world_duration_seconds = 600.0
-required_homework_count = 4
+required_homework_count = 21
 optional_special_event_ids = PackedStringArray("lights_warning")
 active_enemy_ids = PackedStringArray("teacher_1", "teacher_2")
 enemy_speed_multiplier = 1.05
@@ -19,4 +19,4 @@ enemy_vision_multiplier = 1.05
 enemy_hearing_multiplier = 1.05
 headmistress_active = false
 chase_music_intensity = 0.35
-difficulty_description = "Two teachers cover different routes and react a little faster."
+difficulty_description = "Dvaja učitelia strážia rôzne trasy a reagujú rýchlejšie."

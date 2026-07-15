@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="SubjectData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/homework/subject_data.gd" id="1_subject"]
+[ext_resource type="Script" path="res://data/homework/homework_question.gd" id="2_question"]
+
+[sub_resource type="Resource" id="Question_1"]
+script = ExtResource("2_question")
+prompt = "Čo označuje pojem inflácia?"
+choices = PackedStringArray("Rast všeobecnej cenovej hladiny", "Pokles výroby iba v jednej firme", "Zvýšenie mzdy jedného pracovníka", "Zníženie počtu obyvateľov")
+correct_index = 0
+
+[sub_resource type="Resource" id="Question_2"]
+script = ExtResource("2_question")
+prompt = "Ako vypočítame zisk podniku?"
+choices = PackedStringArray("náklady + výnosy", "výnosy − náklady", "majetok − mzdy", "tržby + dane")
+correct_index = 1
+
+[sub_resource type="Resource" id="Question_3"]
+script = ExtResource("2_question")
+prompt = "Čo sa pri nezmenených podmienkach zvyčajne stane s dopytom, keď cena rastie?"
+choices = PackedStringArray("rastie bez obmedzenia", "nemení sa", "klesá", "zanikne ponuka")
+correct_index = 2
+
+[resource]
+script = ExtResource("1_subject")
+subject_id = "ekonomika"
+display_name = "Ekonomika"
+room_code = "E-301"
+teacher_id = "teacher_5"
+accent_color = Color(0.36, 0.28, 0.16, 1)
+homework_sets = Array[ExtResource("2_question")]([SubResource("Question_1"), SubResource("Question_2"), SubResource("Question_3")])

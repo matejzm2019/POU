@@ -4,6 +4,7 @@ signal night_loaded(night_data: NightData)
 signal night_started(night_data: NightData)
 signal night_restarted(night_data: NightData)
 signal time_updated(game_time_seconds: float, progress: float)
+signal morning_reached(night_data: NightData)
 signal night_completed(night_data: NightData, completion_seconds: float)
 signal night_failed(night_data: NightData, reason: String)
 signal pause_state_changed(paused: bool)
@@ -16,6 +17,7 @@ var current_night_data: NightData
 var current_night_number := 0
 var is_night_running := false
 var is_night_paused := false
+var is_morning := false
 var elapsed_night_time := 0.0
 var current_in_game_time := 0.0
 
@@ -80,6 +82,7 @@ func start_night(night_number := 0) -> bool:
 		return false
 	_school_time.reset()
 	is_night_running = true
+	is_morning = false
 	_set_pause_state(false)
 	_last_tick_usec = Time.get_ticks_usec()
 	_timer.start()
@@ -94,6 +97,7 @@ func restart_current_night() -> bool:
 		return false
 	_school_time.reset()
 	is_night_running = true
+	is_morning = false
 	_set_pause_state(false)
 	_last_tick_usec = Time.get_ticks_usec()
 	_timer.start()
@@ -106,6 +110,7 @@ func restart_current_night() -> bool:
 func stop_night() -> void:
 	var was_running := is_night_running
 	is_night_running = false
+	is_morning = false
 	if _timer != null:
 		_timer.stop()
 	_set_pause_state(false)
@@ -124,7 +129,7 @@ func complete_current_night() -> bool:
 	return true
 
 
-func fail_current_night(reason := "Night failed") -> bool:
+func fail_current_night(reason := "Noc zlyhala") -> bool:
 	if not is_night_running or current_night_data == null:
 		return false
 	var failed_data := current_night_data
@@ -182,7 +187,16 @@ func _on_time_tick() -> void:
 	_sync_time_state()
 	time_updated.emit(current_in_game_time, get_night_progress())
 	if reached_end:
-		complete_current_night()
+		_reach_morning()
+
+
+func _reach_morning() -> void:
+	if not is_night_running or is_morning or current_night_data == null:
+		return
+	is_morning = true
+	_timer.stop()
+	_school_time.paused = true
+	morning_reached.emit(current_night_data)
 
 
 func _sync_time_state() -> void:

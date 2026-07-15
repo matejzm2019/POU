@@ -1,217 +1,209 @@
-# Detention: After Hours
+# Nočná škola
 
-A Godot 4 first-person school-horror project. Phase 2 adds the complete eight-night configuration, synchronized school time, classroom clocks, save persistence, night selection, Continue flow, and temporary development completion flow on top of the Phase 1 first-person prototype.
+Godot 4 first-person horor zo slovenskej školy. Hráč sa môže voľne pohybovať medzi siedmimi predmetovými učebňami, otvárať dvere, riešiť domáce úlohy a utekať pred učiteľom príslušného predmetu. Kabinet je iba pre učiteľov.
 
-## Current scope
+## Aktuálny obsah
 
-Implemented:
+- Slovenské hlavné menu, výber noci, načítanie, HUD, obrazovka úloh a dokončenie noci
+- Celá školská chodba so siedmimi učebňami: Dejepis, Matematika, Slovenský jazyk, Elektrotechnika, Ekonomika, Aplikovaná informatika a Anglický jazyk
+- Zamknutý kabinet so siedmimi konfigurovateľnými učiteľmi a riaditeľkou Zuzanou Čižmárikovou; hráč ho neotvorí ani nevojde za nimi
+- Osem dátovo riadených nocí, spoločný školský čas, analógové a digitálne hodiny
+- Pohyb z prvej osoby, otáčanie myšou, šprint, výdrž, drep, skok a interakcia
+- Osem presne osadených interiérových dverí a ranný východ na konci chodby
+- Tri sady úloh v každej učebni, spolu 21 sád za noc
+- Nesprávna odpoveď vypne školské svetlá, spustí naháňačku a zablokuje danú úlohu na 30 sekúnd
+- Ostatní aktívni učitelia pri spozorovaní hráča spustia sirénu a odovzdajú jeho polohu prenasledovateľovi
+- Navigačný mesh školy, kolízny nábytok, hliadkovanie, prenasledovanie, hľadanie a únik
+- Schovanie pod každou zo 42 žiackych lavíc; učiteľ hráča pod lavicou nevidí a začne prehľadávať školu
+- Plnohodnotná pauza cez `Esc` s okamžitým nastavením jasu/gammy, pokračovaním a návratom do hlavného menu
+- Vymeniteľná hudba menu, školský ambient a priestorové kroky učiteľov s procedurálnymi náhradami
+- Noc 1 trvá 10 reálnych minút; ráno sa odomkne východ, ktorým sa dokončí level
+- Verziovaný JSON save systém a odomykanie nocí
+- Učiteľské modely, animácie a parametre sú v `TeacherData`; modely nie sú zakódované v AI
+- Celoplošný jumpscare s voliteľným obrázkom/zvukom učiteľa a automatickým reštartom rovnakej noci
 
-- Main menu, threaded loading screen, Night Select, and night-complete placeholder
-- First-person movement, sprint/stamina, crouch clearance, jump, interaction, and real pause behavior
-- Eight data-driven `NightData` resources
-- `NightManager` with start, restart, pause, fail, completion, and difficulty queries
-- Timer-driven synchronized school time with midnight rollover and time scaling
-- Reusable signal-driven digital and analog classroom clocks
-- Versioned JSON save data with recovery, migration defaults, reset, and debug unlock support
-- New Game, Continue, locked-night selection, progression, and Night 8 cap
-- Development-only `F8` night completion
-- Automated Phase 1 regression, Phase 2 behavior, and cross-process persistence validation
+Zatiaľ nie sú hotové: finálny autorský zvukový obsah, chase hudba, úvodná detention sekvencia a ručne vytvorené 3D modely. Učitelia, hudba, ambient, kroky a jumpscare používajú v prípade nepriradeného súboru procedurálne náhrady.
 
-Not implemented: homework minigames, enemy AI, navigation, hiding, jumpscares, chase/audio systems, power events, or the opening cinematic. Those remain later phases.
-
-## Project structure
+## Štruktúra projektu
 
 ```text
 res://
-|- assets/                         Future textures and imported 3D models
-|- audio/                          Future ambience, music, and effects
+|- assets/                         importované modely, textúry a obrázky
+|- audio/                          vlastná hudba a zvuky na import
 |- characters/
-|  |- clocks/                      Reusable analog and digital clock scenes
-|  `- player.tscn                  First-person player and HUD
-|- data/nights/                    Night 1 through Night 8 resources
-|- enemies/                        Future enemy scenes
-|- levels/                         Test classroom and props
-|- scripts/
-|  |- levels/                      Placeholder room builder
-|  |- ui/                          Menu, selection, loading, HUD, completion
-|  `- validate_phase*.{gd,tscn}    Headless validation scenes
+|  |- clocks/                      spoločné analógové a digitálne hodiny
+|  |- teachers/                    pohyblivý TeacherData-driven učiteľ
+|  `- player.tscn                  FPS hráč, HUD a obrazovka úloh
+|- data/
+|  |- homework/                    7 predmetov, každý s 3 otázkami
+|  |- nights/                      NightData pre noci 1 až 8
+|  |- teachers/                    7 učiteľov a TeacherData riaditeľky
+|  `- audio/                       centrálna GameAudioData konfigurácia
+|- enemies/                        miesto pre zdedené scény importovaných postáv
+|- levels/                         škola a opakovateľné objekty
+|- scripts/                        level, UI a automatické validátory
 |- systems/
-|  |- night/                       NightData, SchoolTime, NightManager
+|  |- audio/                       menu, ambient a náhradné kroky
+|  |- night/                       NightData, SchoolTime a NightManager
 |  |- save/                        SaveManager
-|  |- door.gd
-|  `- interaction_component.gd
-|- ui/                             Player-facing UI scenes
-|- shaders/                        Menu background shader
-|- main.tscn                       Project entry scene
-`- project.godot                   Inputs, autoloads, renderer, project settings
+|  |- homework/                    interaktívna stanica úloh
+|  |- hiding/                      schovanie pod lavicami
+|  `- school_game_manager.gd       úlohy, výpadok, naháňačka a sirény
+|- ui/                             všetky herné obrazovky
+|- shaders/                        shader hlavného menu
+|- main.tscn                       vstupná scéna
+`- project.godot                   nastavenia, vstupy a autoloady
 ```
 
-## Controls
+## Ovládanie
 
-| Action | Input |
+| Akcia | Kláves |
 |---|---|
-| Move | `W`, `A`, `S`, `D` |
-| Look | Mouse |
-| Sprint | Left `Shift` |
-| Crouch | `C` |
-| Jump | `Space` |
-| Interact | `E` |
-| Pause/release mouse | `Esc` |
-| Resume/capture mouse | Left click |
-| Complete active night (debug builds only) | `F8` |
+| Pohyb | `W`, `A`, `S`, `D` |
+| Rozhliadanie a otáčanie | myš |
+| Šprint | ľavý `Shift` |
+| Drep / fyzické schovanie pod lavicu | podržať `C` a vojsť pod lavicu |
+| Skok | `Space` |
+| Otvoriť alebo zatvoriť dvere / domáca úloha | `E` |
+| Pozastaviť hru / zavrieť pauzu | `Esc` |
+| Dokončiť noc (iba debug build) | `F8` |
 
-## Run the project
+## Spustenie
 
 ```powershell
 C:\Users\matej\Downloads\godot.exe --path . --editor
 ```
 
-Press `F5` to start at the main menu. No manual scene or autoload setup is required.
+Stlač `F5`; projekt spustí `main.tscn`. Hlavná scéna aj autoloady `AudioManager`, `SaveManager`, `NightManager` a `SchoolGameManager` sú už nastavené.
 
-## Night system overview
+## Herný priebeh
 
-`SaveManager` and `NightManager` are the only autoloads. `NightManager` owns one `SchoolTime` object, so clocks and HUD elements never maintain independent time. A 0.1-second manager timer samples monotonic engine time, updates the shared clock, and emits `time_updated`.
+V každej učebni je na učiteľskom stole zošit. Interakcia otvorí nasledujúcu z troch sád daného predmetu. Správna odpoveď započíta postup aktuálne spustenej noci. Dokončenie všetkých 21 sád už noc neukončí predčasne.
 
-Typical flow:
+Nesprávna odpoveď okamžite:
 
-```text
-Main menu / Night Select
-        -> SaveManager validates and stores selection
-        -> NightManager loads NightData
-        -> loading screen loads test school
-        -> NightManager starts SchoolTime
-        -> HUD and every clock receive the same signal
-        -> completion updates save and unlocks at most Night 8
-```
+1. zavrie zošit a zhasne všetky školské svetlá,
+2. bez textového oznamu aktivuje učiteľa daného predmetu v kabinete,
+3. nastaví 30-sekundový cooldown pre ďalší pokus v rovnakom predmete,
+4. umožní ostatným učiteľom hlásiť hráča hlasnou sirénou.
 
-`NightManager` exposes active enemy IDs and speed, vision, and hearing multipliers for later AI phases; Phase 2 does not instantiate enemies.
+Po priamom kontakte učiteľ neustále aktualizuje cieľ. Po úniku sa už nevráti do kabinetu: zostane vypustený a striedavo prechádza chodbou aj všetkými predmetovými učebňami. Každé interiérové dvere majú obojsmerný navigačný prechod; učiteľ ich otvorí až vtedy, keď k nim príde. Pri odchode z kabinetu jeho dvere za sebou zavrie, keď je priechod voľný. Otvorené triedne dvere vypnú kolíziu krídla, takže hráč aj učiteľ spoľahlivo prejdú medzi učebňou a chodbou. Lavice, stoličky a učiteľské stoly majú kolíziu aj pre učiteľov.
 
-## NightData resources
+Pod lavicu sa nelezie cez `E`. Podrž `C`, prikrč sa a fyzicky pod ňu vojdi. Hráč sa pod lavicou ďalej normálne pohybuje; skrytý je iba počas drepu v priestore priamo pod stolom. Prenasledovateľ ho tam nevidí ani nechytí a prepne sa do prehľadávania školy. Po vylezení ďalej roamuje, kým hráča znovu neuvidí, nedostane sirénové hlásenie alebo nepríde ráno. Počas jeho prehľadávania možno riešiť úlohy v iných triedach.
 
-Night files are `res://data/nights/night_1.tres` through `night_8.tres`. Each resource configures:
+Dvere používajú fyzický lokálny pánt a 0,45-sekundovú sinusovú tween animáciu. Viditeľná sieť sa otáča spolu s pántom; po otvorení zostane krídlo mimo otvoru. Pevná interakčná zóna zostáva pri zárubni, preto rovnaké `E` dvere aj zatvorí. Kabinetové dvere môže otvoriť iba AI. Samostatná hráčska kolízna vrstva zostáva aktívna aj pri otvorených kabinetových dverách, takže hráč nemôže vojsť za učiteľom.
 
-- Number and display name
-- Start hour/minute and end hour/minute
-- Real-world duration in seconds
-- Placeholder homework count
-- Active teacher string IDs
-- Speed, vision, and hearing multipliers
-- Headmistress flag
-- Placeholder chase intensity and event IDs
-- Player-facing difficulty description
+`Esc` úplne pozastaví SceneTree, školský čas, fyziku aj AI. Pauza ponúka posuvník jasu/gammy v rozsahu 50–150 %, tlačidlo pokračovania a bezpečný návrat do hlavného menu. Jas sa aplikuje na `WorldEnvironment` okamžite a ukladá sa do save súboru.
 
-### Configure duration
+Noc 1 má `real_world_duration_seconds = 600.0`, teda presne 10 minút. Po dosiahnutí rána hra pokračuje: svetlá sa obnovia, naháňačka sa ukončí a HUD pošle hráča k dverám `VÝCHOD` na severnom konci chodby. Až interakcia s týmto východom dokončí noc a odomkne ďalšiu.
 
-Edit `real_world_duration_seconds` in the Inspector or `.tres` file. At normal `time_scale = 1.0`, the complete in-game interval is mapped onto this many real seconds. Runtime tests can call `NightManager.set_time_scale(value)`; loading another night restores normal scale.
+## Úlohy a predmety
 
-### Configure start and end time
+Predmetové dáta sú v `data/homework/*.tres`. Každý `SubjectData` obsahuje identifikátor, slovenský názov, číslo učebne, učiteľa, farbu a pole `homework_sets`.
 
-Edit `start_hour`, `start_minute`, `end_hour`, and `end_minute` using 24-hour values. Midnight rollover is automatic: an end time earlier than or equal to the start is treated as the next day. Example: `23:00` to `06:00` spans seven in-game hours.
+### Pridanie alebo zmena otázky
 
-### Add or edit a night
+1. Otvor príslušný `.tres` súbor v Godot Inspectore.
+2. V `homework_sets` uprav jeden z troch vnorených `HomeworkQuestion` resource objektov.
+3. Nastav slovenské `prompt`, štyri položky `choices` a `correct_index` v rozsahu `0` až `3`.
+4. Zachovaj presne tri sady na predmet; aktuálny postup a validátor s tým počítajú.
 
-To edit a night, open its `.tres` resource and change exported fields. To restore a missing configuration, create a `NightData` resource at `res://data/nights/night_<number>.tres` and keep its `night_number` aligned with the filename.
+Ak chceš viac ako tri sady, zmeň aj `SchoolGameManager.SETS_PER_SUBJECT`, konfiguráciu nocí, texty HUD a validátor.
 
-The game is intentionally capped at eight nights. Supporting Night 9+ would require changing the `NightData` range, `NightManager.get_all_nights()`, save clamps, and selection UI; Phase 2 never unlocks Night 9.
+## Vlastné modely učiteľov
 
-Progression is currently:
+Godot môže importovať `.glb`, `.gltf` a `.fbx`; odporúčaný je binárny `.glb`.
 
-| Night | Active IDs | Headmistress |
+1. Skopíruj model aj jeho textúry do `res://assets/models/teachers/<meno>/` (na disku `D:\skibidi\assets\models\teachers\<meno>\`).
+2. Nechaj Godot dokončiť import. Model má byť v metroch, Y hore a jeho predná strana má smerovať pozdĺž lokálnej osi +Z.
+3. Ak potrebuješ upraviť orientáciu alebo uzly, vytvor zdedenú scénu v `enemies/<meno>.tscn` a model otoč v nej.
+4. Otvor správny `data/teachers/teacher_<n>.tres`.
+5. Pretiahni importovanú alebo zdedenú scénu do `model_scene` a dolaď `model_scale`.
+
+Nemeň `teacher_scene` v `levels/test_school.tscn` a nemaž `characters/teachers/placeholder_teacher.tscn`. Tento wrapper obsahuje AI, kolíziu a navigáciu. Keď je `model_scene` prázdne, zobrazí sa hotový vstavaný placeholder učiteľa. Keď neskôr priradíš vlastný model, skryje sa iba placeholder vizuál a vlastný model automaticky používa rovnaké prenasledovanie.
+
+### Animácie
+
+Animácia nie je povinná. Učiteľ sa ako celá postava posúva dopredu aj bez nej. Ak ju model obsahuje, `placeholder_teacher.gd` nájde prvý `AnimationPlayer`; v `TeacherData` potom môžeš nastaviť presné názvy `idle_animation` a `run_animation`. Neexistujúci alebo prázdny názov nijako nezastaví AI.
+
+### Konfigurácia učiteľa
+
+Každý `TeacherData` podporuje meno, predmet, model, mierku, voliteľné názvy animácií, rýchlosť hliadky a naháňačky, sluch, dohľad, uhol videnia, aktívne noci, chase hudbu, jumpscare obrázok, jumpscare zvuk a špeciálne správanie. Aktuálna AI používa model, voliteľné animácie, rýchlosti, dohľad, uhol, aktívne noci a jumpscare médiá.
+
+| Predmet | Učiteľ/ka | Konfigurácia vlastného modelu |
+|---|---|---|
+| Dejepis | Jindra Kanyicsková | `data/teachers/teacher_1.tres` |
+| Matematika | Alžbeta Kéryová | `data/teachers/teacher_2.tres` |
+| Slovenský jazyk | Miroslav Broniš | `data/teachers/teacher_3.tres` |
+| Elektrotechnika | Mária Šumná | `data/teachers/teacher_4.tres` |
+| Ekonomika | Marián Kováč | `data/teachers/teacher_5.tres` |
+| Aplikovaná informatika | Miloš Palaj | `data/teachers/teacher_6.tres` |
+| Anglický jazyk | Jana Palajová | `data/teachers/teacher_7.tres` |
+| Riaditeľka | Zuzana Čižmáriková | `data/teachers/headmistress.tres` |
+
+Zuzana Čižmáriková sa objaví v 8. noci. Kým je aktívna, zvyšuje všetkým predmetovým učiteľom rýchlosť o 20 % a vzdialenosť dohľadu o 25 %. Používa rovnaký vymeniteľný `model_scene` ako ostatné postavy.
+
+## Vlastná hudba, ambient a kroky
+
+Godot podporuje najmä `.wav`, `.ogg` a `.mp3`. Súbory vlož do `res://audio/` a po importe otvor `data/audio/game_audio.tres`:
+
+1. `menu_music` nahrádza hudbu hlavného menu,
+2. `school_ambient` nahrádza slučku počas noci,
+3. `default_teacher_footstep` nahrádza spoločný zvuk krokov,
+4. hlasitosť upravíš v troch poliach `*_volume_db`.
+
+Konkrétny učiteľ alebo riaditeľka môže mať vlastné kroky v poli `footstep_sound` svojho `TeacherData`. Prázdne audio polia sú bezpečné a použijú procedurálny placeholder. Podrobnosti sú aj v `audio/README.md`.
+
+## Jumpscare obrázky a zvuky
+
+Vlož obrázky do `assets/images/jumpscares/` a zvuky do `audio/jumpscares/`, potom ich priraď k `jumpscare_image` a `jumpscare_sound` v príslušnom `TeacherData`. Po chytení obrazovka použije tieto médiá; prázdne polia použijú procedurálnu tvár a zvuk. Po 2,4 sekundy sa tá istá noc načíta od začiatku s nulovým postupom úloh.
+
+## Noci, čas a učitelia
+
+`data/nights/night_1.tres` až `night_8.tres` určujú názov, začiatok/koniec školského času, reálne trvanie, 21 požadovaných sád, aktívne ID učiteľov, násobiče AI, riaditeľku a špeciálne udalosti. Čas zvláda prechod cez polnoc.
+
+| Noc | Aktívni učitelia | Riaditeľka |
 |---|---:|---|
-| 1 | None | No |
-| 2 | `teacher_1` | No |
-| 3 | `teacher_1`-`teacher_2` | No |
-| 4 | `teacher_1`-`teacher_3` | No |
-| 5 | `teacher_1`-`teacher_4` | No |
-| 6 | `teacher_1`-`teacher_5` | No |
-| 7 | `teacher_1`-`teacher_6` | No |
-| 8 | `teacher_1`-`teacher_6` | Yes |
+| 1 | 0 | nie |
+| 2 | 1 | nie |
+| 3 | 2 | nie |
+| 4 | 3 | nie |
+| 5 | 4 | nie |
+| 6 | 5 | nie |
+| 7 | 6 | nie |
+| 8 | všetkých 7 predmetových učiteľov | Zuzana Čižmáriková, aktívna |
 
-## Synchronized clocks
+Učitelia aktívni pre danú noc hliadkujú po chodbe aj učebniach a môžu spustiť sirénu počas cudzej predmetovej naháňačky. Predmetový učiteľ sa po nesprávnej odpovedi aktivuje aj v noci, v ktorej normálne nehliadkuje, a do konca noci už zostane v škole namiesto návratu do kabinetu.
 
-`NightManager.current_in_game_time` is the only source of truth. It provides 12-hour/24-hour formatting, seconds, elapsed real time, and normalized progress.
+Všetky hodiny a HUD čítajú jediný zdroj `NightManager.current_in_game_time`; nemajú vlastné časovače, preto sa nerozchádzajú. Dĺžku noci mení `real_world_duration_seconds`, čas začiatku a konca polia `start_*` a `end_*`. Dosiahnutie koncového času vytvorí stav rána; samotné dokončenie nastane až pri školskom východe.
 
-- `digital_clock.tscn` selects 12/24-hour display and optional seconds, then updates only on manager signals.
-- `analog_clock.tscn` derives all hand rotations from the same emitted timestamp. `smooth_movement` uses fractional values; stepped mode uses discrete seconds/minutes.
-- Neither scene owns a timer. Adding multiple instances cannot create drift between clocks.
-- The digital clock shows its configured fallback when no night is running.
+## Ukladanie
 
-Place clock scenes anywhere in a 3D level. One of each is already on the north classroom wall.
+`SaveManager` zapisuje verziovaný JSON do `user://detention_save.json`. Ukladá odomknutú/poslednú noc, dokončenia, najlepšie časy, úmrtia a nastavený jas. Neplatný súbor obnoví zo zálohy alebo z bezpečných predvolených hodnôt.
 
-## Save system
+Vývojový reset: zatvor hru, v Godot zvoľ **Project > Open User Data Folder** a odstráň `detention_save.json`, `.bak` a `.tmp`, alebo dočasne zavolaj `SaveManager.reset_progress()`.
 
-`SaveManager` loads automatically and writes JSON to `user://detention_save.json`. Data includes:
-
-- `save_version`
-- `highest_unlocked_night`
-- `last_selected_night`
-- `last_completed_night`
-- `settings` placeholder
-- `best_completion_time_per_night`
-- `total_deaths`
-- `total_nights_completed`
-
-Missing or wrong-typed fields are sanitized. Invalid JSON recovers from the last valid backup, or from defaults if no backup exists. Saves are flushed to a temporary file before the live file is replaced, and the previous live file is retained as `.bak`. `save_version` is migrated through a dedicated version step before known fields are sanitized. Saves created by a newer build are left untouched and treated as read-only by the older build.
-
-Continue uses the last selected night when it is unlocked; otherwise it falls back to the highest unlocked night.
-
-### Reset development progress
-
-Use either method:
-
-1. Run `SaveManager.reset_progress()` from a temporary debug/editor script.
-2. Close the game, choose **Project > Open User Data Folder**, and delete `detention_save.json`, `detention_save.json.bak`, and `detention_save.json.tmp` if present.
-
-`SaveManager.debug_unlock_all_nights()` unlocks all eight only in debug builds. It is intentionally absent from normal menus.
-
-## Test Phase 2
-
-Manual test:
-
-1. Start the project and choose **Night Select**. Only Night 1 should be available.
-2. Start Night 1 and compare the HUD, digital clock, and analog clock.
-3. Press `Esc`; school time should stop. Left-click to resume.
-4. Press `F8`; the completion screen should appear and Night 2 should unlock.
-5. Start Night 2 or return to the menu and use **Continue**.
-6. Restart the project and confirm the selected night and unlock persist.
-
-Automated validation uses an isolated `user://detention_phase2_test_save.json`; the second command verifies a fresh-process load and removes it:
+## Validácia
 
 ```powershell
 C:\Users\matej\Downloads\godot.exe --headless --path . --editor --quit
 C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase1.tscn -- --phase2-test
 C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase2.tscn -- --phase2-test
 C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase2.tscn -- --phase2-test --phase2-verify
+C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase3.tscn -- --phase2-test
 ```
 
-Run the two Phase 2 commands in order. The first deliberately exercises corrupt, interrupted, wrong-typed, and newer-version saves. The newer-version preservation warning is expected.
+Phase 3 test overuje 7 predmetov, 7 učiteľov, Zuzanu Čižmárikovú a jej boosty, 21 otázok, 30-sekundový cooldown, vymeniteľnú audio konfiguráciu, roaming cez triedy, zatvorenie kabinetu, dvere, fyzický drep, pauzu, navigation mesh, výpadok, sirénu, chytenie, jumpscare, ranný východ a reset noci.
 
-## Future content workflows
+## Export pre Windows
 
-### Teacher models and animations
+1. V **Editor > Manage Export Templates** nainštaluj šablóny zhodné s verziou Godot.
+2. V **Project > Export > Add...** pridaj `Windows Desktop`.
+3. Nastav názov, ikonu, architektúru a výstup.
+4. Exportovaný `.exe` otestuj mimo priečinka projektu.
 
-1. Put `.glb`, `.gltf`, or `.fbx` files under `res://assets/models/enemies/<enemy_name>/`; GLB is preferred.
-2. Verify meter scale, Y-up orientation, skeleton, materials, and clips in Advanced Import Settings.
-3. Save an inherited model scene under `res://enemies/` if node changes are needed.
-4. In the future enemy resource, assign the imported `PackedScene` and map idle, walk, investigate, search, chase, and jumpscare clips. Do not hardcode model or animation paths in AI.
-
-### Jumpscare media
-
-Place images under `res://assets/images/jumpscares/` and audio under `res://audio/jumpscares/`, then assign both to the future enemy resource.
-
-### Homework questions
-
-Future homework resources will live under `res://data/homework/`. Question text is not implemented in Phase 2.
-
-## Export a Windows build
-
-1. Install matching templates from **Editor > Manage Export Templates**.
-2. Choose **Project > Export > Add... > Windows Desktop**.
-3. Configure executable name, icon, architecture, and output path.
-4. Export and test outside the project folder.
-
-After creating a `Windows Desktop` preset:
+Po vytvorení export presetu:
 
 ```powershell
-C:\Users\matej\Downloads\godot.exe --headless --path . --export-release "Windows Desktop" build\DetentionAfterHours.exe
+C:\Users\matej\Downloads\godot.exe --headless --path . --export-release "Windows Desktop" build\NocnaSkola.exe
 ```

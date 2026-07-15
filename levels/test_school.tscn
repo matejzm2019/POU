@@ -1,10 +1,12 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/test_school.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://characters/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://levels/props/classroom_door.tscn" id="3_door"]
 [ext_resource type="PackedScene" path="res://characters/clocks/digital_clock.tscn" id="4_digital"]
 [ext_resource type="PackedScene" path="res://characters/clocks/analog_clock.tscn" id="5_analog"]
+[ext_resource type="PackedScene" path="res://characters/teachers/placeholder_teacher.tscn" id="6_teacher"]
+[ext_resource type="PackedScene" path="res://levels/props/homework_station.tscn" id="7_homework"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_night"]
 sky_top_color = Color(0.004, 0.008, 0.018, 1)
@@ -27,17 +29,17 @@ tonemap_mode = 2
 fog_enabled = true
 fog_light_color = Color(0.08, 0.1, 0.11, 1)
 fog_light_energy = 0.35
-fog_density = 0.012
+fog_density = 0.006
 fog_height = 1.0
 fog_height_density = 0.08
 
-[sub_resource type="BoxMesh" id="Mesh_hall"]
-size = Vector3(3.2, 0.12, 2.2)
-
 [node name="TestSchool" type="Node3D"]
 script = ExtResource("1_level")
+door_scene = ExtResource("3_door")
+teacher_scene = ExtResource("6_teacher")
+homework_station_scene = ExtResource("7_homework")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." groups=["school_environment"]]
 environment = SubResource("Environment_school")
 
 [node name="MoonLight" type="DirectionalLight3D" parent="."]
@@ -46,21 +48,14 @@ light_color = Color(0.35, 0.44, 0.52, 1)
 light_energy = 0.24
 shadow_enabled = true
 
-[node name="HallDarkness" type="MeshInstance3D" parent="."]
-position = Vector3(6.5, 1.2, 8.4)
-mesh = SubResource("Mesh_hall")
-
-[node name="ClassroomDoor" parent="." instance=ExtResource("3_door")]
-position = Vector3(7.2, 0, 6.82)
-
 [node name="DigitalClock" parent="." instance=ExtResource("4_digital")]
-position = Vector3(6.25, 3.1, -6.8)
+position = Vector3(-13, 3.15, -18.66)
 
 [node name="AnalogClock" parent="." instance=ExtResource("5_analog")]
-position = Vector3(-6.3, 3.05, -6.78)
+position = Vector3(13, 3.05, -37.66)
 smooth_movement = true
 show_second_hand = true
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector3(0, 0.05, 4.8)
-rotation_degrees = Vector3(0, 180, 0)
+position = Vector3(-13, 0.05, 34)
+rotation_degrees = Vector3(0, -90, 0)

@@ -18,7 +18,7 @@ func _ready() -> void:
 	%SettingsBackButton.pressed.connect(_hide_panels)
 	%CreditsBackButton.pressed.connect(_hide_panels)
 	%QuitButton.pressed.connect(get_tree().quit)
-	%ContinueButton.text = "CONTINUE NIGHT %d" % SaveManager.get_continue_night()
+	%ContinueButton.text = "POKRAČOVAŤ V NOCI %d" % SaveManager.get_continue_night()
 	%StartButton.grab_focus()
 
 
