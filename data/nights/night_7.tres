@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/night/night_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+night_number = 7
+display_name = "Full Staff"
+start_hour = 0
+start_minute = 0
+end_hour = 6
+end_minute = 0
+real_world_duration_seconds = 840.0
+required_homework_count = 8
+optional_special_event_ids = PackedStringArray("full_power_failure")
+active_enemy_ids = PackedStringArray("teacher_1", "teacher_2", "teacher_3", "teacher_4", "teacher_5", "teacher_6")
+enemy_speed_multiplier = 1.28
+enemy_vision_multiplier = 1.25
+enemy_hearing_multiplier = 1.25
+headmistress_active = false
+chase_music_intensity = 0.9
+difficulty_description = "All six teachers are present. Every corridor is contested."

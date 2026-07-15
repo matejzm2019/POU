@@ -1,0 +1,504 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_script"]
+[ext_resource type="Shader" path="res://shaders/menu_background.gdshader" id="2_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
+shader = ExtResource("2_shader")
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.025, 0.035, 0.041, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.34, 0.32, 0.55)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+content_margin_left = 18.0
+content_margin_top = 13.0
+content_margin_right = 18.0
+content_margin_bottom = 13.0
+bg_color = Color(0.065, 0.082, 0.087, 0.9)
+border_width_left = 2
+border_color = Color(0.34, 0.58, 0.5, 0.65)
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_button_hover"]
+content_margin_left = 22.0
+content_margin_top = 13.0
+content_margin_right = 18.0
+content_margin_bottom = 13.0
+bg_color = Color(0.11, 0.16, 0.15, 0.98)
+border_width_left = 4
+border_color = Color(0.55, 0.88, 0.72, 1)
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_button_pressed"]
+content_margin_left = 22.0
+content_margin_top = 13.0
+content_margin_right = 18.0
+content_margin_bottom = 13.0
+bg_color = Color(0.16, 0.23, 0.21, 1)
+border_width_left = 4
+border_color = Color(0.66, 0.95, 0.8, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_button_disabled"]
+content_margin_left = 18.0
+content_margin_top = 13.0
+content_margin_right = 18.0
+content_margin_bottom = 13.0
+bg_color = Color(0.035, 0.043, 0.046, 0.72)
+border_width_left = 2
+border_color = Color(0.16, 0.2, 0.2, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="Style_button_focus"]
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.62, 0.9, 0.76, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_small_button"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.06, 0.075, 0.08, 0.85)
+border_width_bottom = 1
+border_color = Color(0.29, 0.44, 0.4, 0.75)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_small_hover"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.12, 0.17, 0.16, 0.95)
+border_width_bottom = 2
+border_color = Color(0.55, 0.82, 0.7, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_overlay"]
+bg_color = Color(0.025, 0.035, 0.041, 0.99)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.4, 0.64, 0.55, 0.7)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.75)
+shadow_size = 24
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_bg")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="TopRule" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 3.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0.36, 0.66, 0.55, 0.75)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 48.0
+offset_right = -64.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Columns" type="HBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 70
+
+[node name="Identity" type="VBoxContainer" parent="SafeArea/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="NightStamp" type="Label" parent="SafeArea/Columns/Identity"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.77, 0.68, 1)
+theme_override_font_sizes/font_size = 15
+text = "MONDAY  •  11:47 PM  •  EAST WING"
+
+[node name="UpperSpacer" type="Control" parent="SafeArea/Columns/Identity"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Kicker" type="Label" parent="SafeArea/Columns/Identity"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.56, 0.66, 0.63, 1)
+theme_override_font_sizes/font_size = 18
+text = "YOU WERE WARNED NOT TO STAY LATE"
+
+[node name="Title" type="Label" parent="SafeArea/Columns/Identity"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.91, 0.86, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 4
+theme_override_constants/shadow_offset_y = 5
+theme_override_font_sizes/font_size = 68
+text = "DETENTION"
+
+[node name="Subtitle" type="Label" parent="SafeArea/Columns/Identity"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.73, 0.62, 1)
+theme_override_font_sizes/font_size = 24
+text = "AFTER HOURS"
+
+[node name="Story" type="Label" parent="SafeArea/Columns/Identity"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0.63, 0.66, 0.64, 1)
+theme_override_font_sizes/font_size = 16
+text = "Eight nights. Locked classrooms.\nEvery clock is watching."
+
+[node name="LowerSpacer" type="Control" parent="SafeArea/Columns/Identity"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PhaseBadge" type="Label" parent="SafeArea/Columns/Identity"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.44, 0.55, 0.52, 1)
+theme_override_font_sizes/font_size = 13
+text = "PHASE 2  /  NIGHT SYSTEM BUILD"
+
+[node name="MenuPanel" type="PanelContainer" parent="SafeArea/Columns"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Margin" type="MarginContainer" parent="SafeArea/Columns/MenuPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 30
+
+[node name="Options" type="VBoxContainer" parent="SafeArea/Columns/MenuPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="OfficeLabel" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.69, 0.62, 1)
+theme_override_font_sizes/font_size = 14
+text = "MAIN OFFICE / NIGHT ACCESS"
+
+[node name="MenuTitle" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.89, 0.85, 1)
+theme_override_font_sizes/font_size = 30
+text = "SIGN IN"
+
+[node name="Divider" type="HSeparator" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+layout_mode = 2
+
+[node name="Gap" type="Control" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_neighbor_top = NodePath("../QuitButton")
+theme_override_colors/font_color = Color(0.84, 0.94, 0.89, 1)
+theme_override_colors/font_hover_color = Color(0.95, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "BEGIN NIGHT 1"
+alignment = 0
+
+[node name="ContinueButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Continue from the last valid selected night."
+theme_override_colors/font_color = Color(0.74, 0.82, 0.78, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "CONTINUE NIGHT 1"
+alignment = 0
+
+[node name="NightSelectButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Review unlocked nights and their configurations."
+theme_override_colors/font_color = Color(0.74, 0.82, 0.78, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "NIGHT SELECT"
+alignment = 0
+
+[node name="Row" type="HBoxContainer" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SettingsButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 0.77, 0.74, 1)
+theme_override_styles/normal = SubResource("Style_small_button")
+theme_override_styles/hover = SubResource("Style_small_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "SETTINGS"
+
+[node name="CreditsButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 0.77, 0.74, 1)
+theme_override_styles/normal = SubResource("Style_small_button")
+theme_override_styles/hover = SubResource("Style_small_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "CREDITS"
+
+[node name="QuitButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_neighbor_bottom = NodePath("../StartButton")
+theme_override_colors/font_color = Color(0.55, 0.59, 0.58, 1)
+theme_override_colors/font_hover_color = Color(0.86, 0.64, 0.61, 1)
+theme_override_styles/normal = SubResource("Style_small_button")
+theme_override_styles/hover = SubResource("Style_small_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "LEAVE SCHOOL"
+
+[node name="Hint" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.4, 0.39, 1)
+theme_override_font_sizes/font_size = 12
+text = "ENTER TO SELECT  /  ESC TO GO BACK"
+horizontal_alignment = 1
+
+[node name="SettingsPanel" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="SettingsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.76)
+
+[node name="Panel" type="PanelContainer" parent="SettingsPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -220.0
+offset_right = 270.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_overlay")
+
+[node name="Margin" type="MarginContainer" parent="SettingsPanel/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 34
+
+[node name="Content" type="VBoxContainer" parent="SettingsPanel/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
+theme_override_font_sizes/font_size = 30
+text = "SETTINGS"
+
+[node name="Note" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.46, 0.61, 0.55, 1)
+text = "PHASE 2 PREVIEW — settings controls arrive in a later phase."
+
+[node name="Rule" type="HSeparator" parent="SettingsPanel/Panel/Margin/Content"]
+layout_mode = 2
+
+[node name="Mouse" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 17
+text = "MOUSE SENSITIVITY                         0.08"
+
+[node name="Volume" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 17
+text = "MASTER VOLUME                              80%"
+
+[node name="Display" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 17
+text = "DISPLAY                                  1280 × 720"
+
+[node name="Spacer" type="Control" parent="SettingsPanel/Panel/Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SettingsBackButton" type="Button" parent="SettingsPanel/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "BACK"
+
+[node name="CreditsPanel" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="CreditsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.76)
+
+[node name="Panel" type="PanelContainer" parent="CreditsPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -220.0
+offset_right = 270.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_overlay")
+
+[node name="Margin" type="MarginContainer" parent="CreditsPanel/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 34
+
+[node name="Content" type="VBoxContainer" parent="CreditsPanel/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
+theme_override_font_sizes/font_size = 30
+text = "CREDITS"
+
+[node name="Rule" type="HSeparator" parent="CreditsPanel/Panel/Margin/Content"]
+layout_mode = 2
+
+[node name="Project" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.74, 0.72, 1)
+theme_override_font_sizes/font_size = 18
+text = "DETENTION: AFTER HOURS"
+
+[node name="Build" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.59, 0.54, 1)
+text = "Phase 2 night-system prototype built with Godot 4 and GDScript."
+
+[node name="Tools" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.62, 0.6, 1)
+text = "Engine: Godot Engine\nPlaceholder geometry: generated in-project\nTypeface: Godot default"
+
+[node name="Spacer" type="Control" parent="CreditsPanel/Panel/Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CreditsBackButton" type="Button" parent="CreditsPanel/Panel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "BACK"

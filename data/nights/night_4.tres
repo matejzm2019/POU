@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/night/night_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+night_number = 4
+display_name = "Faculty Meeting"
+start_hour = 23
+start_minute = 30
+end_hour = 6
+end_minute = 0
+real_world_duration_seconds = 660.0
+required_homework_count = 5
+optional_special_event_ids = PackedStringArray("east_wing_outage")
+active_enemy_ids = PackedStringArray("teacher_1", "teacher_2", "teacher_3")
+enemy_speed_multiplier = 1.1
+enemy_vision_multiplier = 1.1
+enemy_hearing_multiplier = 1.08
+headmistress_active = false
+chase_music_intensity = 0.5
+difficulty_description = "Three patrols overlap. Safe routes are becoming scarce."

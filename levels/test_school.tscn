@@ -1,0 +1,66 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/test_school.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://characters/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://levels/props/classroom_door.tscn" id="3_door"]
+[ext_resource type="PackedScene" path="res://characters/clocks/digital_clock.tscn" id="4_digital"]
+[ext_resource type="PackedScene" path="res://characters/clocks/analog_clock.tscn" id="5_analog"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_night"]
+sky_top_color = Color(0.004, 0.008, 0.018, 1)
+sky_horizon_color = Color(0.025, 0.04, 0.055, 1)
+ground_bottom_color = Color(0.002, 0.003, 0.006, 1)
+ground_horizon_color = Color(0.02, 0.026, 0.03, 1)
+sun_angle_max = 12.0
+
+[sub_resource type="Sky" id="Sky_night"]
+sky_material = SubResource("SkyMaterial_night")
+
+[sub_resource type="Environment" id="Environment_school"]
+background_mode = 2
+sky = SubResource("Sky_night")
+ambient_light_source = 3
+ambient_light_color = Color(0.16, 0.2, 0.22, 1)
+ambient_light_energy = 0.34
+reflected_light_source = 2
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.08, 0.1, 0.11, 1)
+fog_light_energy = 0.35
+fog_density = 0.012
+fog_height = 1.0
+fog_height_density = 0.08
+
+[sub_resource type="BoxMesh" id="Mesh_hall"]
+size = Vector3(3.2, 0.12, 2.2)
+
+[node name="TestSchool" type="Node3D"]
+script = ExtResource("1_level")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_school")
+
+[node name="MoonLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, -28, 0)
+light_color = Color(0.35, 0.44, 0.52, 1)
+light_energy = 0.24
+shadow_enabled = true
+
+[node name="HallDarkness" type="MeshInstance3D" parent="."]
+position = Vector3(6.5, 1.2, 8.4)
+mesh = SubResource("Mesh_hall")
+
+[node name="ClassroomDoor" parent="." instance=ExtResource("3_door")]
+position = Vector3(7.2, 0, 6.82)
+
+[node name="DigitalClock" parent="." instance=ExtResource("4_digital")]
+position = Vector3(6.25, 3.1, -6.8)
+
+[node name="AnalogClock" parent="." instance=ExtResource("5_analog")]
+position = Vector3(-6.3, 3.05, -6.78)
+smooth_movement = true
+show_second_hand = true
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 0.05, 4.8)
+rotation_degrees = Vector3(0, 180, 0)

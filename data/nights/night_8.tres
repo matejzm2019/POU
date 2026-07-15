@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/night/night_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+night_number = 8
+display_name = "The Headmistress"
+start_hour = 0
+start_minute = 0
+end_hour = 6
+end_minute = 0
+real_world_duration_seconds = 900.0
+required_homework_count = 8
+optional_special_event_ids = PackedStringArray("headmistress_arrival", "final_bell")
+active_enemy_ids = PackedStringArray("teacher_1", "teacher_2", "teacher_3", "teacher_4", "teacher_5", "teacher_6")
+enemy_speed_multiplier = 1.35
+enemy_vision_multiplier = 1.32
+enemy_hearing_multiplier = 1.32
+headmistress_active = true
+chase_music_intensity = 1.0
+difficulty_description = "All staff are active, and the headmistress has joined the hunt."

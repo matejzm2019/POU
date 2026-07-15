@@ -1,0 +1,146 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/loading_screen.gd" id="1_script"]
+[ext_resource type="Shader" path="res://shaders/menu_background.gdshader" id="2_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
+shader = ExtResource("2_shader")
+
+[sub_resource type="StyleBoxFlat" id="Style_progress_bg"]
+bg_color = Color(0.025, 0.035, 0.038, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.34, 0.31, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_progress_fill"]
+bg_color = Color(0.43, 0.75, 0.62, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_tip"]
+bg_color = Color(0.025, 0.035, 0.04, 0.82)
+border_width_left = 2
+border_color = Color(0.33, 0.56, 0.48, 0.7)
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+
+[node name="LoadingScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_bg")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="Content" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 72.0
+offset_top = 56.0
+offset_right = -72.0
+offset_bottom = -56.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Stack" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Stamp" type="Label" parent="Content/Stack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.47, 0.67, 0.59, 1)
+theme_override_font_sizes/font_size = 14
+text = "BLACKWOOD SECONDARY  /  AFTER-HOURS ACCESS"
+
+[node name="UpperSpacer" type="Control" parent="Content/Stack"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NightLabel" type="Label" parent="Content/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.7, 0.63, 1)
+theme_override_font_sizes/font_size = 18
+text = "NIGHT 1"
+
+[node name="TitleLabel" type="Label" parent="Content/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87, 0.89, 0.85, 1)
+theme_override_font_sizes/font_size = 46
+text = "THE SCHOOL IS SETTLING"
+
+[node name="StatusLabel" type="Label" parent="Content/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.63, 0.61, 1)
+theme_override_font_sizes/font_size = 17
+text = "Preparing detention"
+
+[node name="ProgressRow" type="HBoxContainer" parent="Content/Stack"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ProgressBar" type="ProgressBar" parent="Content/Stack/ProgressRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_styles/background = SubResource("Style_progress_bg")
+theme_override_styles/fill = SubResource("Style_progress_fill")
+show_percentage = false
+
+[node name="PercentLabel" type="Label" parent="Content/Stack/ProgressRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(54, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.71, 0.64, 1)
+theme_override_font_sizes/font_size = 14
+text = "0%"
+horizontal_alignment = 2
+
+[node name="TipPanel" type="PanelContainer" parent="Content/Stack"]
+custom_minimum_size = Vector2(0, 74)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_tip")
+
+[node name="Tip" type="Label" parent="Content/Stack/TipPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.49, 0.55, 0.53, 1)
+theme_override_font_sizes/font_size = 14
+text = "  DETENTION RULE 01\n  If a classroom door is closed, leave it closed."
+vertical_alignment = 1
+
+[node name="LowerSpacer" type="Control" parent="Content/Stack"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Footer" type="Label" parent="Content/Stack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.27, 0.32, 0.31, 1)
+theme_override_font_sizes/font_size = 12
+text = "DO NOT TURN OFF THE LIGHTS"
+horizontal_alignment = 2

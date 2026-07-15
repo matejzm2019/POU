@@ -1,0 +1,44 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://systems/door.gd" id="1_door"]
+
+[sub_resource type="StandardMaterial3D" id="Material_door"]
+albedo_color = Color(0.18, 0.215, 0.205, 1)
+roughness = 0.82
+
+[sub_resource type="BoxMesh" id="Mesh_door"]
+material = SubResource("Material_door")
+size = Vector3(1.4, 2.8, 0.12)
+
+[sub_resource type="BoxShape3D" id="Shape_door"]
+size = Vector3(1.4, 2.8, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="Material_handle"]
+albedo_color = Color(0.48, 0.42, 0.25, 1)
+metallic = 0.7
+roughness = 0.28
+
+[sub_resource type="SphereMesh" id="Mesh_handle"]
+material = SubResource("Material_handle")
+radius = 0.08
+height = 0.16
+
+[node name="ClassroomDoor" type="Node3D"]
+script = ExtResource("1_door")
+
+[node name="Leaf" type="AnimatableBody3D" parent="."]
+position = Vector3(-0.7, 1.4, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Leaf"]
+mesh = SubResource("Mesh_door")
+
+[node name="Collision" type="CollisionShape3D" parent="Leaf"]
+shape = SubResource("Shape_door")
+
+[node name="HandleFront" type="MeshInstance3D" parent="Leaf"]
+position = Vector3(-0.48, 0, -0.13)
+mesh = SubResource("Mesh_handle")
+
+[node name="HandleBack" type="MeshInstance3D" parent="Leaf"]
+position = Vector3(-0.48, 0, 0.13)
+mesh = SubResource("Mesh_handle")

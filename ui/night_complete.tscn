@@ -1,0 +1,187 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/night_complete.gd" id="1_script"]
+[ext_resource type="Shader" path="res://shaders/menu_background.gdshader" id="2_shader"]
+
+[sub_resource type="ShaderMaterial" id="Shader_bg"]
+shader = ExtResource("2_shader")
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.02, 0.032, 0.035, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.67, 0.55, 0.75)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.7)
+shadow_size = 24
+
+[sub_resource type="StyleBoxFlat" id="Style_primary"]
+content_margin_top = 14.0
+content_margin_bottom = 14.0
+bg_color = Color(0.26, 0.5, 0.41, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_hover"]
+content_margin_top = 14.0
+content_margin_bottom = 14.0
+bg_color = Color(0.39, 0.69, 0.56, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_secondary"]
+content_margin_top = 12.0
+content_margin_bottom = 12.0
+bg_color = Color(0.05, 0.07, 0.074, 0.92)
+border_width_bottom = 1
+border_color = Color(0.3, 0.48, 0.41, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_focus"]
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.65, 0.94, 0.78, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="NightComplete" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+material = SubResource("Shader_bg")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -310.0
+offset_top = -245.0
+offset_right = 310.0
+offset_bottom = 245.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 52
+theme_override_constants/margin_top = 44
+theme_override_constants/margin_right = 52
+theme_override_constants/margin_bottom = 40
+
+[node name="Stack" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 13
+
+[node name="Stamp" type="Label" parent="Panel/Margin/Stack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.72, 0.61, 1)
+theme_override_font_sizes/font_size = 14
+text = "BLACKWOOD SECONDARY  /  MORNING REPORT"
+horizontal_alignment = 1
+
+[node name="CompletedNight" type="Label" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.89, 0.92, 0.87, 1)
+theme_override_font_sizes/font_size = 39
+text = "NIGHT 1 COMPLETE"
+horizontal_alignment = 1
+
+[node name="NightName" type="Label" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.71, 0.62, 1)
+theme_override_font_sizes/font_size = 20
+text = "FIRST DETENTION"
+horizontal_alignment = 1
+
+[node name="Rule" type="HSeparator" parent="Panel/Margin/Stack"]
+layout_mode = 2
+
+[node name="Message" type="Label" parent="Panel/Margin/Stack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.68, 0.65, 1)
+theme_override_font_sizes/font_size = 16
+text = "The morning bell rings. Your progress has been saved."
+horizontal_alignment = 1
+
+[node name="CompletionTime" type="Label" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.39, 0.55, 0.49, 1)
+text = "SURVIVED IN 00:00"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Panel/Margin/Stack"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NextButton" type="Button" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.98, 0.95, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("Style_primary")
+theme_override_styles/hover = SubResource("Style_hover")
+theme_override_styles/pressed = SubResource("Style_primary")
+theme_override_styles/focus = SubResource("Style_focus")
+text = "CONTINUE TO NIGHT 2"
+
+[node name="NightSelectButton" type="Button" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.77, 0.73, 1)
+theme_override_styles/normal = SubResource("Style_secondary")
+theme_override_styles/hover = SubResource("Style_hover")
+theme_override_styles/pressed = SubResource("Style_primary")
+theme_override_styles/focus = SubResource("Style_focus")
+text = "NIGHT SELECT"
+
+[node name="MainMenuButton" type="Button" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.54, 0.61, 0.58, 1)
+theme_override_styles/normal = SubResource("Style_secondary")
+theme_override_styles/hover = SubResource("Style_hover")
+theme_override_styles/pressed = SubResource("Style_primary")
+theme_override_styles/focus = SubResource("Style_focus")
+text = "MAIN MENU"
+
+[node name="DebugNote" type="Label" parent="Panel/Margin/Stack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.36, 0.34, 1)
+theme_override_font_sizes/font_size = 11
+text = "PHASE 2 PLACEHOLDER COMPLETION SCREEN"
+horizontal_alignment = 1
