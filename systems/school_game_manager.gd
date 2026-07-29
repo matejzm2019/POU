@@ -8,8 +8,7 @@ signal homework_cooldown_changed(subject_id: String, remaining_seconds: int)
 signal blackout_changed(active: bool)
 signal chase_started(subject_id: String, teacher_name: String)
 signal chase_ended
-signal observer_siren(teacher_name: String)
-signal player_caught(teacher_name: String, jumpscare_image: Texture2D, jumpscare_sound: AudioStream)
+signal player_caught(teacher: Node3D, teacher_name: String, jumpscare_image: Texture2D, jumpscare_sound: AudioStream)
 signal player_hidden_changed(hidden: bool)
 signal main_menu_requested
 
@@ -276,7 +275,6 @@ func report_sighting(observer: Node, player_position: Vector3) -> void:
 	if not is_chase_active() or observer == _chaser:
 		return
 	_chaser.call("set_last_known_position", player_position)
-	observer_siren.emit(str(observer.get("teacher_name")))
 
 
 func teacher_caught_player(teacher: Node) -> void:
@@ -284,7 +282,7 @@ func teacher_caught_player(teacher: Node) -> void:
 		return
 	var name := str(teacher.get("teacher_name"))
 	var data := teacher.get("teacher_data") as TeacherData
-	player_caught.emit(name, data.jumpscare_image if data != null else null, data.jumpscare_sound if data != null else null)
+	player_caught.emit(teacher as Node3D, name, data.jumpscare_image if data != null else null, data.jumpscare_sound if data != null else null)
 	end_chase(false)
 	NightManager.fail_current_night("Učiteľ ťa chytil.")
 

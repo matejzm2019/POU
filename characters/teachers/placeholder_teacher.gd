@@ -25,7 +25,7 @@ var _patrol_index := 0
 var _last_known_position := Vector3.ZERO
 var _last_navigation_target := Vector3.INF
 var _navigation_refresh_elapsed := 0.0
-var _siren_cooldown := 0.0
+var _sighting_cooldown := 0.0
 var _caught_reported := false
 var _released := false
 var _footstep_elapsed := 0.0
@@ -36,7 +36,6 @@ var _custom_model_bounds := AABB()
 @onready var _placeholder: Node3D = $Placeholder
 @onready var _model_anchor: Node3D = $ModelAnchor
 @onready var _agent: NavigationAgent3D = $NavigationAgent3D
-@onready var _siren: AudioStreamPlayer3D = $Siren
 @onready var _steps: AudioStreamPlayer3D = $Steps
 
 
@@ -56,21 +55,18 @@ func _ready() -> void:
 	_agent.target_desired_distance = 0.8
 	_agent.radius = 0.38
 	_agent.height = 2.3
-	_siren.stream = _create_siren_stream()
 	_steps.stream = teacher_data.footstep_sound if teacher_data != null and teacher_data.footstep_sound != null else AudioManager.get_teacher_footstep()
 	_steps.volume_db = AudioManager.get_footstep_volume_db()
 	SchoolGameManager.register_teacher(self)
 
 
 func _exit_tree() -> void:
-	_siren.stop()
 	_steps.stop()
-	_siren.stream = null
 	SchoolGameManager.unregister_teacher(self)
 
 
 func _physics_process(delta: float) -> void:
-	_siren_cooldown = maxf(0.0, _siren_cooldown - delta)
+	_sighting_cooldown = maxf(0.0, _sighting_cooldown - delta)
 	_navigation_refresh_elapsed = maxf(0.0, _navigation_refresh_elapsed - delta)
 	if NightManager.is_night_paused:
 		velocity.x = 0.0
@@ -89,7 +85,7 @@ func _physics_process(delta: float) -> void:
 			_stop_horizontal(delta)
 	_update_animation()
 	_update_footsteps(delta)
-	_check_siren_sighting()
+	_check_observer_sighting()
 
 
 func set_observer_active(active: bool) -> void:
@@ -171,11 +167,6 @@ func can_see_player() -> bool:
 	return not hit.is_empty() and hit.get("collider") == _player
 
 
-func play_siren() -> void:
-	if DisplayServer.get_name() != "headless" and not _siren.playing:
-		_siren.play()
-
-
 func is_chasing() -> bool:
 	return _state == State.CHASE
 
@@ -194,6 +185,38 @@ func has_been_released() -> bool:
 
 func get_custom_model_bounds() -> AABB:
 	return _custom_model_bounds
+
+
+func get_jumpscare_focus_position() -> Vector3:
+	for child in find_children("*", "Skeleton3D", true, false):
+		var skeleton := child as Skeleton3D
+		for bone_index in skeleton.get_bone_count():
+			var bone_name := skeleton.get_bone_name(bone_index).to_lower()
+			if bone_name.ends_with("head") and not bone_name.contains("end"):
+				return skeleton.to_global(skeleton.get_bone_global_pose(bone_index).origin) + Vector3.DOWN * 0.12
+	if not _custom_model_bounds.size.is_zero_approx():
+		var center := _custom_model_bounds.get_center()
+		center.y = _custom_model_bounds.position.y + _custom_model_bounds.size.y * 0.82
+		return _model_anchor.to_global(center)
+	return global_position + Vector3.UP * 2.05
+
+
+func prepare_jumpscare(viewer_position: Vector3) -> void:
+	_state = State.IDLE
+	velocity = Vector3.ZERO
+	set_physics_process(false)
+	var facing_target := Vector3(viewer_position.x, global_position.y, viewer_position.z)
+	if global_position.distance_squared_to(facing_target) > 0.001:
+		look_at(facing_target, Vector3.UP, true)
+	_play_animation(teacher_data.run_animation if teacher_data != null else "RunFast")
+	if _animation_player != null:
+		_animation_player.advance(0.16)
+		_animation_player.pause()
+	$Nameplate.hide()
+
+
+func is_jumpscare_locked() -> bool:
+	return not is_physics_processing()
 
 
 func _patrol(delta: float) -> void:
@@ -329,12 +352,11 @@ func _update_footsteps(delta: float) -> void:
 			_steps.play()
 
 
-func _check_siren_sighting() -> void:
-	if not _observer_active or _state == State.CHASE or _state == State.SEARCH or _siren_cooldown > 0.0:
+func _check_observer_sighting() -> void:
+	if not _observer_active or _state == State.CHASE or _state == State.SEARCH or _sighting_cooldown > 0.0:
 		return
 	if SchoolGameManager.is_chase_active() and can_see_player():
-		_siren_cooldown = 7.0
-		play_siren()
+		_sighting_cooldown = 7.0
 		SchoolGameManager.report_sighting(self, _player.global_position)
 
 
@@ -443,22 +465,3 @@ func _play_animation(animation_name: String) -> void:
 		animation.loop_mode = Animation.LOOP_LINEAR
 	if _animation_player.current_animation != animation_name or not _animation_player.is_playing():
 		_animation_player.play(animation_name)
-
-
-func _create_siren_stream() -> AudioStreamWAV:
-	const MIX_RATE := 22050
-	const DURATION := 0.9
-	var sample_count := int(MIX_RATE * DURATION)
-	var bytes := PackedByteArray()
-	bytes.resize(sample_count * 2)
-	for index in sample_count:
-		var time := float(index) / MIX_RATE
-		var frequency := 760.0 if int(time / 0.13) % 2 == 0 else 1040.0
-		var envelope := minf(1.0, time * 10.0) * minf(1.0, (DURATION - time) * 8.0)
-		bytes.encode_s16(index * 2, int(sin(TAU * frequency * time) * 10500.0 * envelope))
-	var stream := AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = MIX_RATE
-	stream.stereo = false
-	stream.data = bytes
-	return stream

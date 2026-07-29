@@ -1,7 +1,6 @@
 extends Node
 
 var _failures: Array[String] = []
-var _siren_events := 0
 var _caught_events := 0
 
 const EXPECTED_TEACHER_NAMES := {
@@ -115,11 +114,17 @@ func _validate_teacher_desk_navigation(level: Node) -> void:
 		_check(animation_player.has_animation("RunFast"), "Teacher 1 custom model has no RunFast animation.")
 		if animation_player.has_animation("RunFast"):
 			_check(animation_player.get_animation("RunFast").loop_mode == Animation.LOOP_LINEAR, "Teacher 1 RunFast animation is not looping.")
-			var animation_position := animation_player.current_animation_position
-			for _frame in 4:
+			var animation_deadline := Time.get_ticks_msec() + 1000
+			while Vector2(teacher.velocity.x, teacher.velocity.z).length() <= 0.1 and Time.get_ticks_msec() < animation_deadline:
 				await get_tree().physics_frame
-			_check(animation_player.is_playing() and animation_player.current_animation == "RunFast", "Teacher 1 RunFast animation stopped during movement.")
-			_check(not is_equal_approx(animation_player.current_animation_position, animation_position), "Teacher 1 RunFast animation is stuck on one frame.")
+			var moving := Vector2(teacher.velocity.x, teacher.velocity.z).length() > 0.1
+			_check(moving, "Teacher 1 did not start moving for animation validation.")
+			if moving:
+				var animation_position := animation_player.current_animation_position
+				for _frame in 4:
+					await get_tree().physics_frame
+				_check(animation_player.is_playing() and animation_player.current_animation == "RunFast", "Teacher 1 RunFast animation stopped during movement.")
+				_check(not is_equal_approx(animation_player.current_animation_position, animation_position), "Teacher 1 RunFast animation is stuck on one frame.")
 	var maximum_detour := 0.0
 	var deadline := Time.get_ticks_msec() + 7000
 	while teacher.global_position.distance_to(target) > 1.4 and Time.get_ticks_msec() < deadline:
@@ -187,13 +192,16 @@ func _validate_homework_and_chase(level: Node) -> void:
 		_check(bounds.size.x < 3.0 and bounds.size.z < 3.0, "%s custom model is large enough to span the school." % data.display_name)
 	var jana_data := SchoolGameManager.get_teacher_data("anglicky_jazyk")
 	if jana_data != null and jana_data.model_scene != null:
-		_check(is_equal_approx(jana_data.model_rotation_degrees.x, 90.0) and jana_data.model_ground_offset >= 0.08, "Jana Palajová model orientation or ground offset was not corrected.")
 		var jana_teacher := level.find_child("Teacher_07_*", true, false) as PlaceholderTeacher
 		if jana_teacher != null:
 			var jana_bounds := jana_teacher.get_custom_model_bounds()
-			var face_bounds := _find_material_bounds(jana_teacher, jana_teacher.get_node("ModelAnchor"), "face")
-			_check(not face_bounds.size.is_zero_approx(), "Jana Palajová face geometry could not be identified.")
-			_check(face_bounds.get_center().y > jana_bounds.get_center().y, "Jana Palajová is upside down or looking into the floor.")
+			var skeletons := jana_teacher.find_children("*", "Skeleton3D", true, false)
+			var skeleton := skeletons[0] as Skeleton3D if not skeletons.is_empty() else null
+			var head_bone := skeleton.find_bone("Head") if skeleton != null else -1
+			_check(head_bone >= 0, "Jana Palajová head bone could not be identified.")
+			if head_bone >= 0:
+				var head_position: Vector3 = jana_teacher.get_node("ModelAnchor").to_local(skeleton.to_global(skeleton.get_bone_global_pose(head_bone).origin))
+				_check(head_position.y > jana_bounds.get_center().y, "Jana Palajová is upside down or looking into the floor.")
 	if player == null:
 		return
 	var flashlight := player.get_node("Head/Camera3D/Flashlight") as SpotLight3D
@@ -318,13 +326,13 @@ func _validate_homework_and_chase(level: Node) -> void:
 		_check(SchoolGameManager.open_homework(history.subject_id, player), "Homework stayed blocked while the chaser was searching.")
 		_check(SchoolGameManager.submit_answer(history.get_question(1).correct_index), "Homework could not be completed during the teacher search.")
 
-	SchoolGameManager.observer_siren.connect(_capture_siren)
 	var observer := level.find_child("Teacher_01_*", true, false)
 	if observer == chaser:
 		observer = level.find_child("Teacher_03_*", true, false)
-	observer.call("play_siren")
-	SchoolGameManager.report_sighting(observer, player.global_position)
-	_check(_siren_events == 1, "Another subject teacher did not emit a siren alert.")
+	_check(observer.get_node_or_null("Siren") == null, "Silent observer still contains a siren audio player.")
+	var reported_position := player.global_position + Vector3(0.4, 0.0, 0.4)
+	SchoolGameManager.report_sighting(observer, reported_position)
+	_check((chaser.get("_last_known_position") as Vector3).is_equal_approx(reported_position), "Another subject teacher did not silently report the player position.")
 	SchoolGameManager.end_chase()
 	await get_tree().process_frame
 	_check(not SchoolGameManager.blackout_active and school_light.visible, "Lights did not recover after escape.")
@@ -378,37 +386,21 @@ func _validate_stationary_player_catch(level: Node) -> void:
 	_check(_caught_events == 1, "A teacher could not reach and catch a stationary player inside the classroom.")
 	var jumpscare := player.find_child("JumpscareOverlay", true, false)
 	var jumpscare_root := jumpscare.get_node("Root") as Control if jumpscare != null else null
-	_check(jumpscare_root != null and jumpscare_root.visible, "Catching the player did not show the jumpscare.")
+	_check(jumpscare_root != null and jumpscare_root.visible, "Catching the player did not start the jumpscare.")
 	if jumpscare != null:
-		_check((jumpscare.find_child("TeacherName", true, false) as Label).text == "ALŽBETA KÉRYOVÁ", "Jumpscare did not show the catching teacher's name.")
+		var catching_teacher := jumpscare.call("get_target_teacher") as Node3D
+		_check(bool(jumpscare.call("is_3d_sequence_active")), "The 3D jumpscare camera sequence is inactive.")
+		_check(catching_teacher != null and str(catching_teacher.get("subject_id")) == "matematika", "The 3D jumpscare did not target the catching teacher.")
+		_check((jumpscare.call("get_camera_target_position") as Vector3) != Vector3.ZERO, "The 3D jumpscare did not calculate a close camera position.")
+		_check(catching_teacher != null and bool(catching_teacher.call("is_jumpscare_locked")), "The catching teacher kept running instead of posing for the jumpscare.")
 	_check(not NightManager.is_night_running and SchoolGameManager.get_total_completed_sets() == 0, "Failure did not reset the current night progress.")
 	if _caught_events == 1:
 		_check(NightManager.load_night(1) and NightManager.start_night(), "The failed night could not restart from the beginning.")
 		_check(SchoolGameManager.get_total_completed_sets() == 0, "Restarted night retained homework progress.")
 
 
-func _capture_siren(_teacher_name: String) -> void:
-	_siren_events += 1
-
-
-func _capture_caught(_teacher_name: String, _jumpscare_image: Texture2D, _jumpscare_sound: AudioStream) -> void:
+func _capture_caught(_teacher: Node3D, _teacher_name: String, _jumpscare_image: Texture2D, _jumpscare_sound: AudioStream) -> void:
 	_caught_events += 1
-
-
-func _find_material_bounds(root: Node, relative_to: Node3D, keyword: String) -> AABB:
-	var combined := AABB()
-	var found := false
-	var inverse := relative_to.global_transform.affine_inverse()
-	for child in root.find_children("*", "MeshInstance3D", true, false):
-		var mesh_instance := child as MeshInstance3D
-		for surface in mesh_instance.mesh.get_surface_count():
-			var material := mesh_instance.mesh.surface_get_material(surface)
-			if material != null and material.resource_name.to_lower().contains(keyword):
-				var bounds := (inverse * mesh_instance.global_transform) * mesh_instance.get_aabb()
-				combined = combined.merge(bounds) if found else bounds
-				found = true
-				break
-	return combined
 
 
 func _check(condition: bool, message: String) -> void:

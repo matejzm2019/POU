@@ -10,6 +10,7 @@ signal main_menu_requested
 @onready var _pause_overlay: Control = %PauseOverlay
 @onready var _clock: Label = %Clock
 @onready var _progress: ProgressBar = %NightProgress
+@onready var _progress_label: Label = %NightProgressLabel
 @onready var _start_message: Label = %NightStartMessage
 @onready var _alert: Label = %AlertMessage
 @onready var _brightness_slider: HSlider = %BrightnessSlider
@@ -27,9 +28,9 @@ func _ready() -> void:
 	SchoolGameManager.homework_progress_changed.connect(_on_homework_progress)
 	SchoolGameManager.homework_result.connect(_on_homework_result)
 	SchoolGameManager.chase_ended.connect(_on_chase_ended)
-	SchoolGameManager.observer_siren.connect(_on_observer_siren)
 	%ResumeButton.pressed.connect(func() -> void: resume_requested.emit())
 	%MainMenuButton.pressed.connect(func() -> void: main_menu_requested.emit())
+	%DebugMorningButton.pressed.connect(_on_debug_morning_pressed)
 	_brightness_slider.value_changed.connect(_on_brightness_changed)
 	%BrightnessSaveTimer.timeout.connect(_save_brightness)
 	var environment_node := get_tree().get_first_node_in_group("school_environment") as WorldEnvironment
@@ -39,6 +40,7 @@ func _ready() -> void:
 	_brightness_slider.set_value_no_signal(saved_brightness)
 	_apply_brightness(saved_brightness)
 	%DebugCompleteHint.visible = OS.is_debug_build()
+	%DebugMorningButton.visible = OS.is_debug_build()
 	if NightManager.current_night_data != null:
 		_apply_night(NightManager.current_night_data)
 		_on_time_updated(NightManager.current_in_game_time, NightManager.get_night_progress())
@@ -98,6 +100,13 @@ func _apply_night(data: NightData) -> void:
 func _on_time_updated(_game_time_seconds: float, progress: float) -> void:
 	_clock.text = "%s  •  NOC %d" % [NightManager.get_formatted_time(true, false), NightManager.current_night_number]
 	_progress.value = progress * 100.0
+	if progress >= 1.0:
+		_progress_label.text = "RÁNO  •  100 %  •  VÝCHOD ODOMKNUTÝ"
+	elif NightManager.current_night_data != null:
+		_progress_label.text = "NOC → RÁNO %s  •  %d %%" % [
+			SchoolTime.format_time(NightManager.current_night_data.end_time_seconds(), true, false),
+			roundi(progress * 100.0),
+		]
 
 
 func _on_homework_progress(_subject_id: String, _completed: int, total: int, required: int) -> void:
@@ -114,13 +123,16 @@ func _on_chase_ended() -> void:
 	_show_alert("UŠIEL SI\nSVETLÁ SA ZAPÍNAJÚ", Color("7ec79a"), 3.0)
 
 
-func _on_observer_siren(teacher_name: String) -> void:
-	_show_alert("%s SPUSTIL SIRÉNOVÝ KRIK!" % teacher_name.to_upper(), Color("ef9b45"), 3.0)
-
-
 func _on_morning_reached(_data: NightData) -> void:
 	%Objective.text = "RÁNO: choď k východu na konci chodby"
+	%DebugCompleteHint.hide()
+	%DebugMorningButton.disabled = true
 	_show_alert("JE RÁNO\nDOSTAŇ SA K VÝCHODU", Color("8fd2aa"), 5.0)
+
+
+func _on_debug_morning_pressed() -> void:
+	if NightManager.debug_reach_morning():
+		resume_requested.emit()
 
 
 func _show_alert(text: String, color: Color, duration: float) -> void:

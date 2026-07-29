@@ -36,8 +36,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if OS.is_debug_build() and event.is_action_pressed("debug_complete_night"):
-		complete_current_night()
+	if event.is_action_pressed("debug_complete_night") and debug_reach_morning():
 		get_viewport().set_input_as_handled()
 
 
@@ -129,6 +128,13 @@ func complete_current_night() -> bool:
 	return true
 
 
+func debug_reach_morning() -> bool:
+	if not OS.is_debug_build() or not is_night_running or is_morning:
+		return false
+	_reach_morning()
+	return true
+
+
 func fail_current_night(reason := "Noc zlyhala") -> bool:
 	if not is_night_running or current_night_data == null:
 		return false
@@ -193,9 +199,12 @@ func _on_time_tick() -> void:
 func _reach_morning() -> void:
 	if not is_night_running or is_morning or current_night_data == null:
 		return
+	_school_time.elapsed_scaled_seconds = _school_time.real_world_duration_seconds
+	_sync_time_state()
 	is_morning = true
 	_timer.stop()
 	_school_time.paused = true
+	time_updated.emit(current_in_game_time, 1.0)
 	morning_reached.emit(current_night_data)
 
 

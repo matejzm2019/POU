@@ -1,10 +1,8 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/test_school.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://characters/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://levels/props/classroom_door.tscn" id="3_door"]
-[ext_resource type="PackedScene" path="res://characters/clocks/digital_clock.tscn" id="4_digital"]
-[ext_resource type="PackedScene" path="res://characters/clocks/analog_clock.tscn" id="5_analog"]
 [ext_resource type="PackedScene" path="res://characters/teachers/placeholder_teacher.tscn" id="6_teacher"]
 [ext_resource type="PackedScene" path="res://levels/props/homework_station.tscn" id="7_homework"]
 
@@ -24,6 +22,7 @@ sky = SubResource("Sky_night")
 ambient_light_source = 3
 ambient_light_color = Color(0.16, 0.2, 0.22, 1)
 ambient_light_energy = 0.34
+ambient_light_sky_contribution = 0.65
 reflected_light_source = 2
 tonemap_mode = 2
 fog_enabled = true
@@ -42,19 +41,11 @@ homework_station_scene = ExtResource("7_homework")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." groups=["school_environment"]]
 environment = SubResource("Environment_school")
 
-[node name="MoonLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-58, -28, 0)
-light_color = Color(0.35, 0.44, 0.52, 1)
-light_energy = 0.24
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-8, -28, 0)
+light_color = Color(1, 0.78, 0.56, 1)
+light_energy = 0.04
 shadow_enabled = true
-
-[node name="DigitalClock" parent="." instance=ExtResource("4_digital")]
-position = Vector3(-13, 3.15, -18.66)
-
-[node name="AnalogClock" parent="." instance=ExtResource("5_analog")]
-position = Vector3(13, 3.05, -37.66)
-smooth_movement = true
-show_second_hand = true
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector3(-13, 0.05, 34)

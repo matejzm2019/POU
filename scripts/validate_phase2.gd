@@ -193,10 +193,16 @@ func _validate_main_flow_and_clocks() -> void:
 		main.queue_free()
 		return
 	await get_tree().create_timer(0.25).timeout
-	var digital := level.find_child("DigitalClock", true, false) as DigitalSchoolClock
-	var analog := level.find_child("AnalogClock", true, false) as AnalogSchoolClock
-	_check(digital != null, "Digital classroom clock is missing.")
-	_check(analog != null, "Analog classroom clock is missing.")
+	var digital := (load("res://characters/clocks/digital_clock.tscn") as PackedScene).instantiate() as DigitalSchoolClock
+	var analog := (load("res://characters/clocks/analog_clock.tscn") as PackedScene).instantiate() as AnalogSchoolClock
+	_check(digital != null, "Digital clock component scene is invalid.")
+	_check(analog != null, "Analog clock component scene is invalid.")
+	if digital == null or analog == null:
+		main.queue_free()
+		return
+	add_child(digital)
+	add_child(analog)
+	await get_tree().process_frame
 	if digital != null:
 		_check(digital.get_node("Display").text == NightManager.get_formatted_time(true, false), "Digital clock is not synchronized.")
 	if analog != null:
@@ -209,7 +215,7 @@ func _validate_main_flow_and_clocks() -> void:
 		_check(absf(angle_difference(analog.get_node("Hands/SecondHand").rotation.z, expected_second)) < 0.3, "Analog second hand rotation is incorrect.")
 		var stepped := (load("res://characters/clocks/analog_clock.tscn") as PackedScene).instantiate() as AnalogSchoolClock
 		stepped.smooth_movement = false
-		level.add_child(stepped)
+		add_child(stepped)
 		stepped.call("_on_time_updated", 36661.9, 0.0)
 		_check(absf(angle_difference(stepped.get_node("Hands/MinuteHand").rotation.z, -TAU * 11.0 / 60.0)) < 0.001, "Stepped analog minute hand is not discrete.")
 		stepped.queue_free()
@@ -228,15 +234,35 @@ func _validate_main_flow_and_clocks() -> void:
 	_check(_pause_events.size() >= 4 and _pause_events[-2] and not _pause_events[-1], "Stopping a paused night did not emit resume state.")
 	if digital != null:
 		_check(digital.get_node("Display").text == digital.fallback_text, "Digital clock did not show fallback after stop.")
+	digital.queue_free()
+	analog.queue_free()
 	NightManager.start_night()
+	var debug_events := InputMap.action_get_events("debug_complete_night")
+	_check(debug_events.size() == 1 and debug_events[0] is InputEventKey and (debug_events[0] as InputEventKey).physical_keycode == KEY_F10, "Debug morning shortcut must use F10.")
 	var debug_event := InputEventAction.new()
 	debug_event.action = "debug_complete_night"
 	debug_event.pressed = true
 	NightManager._unhandled_input(debug_event)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	var player := level.find_child("Player", true, false) as FirstPersonController
+	var debug_hud := player.find_child("HUD", false, false) as GameHUD if player != null else null
+	var exit_door := level.find_child("SchoolExitDoor", true, false) as Node3D
+	_check(NightManager.is_night_running and NightManager.is_morning, "Debug F10 did not reach the playable morning state.")
+	_check(is_equal_approx(NightManager.get_night_progress(), 1.0), "Debug F10 did not advance night progress to 100%.")
+	_check(SaveManager.get_highest_unlocked_night() == 1, "Debug F10 bypassed the required morning exit.")
+	_check(debug_hud != null and (debug_hud.get_node("%NightProgress") as ProgressBar).value == 100.0, "HUD did not show full night-to-morning progress.")
+	_check(debug_hud != null and (debug_hud.get_node("%NightProgressLabel") as Label).text.contains("VÝCHOD ODOMKNUTÝ"), "HUD did not label the playable morning state in Slovak.")
+	_check(debug_hud != null and (debug_hud.get_node("%DebugMorningButton") as Button).text.contains("F10"), "Debug morning pause control is not labeled with F10.")
+	_check(exit_door != null and str(exit_door.call("get_interaction_prompt")).contains("Odísť"), "Debug F10 did not unlock the morning exit.")
 	var complete_screen := main.find_child("NightComplete", false, false) as NightCompleteScreen
-	_check(complete_screen != null, "Night-complete placeholder did not open.")
+	_check(complete_screen == null, "Debug F10 completed the night before the player used the exit.")
+	if exit_door != null and player != null:
+		exit_door.call("interact", player)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	complete_screen = main.find_child("NightComplete", false, false) as NightCompleteScreen
+	_check(complete_screen != null, "Using the debug morning exit did not complete the night.")
 	_check(SaveManager.get_highest_unlocked_night() == 2, "Completing Night 1 did not unlock Night 2.")
 	_check(int(SaveManager.data.get("last_completed_night", 0)) == 1, "Completed night was not saved.")
 	if complete_screen != null:

@@ -481,3 +481,90 @@ C:\Users\matej\Downloads\godot.exe --headless --verbose --path . res://scripts/v
 - Phase 3 movement-animation and gameplay regression: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
 - Main-scene startup smoke test for 120 frames: exit `0`.
 - Static quoted-resource-path audit and `git diff --check`: passed.
+
+## 2026-07-29 - Transparent classroom exterior windows
+
+- Replaced the solid east/west classroom facade with fitted wall sections containing real window openings.
+- Added three transparent, two-sided glass panes to every subject classroom.
+- Added internal metal rails and mullions inspired by the reference classroom while keeping the exterior face free of a separate grille.
+- Glass keeps physical collision, but no longer blocks the view between the classroom and the exterior.
+- Extended Phase 1 validation to verify all 21 panes, alpha transparency and two-sided rendering.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 scene and window regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Main-scene startup smoke test for 120 frames: exit `0`.
+- GUI inspection at 1280 × 720 confirmed the classroom-to-exterior and exterior-to-classroom views.
+- Static audit checked 71 quoted literal `res://` dependencies with none missing; `git diff --check` passed.
+- The full Phase 3 run still reports three pre-existing Jana Palajová model-fit assertions (rotation/face/grounding); this pass did not modify her model or teacher data.
+
+## 2026-07-29 - Corridor windows, full glass facades and sunrise
+
+- Corrected the window placement: every subject classroom now has a three-pane internal window between the corridor and classroom, beside its door.
+- Moved the reference-style metal rails to the classroom face of those internal windows.
+- Replaced each subject classroom's complete exterior wall with six floor-to-ceiling transparent panes; kabinet retains its opaque exterior wall.
+- Extended the first and last facade banks to the school corners so there are no exterior wall gaps.
+- Added one warm `SunLight` and a synchronized sunrise during the final 28% of the night. Sun energy, ambient light, sky colors and fog brighten toward morning.
+- Window glass remains two-sided and physically solid while no longer casting shadows that would block daylight.
+- Extended Phase 1 validation for all 21 corridor panes, 42 exterior panes, their coordinates/materials and the night-to-morning lighting transition.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 scene, window and sunrise regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Main-scene startup smoke test for 120 frames: exit `0`.
+- GUI inspection at 1280 × 720 confirmed corridor-to-classroom, classroom-to-exterior and exterior-to-classroom views.
+- Static audit checked 71 quoted literal `res://` dependencies with none missing; `git diff --check` passed.
+- Phase 3 reported four existing teacher-asset checks (Teacher 1 `RunFast`, plus Jana Palajová rotation/face/grounding); no window, door or navigation assertion failed.
+
+## 2026-07-29 - Normal windows, morning progress and teacher verification
+
+- Replaced the floor-to-ceiling exterior glass facades with centered 12 m school window banks. Every exterior bank now has opaque wall sections on both sides, a solid sill and a solid header.
+- Kept the internal corridor-to-classroom windows and their two-sided transparent glass, frames and physical collision.
+- Removed the analog and digital clock instances from the school scene. Their reusable component scenes remain available but are no longer mounted in classrooms.
+- Expanded the night HUD into a clearer `NOC → RÁNO` display with the current time, percentage, a thicker progress bar and an explicit unlocked-exit state at 100%.
+- Added a debug-only `F10` shortcut and pause-menu button that advance the running night to the playable morning state. They do not complete the level or unlock the next night; the player must still use the school exit.
+- The synchronized sunrise now visibly reaches full daylight when the timer or the debug action reaches morning.
+- Hardened the Teacher 1 animation regression so it waits for real navigation movement before sampling `RunFast`, then proves that the looping animation advances.
+- Replaced Jana Palajová's fragile face-material assertion with a skeleton `Head` bone orientation check while retaining full bounds, grounding and rotation checks.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 scene, normal-window, sunrise and no-classroom-clock regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 2 HUD, `F10`, playable morning, exit gating and persistence: `PHASE_2_VALIDATION_OK` and `PHASE_2_PERSISTENCE_OK`; exit `0`.
+- Phase 3 Teacher 1 movement animation, Jana orientation/grounding and full gameplay: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- Main-scene startup smoke test for 120 frames: exit `0`.
+- GUI inspection at 1280 × 720 confirmed the normal framed windows, improved night progress, debug morning transition, 100% exit state and bright morning lighting.
+- Static audit checked 76 quoted literal `res://` references with none missing; `git diff --check` passed.
+
+## 2026-07-29 - Silent observer reports
+
+- Kept the observer-teacher mechanic: when another subject teacher sees the player during a chase, the active chaser still receives the reported position.
+- Removed the generated siren audio stream, its `AudioStreamPlayer3D`, the public playback method and the HUD siren notification.
+- Renamed the internal sighting cooldown/check to describe the now-silent behavior.
+- Updated the default teacher special-behavior text, README and Phase 3 regression.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 scene regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 3 verifies that the reported position reaches the chaser and that no siren audio node exists: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0` twice.
+- `git diff --check` passed.
+
+## 2026-07-29 - Model-driven 3D jumpscare
+
+- Replaced the full-screen image presentation with a camera-driven sequence aimed at the catching teacher's real 3D model.
+- The catching teacher now freezes, turns toward the viewer, poses on an attack-animation frame and lunges toward the camera.
+- The camera snaps to the face, changes FOV, shakes and receives a short red flash while the normal HUD and all other teachers are hidden.
+- Rigged models use a skeleton bone whose name ends in `Head`; unrigged models fall back to the upper part of their fitted visual bounds.
+- A configured `jumpscare_image` is retained only as a 0.055-second glitch frame. A configured sound or the procedural scream plays over the 3D sequence.
+- The existing 2.4-second same-night restart and cleared homework progress remain unchanged.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 loaded all 11 scenes, including the standalone jumpscare overlay, without node errors: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 3 verifies the catching teacher reference, camera target, locked attack pose and full restart flow: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- GUI inspection at 1280 × 720 confirmed a centered close-up of Alžbeta Kéryová's live 3D model with the attack pose, cinematic bars and no HUD.

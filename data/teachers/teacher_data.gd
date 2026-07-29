@@ -26,4 +26,4 @@ extends Resource
 @export var is_headmistress := false
 @export_range(1.0, 2.0, 0.05) var ally_speed_boost := 1.0
 @export_range(1.0, 2.0, 0.05) var ally_vision_boost := 1.0
-@export_multiline var special_behavior := "Spustí sirénový krik, keď zbadá hráča počas cudzieho prenasledovania."
+@export_multiline var special_behavior := "Potichu odovzdá polohu hráča predmetovému učiteľovi počas cudzieho prenasledovania."

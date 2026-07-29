@@ -7,23 +7,24 @@ Godot 4 first-person horor zo slovenskej školy. Hráč sa môže voľne pohybov
 - Slovenské hlavné menu, výber noci, načítanie, HUD, obrazovka úloh a dokončenie noci
 - Celá školská chodba so siedmimi učebňami: Dejepis, Matematika, Slovenský jazyk, Elektrotechnika, Ekonomika, Aplikovaná informatika a Anglický jazyk
 - Zamknutý kabinet so siedmimi konfigurovateľnými učiteľmi a riaditeľkou Zuzanou Čižmárikovou; hráč ho neotvorí ani nevojde za nimi
-- Osem dátovo riadených nocí, spoločný školský čas, analógové a digitálne hodiny
+- Osem dátovo riadených nocí a spoločný školský čas zobrazený v HUD
 - Pohyb z prvej osoby, otáčanie myšou, šprint, výdrž, drep, skok a interakcia
 - Baterka s 30-metrovým tieňovaným kužeľom, mäkkým dosvietením do 36 metrov a vyhladenými tieňmi
 - Osem presne osadených interiérových dverí a ranný východ na konci chodby
+- Rámové okná medzi chodbou a triedami aj bežné vonkajšie okná so stenou, parapetom a nadpražím
 - Štyri stropné svetlá v každej učebni a kabinete pre rovnomernejšie osvetlenie
 - Tri sady úloh v každej učebni, spolu 21 sád za noc
 - Nesprávna odpoveď vypne školské svetlá, spustí naháňačku a zablokuje danú úlohu na 30 sekúnd
-- Ostatní aktívni učitelia pri spozorovaní hráča spustia sirénu a odovzdajú jeho polohu prenasledovateľovi
+- Ostatní aktívni učitelia pri spozorovaní hráča potichu odovzdajú jeho polohu prenasledovateľovi
 - Navigačný mesh školy, kolízny nábytok, hliadkovanie, prenasledovanie, hľadanie a únik
 - Schovanie pod každou zo 42 žiackych lavíc; učiteľ hráča pod lavicou nevidí a začne prehľadávať školu
 - Plnohodnotná pauza cez `Esc` s okamžitým nastavením jasu/gammy, pokračovaním a návratom do hlavného menu
 - Nastavenia obrazu s uloženými voľbami 1280 × 720, 1920 × 1080, 2560 × 1440 a režimom v okne alebo na celej obrazovke
 - Vymeniteľná hudba menu, školský ambient a priestorové kroky učiteľov s procedurálnymi náhradami
-- Noc 1 trvá 10 reálnych minút; ráno sa odomkne východ, ktorým sa dokončí level
+- Noc 1 trvá 10 reálnych minút; HUD ukazuje postup k ránu a ranné svetlo odomkne východ, ktorým sa dokončí level
 - Verziovaný JSON save systém a odomykanie nocí
 - Učiteľské modely, animácie a parametre sú v `TeacherData`; modely nie sú zakódované v AI
-- Celoplošný jumpscare s voliteľným obrázkom/zvukom učiteľa a automatickým reštartom rovnakej noci
+- 3D jumpscare s násilným otočením kamery na učiteľa, výpadom modelu, otrasom, zvukom a automatickým reštartom rovnakej noci
 
 Zatiaľ nie sú hotové: finálny autorský zvukový obsah, chase hudba, úvodná detention sekvencia a ručne vytvorené 3D modely. Učitelia, hudba, ambient, kroky a jumpscare používajú v prípade nepriradeného súboru procedurálne náhrady.
 
@@ -34,7 +35,7 @@ res://
 |- assets/                         importované modely, textúry a obrázky
 |- audio/                          vlastná hudba a zvuky na import
 |- characters/
-|  |- clocks/                      spoločné analógové a digitálne hodiny
+|  |- clocks/                      voliteľné komponenty hodín (v učebniach nie sú osadené)
 |  |- teachers/                    pohyblivý TeacherData-driven učiteľ
 |  `- player.tscn                  FPS hráč, HUD a obrazovka úloh
 |- data/
@@ -51,7 +52,7 @@ res://
 |  |- save/                        SaveManager
 |  |- homework/                    interaktívna stanica úloh
 |  |- hiding/                      schovanie pod lavicami
-|  `- school_game_manager.gd       úlohy, výpadok, naháňačka a sirény
+|  `- school_game_manager.gd       úlohy, výpadok, naháňačka a hlásenia polohy
 |- ui/                             všetky herné obrazovky
 |- shaders/                        shader hlavného menu
 |- main.tscn                       vstupná scéna
@@ -70,7 +71,7 @@ res://
 | Otvoriť alebo zatvoriť dvere / domáca úloha | `E` |
 | Zapnúť alebo vypnúť baterku | `F` |
 | Pozastaviť hru / zavrieť pauzu | `Esc` |
-| Dokončiť noc (iba debug build) | `F8` |
+| Okamžite prepnúť na ráno (iba debug build) | `F10` alebo tlačidlo v pauze |
 
 ## Spustenie
 
@@ -89,11 +90,11 @@ Nesprávna odpoveď okamžite:
 1. zavrie zošit a zhasne všetky školské svetlá,
 2. bez textového oznamu aktivuje učiteľa daného predmetu v kabinete,
 3. nastaví 30-sekundový cooldown pre ďalší pokus v rovnakom predmete,
-4. umožní ostatným učiteľom hlásiť hráča hlasnou sirénou.
+4. umožní ostatným učiteľom potichu hlásiť polohu hráča prenasledovateľovi.
 
 Po priamom kontakte učiteľ neustále aktualizuje cieľ. Po úniku sa už nevráti do kabinetu: zostane vypustený a striedavo prechádza chodbou aj všetkými predmetovými učebňami. Každé interiérové dvere majú obojsmerný navigačný prechod; učiteľ ich otvorí až vtedy, keď k nim príde. Pri odchode z kabinetu jeho dvere za sebou zavrie, keď je priechod voľný. Otvorené triedne dvere vypnú kolíziu krídla, takže hráč aj učiteľ spoľahlivo prejdú medzi učebňou a chodbou. Lavice, stoličky a učiteľské stoly majú kolíziu aj pre učiteľov.
 
-Pod lavicu sa nelezie cez `E`. Podrž `C`, prikrč sa a fyzicky pod ňu vojdi. Hráč sa pod lavicou ďalej normálne pohybuje; skrytý je iba počas drepu v priestore priamo pod stolom. Keď učiteľ stratí dohľad, naháňačka sa neukončí: najprv ide na posledné miesto, kde hráča videl, vrátane inej triedy, a až potom prehľadáva školu. Pod lavicou hráča nevidí ani nechytí. Po vylezení ďalej roamuje, kým hráča znovu neuvidí, nedostane sirénové hlásenie alebo nepríde ráno. Počas jeho prehľadávania možno riešiť úlohy v iných triedach.
+Pod lavicu sa nelezie cez `E`. Podrž `C`, prikrč sa a fyzicky pod ňu vojdi. Hráč sa pod lavicou ďalej normálne pohybuje; skrytý je iba počas drepu v priestore priamo pod stolom. Keď učiteľ stratí dohľad, naháňačka sa neukončí: najprv ide na posledné miesto, kde hráča videl, vrátane inej triedy, a až potom prehľadáva školu. Pod lavicou hráča nevidí ani nechytí. Po vylezení ďalej roamuje, kým hráča znovu neuvidí, nedostane tiché hlásenie polohy od iného učiteľa alebo nepríde ráno. Počas jeho prehľadávania možno riešiť úlohy v iných triedach.
 
 Dvere používajú fyzický lokálny pánt a 0,45-sekundovú sinusovú tween animáciu. Viditeľná sieť sa otáča spolu s pántom; po otvorení zostane krídlo mimo otvoru. Pevná interakčná zóna zostáva pri zárubni, preto rovnaké `E` dvere aj zatvorí. Kabinetové dvere môže otvoriť iba AI. Samostatná hráčska kolízna vrstva zostáva aktívna aj pri otvorených kabinetových dverách, takže hráč nemôže vojsť za učiteľom.
 
@@ -162,9 +163,11 @@ Godot podporuje najmä `.wav`, `.ogg` a `.mp3`. Súbory vlož do `res://audio/` 
 
 Konkrétny učiteľ alebo riaditeľka môže mať vlastné kroky v poli `footstep_sound` svojho `TeacherData`. Prázdne audio polia sú bezpečné a použijú procedurálny placeholder. Podrobnosti sú aj v `audio/README.md`.
 
-## Jumpscare obrázky a zvuky
+## 3D jumpscare, obrázky a zvuky
 
-Vlož obrázky do `assets/images/jumpscares/` a zvuky do `audio/jumpscares/`, potom ich priraď k `jumpscare_image` a `jumpscare_sound` v príslušnom `TeacherData`. Po chytení obrazovka použije tieto médiá; prázdne polia použijú procedurálnu tvár a zvuk. Po 2,4 sekundy sa tá istá noc načíta od začiatku s nulovým postupom úloh.
+Po chytení sa hráčska kamera premiestni k tvári skutočného 3D modelu, učiteľ sa otočí na hráča a vrhne sa ku kamere. Nasleduje zmena FOV, červený záblesk, otras a zvuk. Model s kosťou, ktorej názov končí na `Head`, používa presnú polohu hlavy; model bez nej použije hornú časť svojich vizuálnych rozmerov.
+
+Vlož voliteľné obrázky do `assets/images/jumpscares/` a zvuky do `audio/jumpscares/`, potom ich priraď k `jumpscare_image` a `jumpscare_sound` v príslušnom `TeacherData`. Obrázok sa zobrazí iba ako 0,055-sekundový glitch uprostred 3D sekvencie, nie ako hlavný jumpscare. Prázdny zvuk použije procedurálny výkrik. Po 2,4 sekundy sa tá istá noc načíta od začiatku s nulovým postupom úloh.
 
 ## Noci, čas a učitelia
 
@@ -181,9 +184,9 @@ Vlož obrázky do `assets/images/jumpscares/` a zvuky do `audio/jumpscares/`, po
 | 7 | 6 | nie |
 | 8 | všetkých 7 predmetových učiteľov | Zuzana Čižmáriková, aktívna |
 
-Učitelia aktívni pre danú noc hliadkujú po chodbe aj učebniach a môžu spustiť sirénu počas cudzej predmetovej naháňačky. Predmetový učiteľ sa po nesprávnej odpovedi aktivuje aj v noci, v ktorej normálne nehliadkuje, a do konca noci už zostane v škole namiesto návratu do kabinetu.
+Učitelia aktívni pre danú noc hliadkujú po chodbe aj učebniach a počas cudzej predmetovej naháňačky môžu potichu poslať prenasledovateľovi polohu hráča. Hráč nedostane textové ani zvukové upozornenie. Predmetový učiteľ sa po nesprávnej odpovedi aktivuje aj v noci, v ktorej normálne nehliadkuje, a do konca noci už zostane v škole namiesto návratu do kabinetu.
 
-Všetky hodiny a HUD čítajú jediný zdroj `NightManager.current_in_game_time`; nemajú vlastné časovače, preto sa nerozchádzajú. Dĺžku noci mení `real_world_duration_seconds`, čas začiatku a konca polia `start_*` a `end_*`. Dosiahnutie koncového času vytvorí stav rána; samotné dokončenie nastane až pri školskom východe.
+HUD a voliteľné komponenty hodín čítajú jediný zdroj `NightManager.current_in_game_time`; nemajú vlastné časovače, preto sa nerozchádzajú. V učebniach už nástenné hodiny nie sú osadené. Dĺžku noci mení `real_world_duration_seconds`, čas začiatku a konca polia `start_*` a `end_*`. Dosiahnutie koncového času vytvorí stav rána; samotné dokončenie nastane až pri školskom východe. V debug builde možno tento hrateľný ranný stav vyvolať klávesom `F10` alebo tlačidlom v pauze; ďalšia noc sa odomkne až po použití východu.
 
 ## Ukladanie
 
@@ -201,7 +204,7 @@ C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_ph
 C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase3.tscn -- --phase2-test
 ```
 
-Phase 3 test overuje 7 predmetov, 7 učiteľov, Zuzanu Čižmárikovú a jej boosty, 21 otázok, 30-sekundový cooldown, vymeniteľnú audio konfiguráciu, roaming cez triedy, zatvorenie kabinetu, dvere, fyzický drep, pauzu, navigation mesh, výpadok, sirénu, chytenie, jumpscare, ranný východ a reset noci.
+Phase 3 test overuje 7 predmetov, 7 učiteľov, Zuzanu Čižmárikovú a jej boosty, 21 otázok, 30-sekundový cooldown, vymeniteľnú audio konfiguráciu, roaming cez triedy, zatvorenie kabinetu, dvere, fyzický drep, pauzu, navigation mesh, výpadok, tiché hlásenie polohy, chytenie, jumpscare, ranný východ a reset noci.
 
 ## Export pre Windows
 

@@ -74,6 +74,37 @@ func _validate_school(level: Node) -> void:
 	_check(classroom_lights.size() == 32, "Every classroom and kabinet should contain four ceiling lights.")
 	for light in classroom_lights:
 		_check((light as OmniLight3D).light_energy >= 1.35 and (light as OmniLight3D).omni_range >= 8.8, "A classroom light is too dim or too short-ranged.")
+	var corridor_panes := level.find_children("CorridorWindowGlass_*", "StaticBody3D", true, false)
+	var exterior_panes := level.find_children("ExteriorWindowGlass_*", "StaticBody3D", true, false)
+	_check(corridor_panes.size() == 21, "Every subject classroom should contain three corridor-facing window panes.")
+	_check(exterior_panes.size() == 42, "Every subject classroom should contain six exterior window panes.")
+	_check(level.find_children("*ExteriorWindowSill_*", "StaticBody3D", true, false).size() == 7, "Every exterior classroom window needs an opaque sill.")
+	_check(level.find_children("*ExteriorWindowHeader_*", "StaticBody3D", true, false).size() == 7, "Every exterior classroom window needs an opaque header.")
+	_check(level.find_children("*ExteriorWindowBefore_*", "StaticBody3D", true, false).size() == 7 and level.find_children("*ExteriorWindowAfter_*", "StaticBody3D", true, false).size() == 7, "Every exterior classroom window needs opaque wall sections on both sides.")
+	for pane in corridor_panes:
+		_check(is_equal_approx(absf((pane as Node3D).global_position.x), 3.0), "A corridor window was not placed between the corridor and its classroom.")
+	for pane in exterior_panes:
+		_check(is_equal_approx(absf((pane as Node3D).global_position.x), 23.0), "An exterior window was not placed on the school facade.")
+		var pane_mesh := ((pane as Node).get_node("Glass") as MeshInstance3D).mesh as BoxMesh
+		_check(pane_mesh.size.y < 2.4 and (pane as Node3D).global_position.y >= 2.1, "An exterior classroom window still spans floor to ceiling.")
+	var window_panes := corridor_panes + exterior_panes
+	for pane in window_panes:
+		var glass := pane.get_node("Glass") as MeshInstance3D
+		var material := (glass.mesh as BoxMesh).material as StandardMaterial3D
+		_check(material != null and material.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA and material.albedo_color.a <= 0.25, "A classroom window is not transparent.")
+		_check(material != null and material.cull_mode == BaseMaterial3D.CULL_DISABLED, "A classroom window is not visible from both sides.")
+		_check(glass.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "A classroom window blocks daylight.")
+	var sun := level.find_child("SunLight", true, false) as DirectionalLight3D
+	var environment_node := level.find_child("WorldEnvironment", true, false) as WorldEnvironment
+	_check(sun != null and environment_node != null, "The school sunrise lighting is missing.")
+	if sun != null and environment_node != null:
+		level.call("_update_daylight", 0.0, 1.0)
+		_check(sun.light_energy >= 0.85 and environment_node.environment.ambient_light_energy >= 0.65, "Morning sunlight does not brighten the school.")
+		var sky_material := environment_node.environment.sky.sky_material as ProceduralSkyMaterial
+		_check(sky_material.sky_top_color.is_equal_approx(Color("4d84b3")), "Morning sky color was not applied.")
+		level.call("_update_daylight", 0.0, 0.0)
+		_check(sun.light_energy <= 0.05 and environment_node.environment.ambient_light_energy <= 0.35, "Night lighting did not return after the sunrise test.")
+	_check(not level.has_node("DigitalClock") and not level.has_node("AnalogClock"), "The test school should not contain classroom clocks.")
 	_check(level.find_children("DoorNavigationLink_*", "NavigationLink3D", true, false).size() == 8, "Every classroom door should have a bidirectional teacher navigation link.")
 	_check(level.find_children("Homework_*", "", true, false).size() == 7, "School should contain seven homework stations.")
 	_check(level.find_child("Kabinet", true, false) != null, "Kabinet učiteľov is missing.")

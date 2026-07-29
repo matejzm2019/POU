@@ -2,11 +2,20 @@ extends Node3D
 
 const ROOM_ROWS := [-28.5, -9.5, 9.5, 28.5]
 const SCHOOL_HALF_Z := 38.5
+const ROOM_HALF_Z := 9.5
+const CORRIDOR_WINDOW_CENTER_OFFSET_Z := 5.2
+const CORRIDOR_WINDOW_WIDTH := 8.0
+const WINDOW_BOTTOM := 1.0
+const WINDOW_TOP := 3.35
+const EXTERIOR_WINDOW_WIDTH := 12.0
 const DESK_HIDING_SPOT_SCRIPT := preload("res://systems/hiding/desk_hiding_spot.gd")
 
 @export var door_scene: PackedScene
 @export var teacher_scene: PackedScene
 @export var homework_station_scene: PackedScene
+
+@onready var _school_environment: WorldEnvironment = $WorldEnvironment
+@onready var _sun_light: DirectionalLight3D = $SunLight
 
 var _materials: Dictionary = {}
 
@@ -21,6 +30,8 @@ func _ready() -> void:
 	_build_lighting()
 	_build_navigation()
 	SchoolGameManager.blackout_changed.connect(_set_blackout)
+	NightManager.time_updated.connect(_update_daylight)
+	_update_daylight(NightManager.current_in_game_time, NightManager.get_night_progress())
 
 
 func _build_shell() -> void:
@@ -31,8 +42,10 @@ func _build_shell() -> void:
 	_box("NorthExteriorWallRight", Vector3(11.95, 2.05, -SCHOOL_HALF_Z), Vector3(22.1, 4.3, 0.3), wall)
 	_box("NorthExitHeader", Vector3(0, 3.55, -SCHOOL_HALF_Z), Vector3(1.8, 1.3, 0.3), wall)
 	_box("SouthExteriorWall", Vector3(0, 2.05, SCHOOL_HALF_Z), Vector3(46, 4.3, 0.3), wall)
-	_box("WestExteriorWall", Vector3(-23, 2.05, 0), Vector3(0.3, 4.3, 77), wall)
-	_box("EastExteriorWall", Vector3(23, 2.05, 0), Vector3(0.3, 4.3, 77), wall)
+	for row_index in ROOM_ROWS.size():
+		var row_z: float = ROOM_ROWS[row_index]
+		_build_exterior_wall_row(-1.0, row_index, row_z, wall, true)
+		_build_exterior_wall_row(1.0, row_index, row_z, wall, row_index < ROOM_ROWS.size() - 1)
 
 	for divider_z in [-19.0, 0.0, 19.0]:
 		_box("WestRoomDivider_%s" % str(divider_z), Vector3(-13, 2.05, divider_z), Vector3(20, 4.3, 0.25), wall)
@@ -42,11 +55,40 @@ func _build_shell() -> void:
 		var row_z: float = ROOM_ROWS[row_index]
 		for side_value in [-1.0, 1.0]:
 			var side := float(side_value)
-			var wall_x := side * 3.0
-			var side_name := "West" if side < 0.0 else "East"
-			_box("%sCorridorWallA_%d" % [side_name, row_index], Vector3(wall_x, 2.05, row_z - 5.2), Vector3(0.25, 4.3, 8.6), wall)
-			_box("%sCorridorWallB_%d" % [side_name, row_index], Vector3(wall_x, 2.05, row_z + 5.2), Vector3(0.25, 4.3, 8.6), wall)
-			_box("%sDoorHeader_%d" % [side_name, row_index], Vector3(wall_x, 3.55, row_z), Vector3(0.25, 1.3, 1.8), wall)
+			_build_corridor_wall_row(side, row_index, row_z, wall, not (side > 0.0 and row_index == ROOM_ROWS.size() - 1))
+
+
+func _build_exterior_wall_row(side: float, row_index: int, row_z: float, color: Color, has_window: bool) -> void:
+	var side_name := "West" if side < 0.0 else "East"
+	var wall_x := side * 23.0
+	var wall_center_z := row_z + (0.25 if row_index == ROOM_ROWS.size() - 1 else -0.25 if row_index == 0 else 0.0)
+	var wall_width := ROOM_HALF_Z * 2.0 + (0.5 if row_index == 0 or row_index == ROOM_ROWS.size() - 1 else 0.0)
+	if not has_window:
+		_box("%sExteriorWall_%d" % [side_name, row_index], Vector3(wall_x, 2.05, wall_center_z), Vector3(0.3, 4.3, wall_width), color)
+		return
+	var side_width := (wall_width - EXTERIOR_WINDOW_WIDTH) * 0.5
+	_box("%sExteriorWindowBefore_%d" % [side_name, row_index], Vector3(wall_x, 2.05, wall_center_z - EXTERIOR_WINDOW_WIDTH * 0.5 - side_width * 0.5), Vector3(0.3, 4.3, side_width), color)
+	_box("%sExteriorWindowAfter_%d" % [side_name, row_index], Vector3(wall_x, 2.05, wall_center_z + EXTERIOR_WINDOW_WIDTH * 0.5 + side_width * 0.5), Vector3(0.3, 4.3, side_width), color)
+	_box("%sExteriorWindowSill_%d" % [side_name, row_index], Vector3(wall_x, WINDOW_BOTTOM * 0.5, wall_center_z), Vector3(0.3, WINDOW_BOTTOM, EXTERIOR_WINDOW_WIDTH), color)
+	var header_height := 4.2 - WINDOW_TOP
+	_box("%sExteriorWindowHeader_%d" % [side_name, row_index], Vector3(wall_x, WINDOW_TOP + header_height * 0.5, wall_center_z), Vector3(0.3, header_height, EXTERIOR_WINDOW_WIDTH), color)
+
+
+func _build_corridor_wall_row(side: float, row_index: int, row_z: float, color: Color, has_window: bool) -> void:
+	var side_name := "West" if side < 0.0 else "East"
+	var wall_x := side * 3.0
+	_box("%sCorridorWallA_%d" % [side_name, row_index], Vector3(wall_x, 2.05, row_z - 5.2), Vector3(0.25, 4.3, 8.6), color)
+	_box("%sDoorHeader_%d" % [side_name, row_index], Vector3(wall_x, 3.55, row_z), Vector3(0.25, 1.3, 1.8), color)
+	if not has_window:
+		_box("%sCorridorWallB_%d" % [side_name, row_index], Vector3(wall_x, 2.05, row_z + 5.2), Vector3(0.25, 4.3, 8.6), color)
+		return
+	var edge_width := 8.6 - CORRIDOR_WINDOW_WIDTH
+	var window_center_z := row_z + CORRIDOR_WINDOW_CENTER_OFFSET_Z
+	_box("%sCorridorWindowBefore_%d" % [side_name, row_index], Vector3(wall_x, 2.05, row_z + 0.9 + edge_width * 0.25), Vector3(0.25, 4.3, edge_width * 0.5), color)
+	_box("%sCorridorWindowAfter_%d" % [side_name, row_index], Vector3(wall_x, 2.05, row_z + 9.5 - edge_width * 0.25), Vector3(0.25, 4.3, edge_width * 0.5), color)
+	_box("%sCorridorWindowSill_%d" % [side_name, row_index], Vector3(wall_x, WINDOW_BOTTOM * 0.5, window_center_z), Vector3(0.25, WINDOW_BOTTOM, CORRIDOR_WINDOW_WIDTH), color)
+	var header_height := 4.2 - WINDOW_TOP
+	_box("%sCorridorWindowHeader_%d" % [side_name, row_index], Vector3(wall_x, WINDOW_TOP + header_height * 0.5, window_center_z), Vector3(0.25, header_height, CORRIDOR_WINDOW_WIDTH), color)
 
 
 func _build_corridor() -> void:
@@ -103,7 +145,7 @@ func _build_classroom(subject: SubjectData, center: Vector3, side: float, index:
 	_box("%sFloor" % subject.subject_id, center + Vector3(0, 0.012, 0), Vector3(19.6, 0.025, 18.6), subject.accent_color.darkened(0.68), false, 0.0, room)
 	_box("%sBlackboard" % subject.subject_id, center + Vector3(0, 2.45, -9.28), Vector3(8.2, 1.8, 0.12), subject.accent_color.darkened(0.55), false, 0.0, room)
 	_box("%sChalkTray" % subject.subject_id, center + Vector3(0, 1.5, -9.1), Vector3(8.35, 0.1, 0.28), Color("9c978b"), false, 0.0, room)
-	_box("%sWindow" % subject.subject_id, Vector3(side * 22.82, 2.4, center.z + 3.5), Vector3(0.08, 1.65, 5.0), Color("07141c"), false, 0.18, room)
+	_build_classroom_windows(subject.subject_id, center, side, room)
 	_add_board_label(subject.display_name, subject.room_code, center, room)
 
 	var desk_index := 0
@@ -117,6 +159,48 @@ func _build_classroom(subject: SubjectData, center: Vector3, side: float, index:
 	_place_homework_station(subject, teacher_desk_position + Vector3(0, 1.0, 0), room)
 	_place_door(subject.subject_id, Vector3(side * 3.0, 0, center.z), side, room, index, false)
 	_place_room_sign("%s  %s" % [subject.room_code, subject.display_name], Vector3(side * 2.82, 3.03, center.z), side, room)
+
+
+func _build_classroom_windows(subject_id: String, center: Vector3, side: float, parent: Node3D) -> void:
+	_build_window_bank("CorridorWindow", subject_id, side * 3.0, side * 3.22, center.z + CORRIDOR_WINDOW_CENTER_OFFSET_Z, CORRIDOR_WINDOW_WIDTH, WINDOW_BOTTOM, WINDOW_TOP, 3, parent)
+	var exterior_center_z := center.z + (0.25 if center.z == ROOM_ROWS[-1] else -0.25 if center.z == ROOM_ROWS[0] else 0.0)
+	_build_window_bank("ExteriorWindow", subject_id, side * 23.0, side * 22.88, exterior_center_z, EXTERIOR_WINDOW_WIDTH, WINDOW_BOTTOM, WINDOW_TOP, 6, parent)
+
+
+func _build_window_bank(prefix: String, subject_id: String, glass_x: float, frame_x: float, center_z: float, width: float, bottom: float, top: float, pane_count: int, parent: Node3D) -> void:
+	var pane_height := top - bottom
+	var pane_width := width / pane_count
+	for pane_index in pane_count:
+		var pane_z := center_z - width * 0.5 + pane_width * (pane_index + 0.5)
+		_add_window_pane("%sGlass_%s_%d" % [prefix, subject_id, pane_index + 1], Vector3(glass_x, bottom + pane_height * 0.5, pane_z), Vector3(0.06, pane_height - 0.12, pane_width - 0.12), parent)
+	var frame_color := Color("7d8584")
+	for rail_index in 3:
+		var rail_y := bottom + pane_height * rail_index * 0.5
+		_box("%sRail_%s_%d" % [prefix, subject_id, rail_index], Vector3(frame_x, rail_y, center_z), Vector3(0.14, 0.1, width + 0.12), frame_color, false, 0.0, parent)
+	for mullion_index in pane_count + 1:
+		var mullion_z := center_z - width * 0.5 + pane_width * mullion_index
+		_box("%sMullion_%s_%d" % [prefix, subject_id, mullion_index], Vector3(frame_x, bottom + pane_height * 0.5, mullion_z), Vector3(0.14, pane_height, 0.1), frame_color, false, 0.0, parent)
+
+
+func _add_window_pane(label: String, pane_position: Vector3, size: Vector3, parent: Node3D) -> void:
+	var body := StaticBody3D.new()
+	body.name = label
+	body.add_to_group("classroom_window_glass")
+	body.position = pane_position
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.name = "Glass"
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh.material = _window_glass_material()
+	mesh_instance.mesh = mesh
+	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(mesh_instance)
+	body.add_child(collision)
+	parent.add_child(body)
 
 
 func _build_kabinet() -> void:
@@ -406,6 +490,20 @@ func _set_blackout(active: bool) -> void:
 			(node as Node3D).visible = not active
 
 
+func _update_daylight(_game_time_seconds: float, progress: float) -> void:
+	var dawn := smoothstep(0.72, 1.0, clampf(progress, 0.0, 1.0))
+	_sun_light.light_energy = lerpf(0.04, 0.9, dawn)
+	_sun_light.rotation_degrees.x = lerpf(-8.0, -38.0, dawn)
+	var environment := _school_environment.environment
+	environment.ambient_light_energy = lerpf(0.34, 0.68, dawn)
+	environment.fog_light_color = Color(0.08, 0.1, 0.11, 1).lerp(Color("b9cddd"), dawn)
+	environment.fog_light_energy = lerpf(0.35, 0.8, dawn)
+	var sky_material := environment.sky.sky_material as ProceduralSkyMaterial
+	sky_material.sky_top_color = Color("010205").lerp(Color("4d84b3"), dawn)
+	sky_material.sky_horizon_color = Color("06101a").lerp(Color("f2b272"), dawn)
+	sky_material.ground_horizon_color = Color("05090c").lerp(Color("8d765f"), dawn)
+
+
 func _box(label: String, box_position: Vector3, size: Vector3, color: Color, collision := true, emission := 0.0, parent: Node3D = null) -> Node3D:
 	var mesh_instance := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
@@ -443,4 +541,18 @@ func _material(color: Color, emission: float) -> StandardMaterial3D:
 		material.emission = color
 		material.emission_energy_multiplier = emission
 	_materials[key] = material
+	return material
+
+
+func _window_glass_material() -> StandardMaterial3D:
+	const KEY := "classroom_window_glass"
+	if _materials.has(KEY):
+		return _materials[KEY] as StandardMaterial3D
+	var material := StandardMaterial3D.new()
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.albedo_color = Color(0.22, 0.36, 0.44, 0.2)
+	material.metallic = 0.15
+	material.roughness = 0.12
+	_materials[KEY] = material
 	return material

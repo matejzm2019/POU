@@ -101,10 +101,6 @@ height = 2.3
 avoidance_enabled = false
 neighbor_distance = 3.0
 
-[node name="Siren" type="AudioStreamPlayer3D" parent="."]
-unit_size = 4.0
-max_distance = 35.0
-
 [node name="Steps" type="AudioStreamPlayer3D" parent="."]
 unit_size = 3.0
 max_distance = 24.0

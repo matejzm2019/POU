@@ -42,6 +42,8 @@ corner_radius_bottom_left = 2
 
 [sub_resource type="StyleBoxFlat" id="Style_clock"]
 bg_color = Color(0.008, 0.012, 0.014, 0.82)
+border_width_left = 1
+border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.32, 0.5, 0.44, 0.58)
 corner_radius_bottom_left = 4
@@ -49,17 +51,22 @@ corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_progress_bg"]
 bg_color = Color(0.02, 0.03, 0.032, 0.9)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28, 0.4, 0.36, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_progress_fill"]
-bg_color = Color(0.42, 0.69, 0.57, 0.95)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+bg_color = Color(0.89, 0.64, 0.35, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="Style_pause"]
 bg_color = Color(0.018, 0.027, 0.03, 0.98)
@@ -125,15 +132,22 @@ layout_mode = 1
 anchors_preset = 10
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -108.0
-offset_right = 108.0
-offset_bottom = 66.0
+offset_left = -155.0
+offset_right = 155.0
+offset_bottom = 92.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_clock")
 
 [node name="Stack" type="VBoxContainer" parent="Root/ClockPanel"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 5
+
+[node name="PhaseTitle" type="Label" parent="Root/ClockPanel/Stack"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.63, 0.59, 1)
+theme_override_font_sizes/font_size = 10
+text = "PRIEBEH NOCI"
+horizontal_alignment = 1
 
 [node name="Clock" type="Label" parent="Root/ClockPanel/Stack"]
 unique_name_in_owner = true
@@ -146,12 +160,20 @@ vertical_alignment = 1
 
 [node name="NightProgress" type="ProgressBar" parent="Root/ClockPanel/Stack"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 5)
+custom_minimum_size = Vector2(0, 9)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/background = SubResource("Style_progress_bg")
 theme_override_styles/fill = SubResource("Style_progress_fill")
 show_percentage = false
+
+[node name="NightProgressLabel" type="Label" parent="Root/ClockPanel/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.75, 0.7, 1)
+theme_override_font_sizes/font_size = 11
+text = "NOC → RÁNO 06:00  •  0 %"
+horizontal_alignment = 1
 
 [node name="Crosshair" type="Control" parent="Root"]
 layout_mode = 1
@@ -269,7 +291,7 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.48, 0.62, 0.56, 0.78)
 theme_override_font_sizes/font_size = 12
-text = "VÝVOJ: F8 DOKONČIŤ NOC"
+text = "VÝVOJ: F10 = OKAMŽITE RÁNO"
 horizontal_alignment = 2
 
 [node name="NightStartMessage" type="Label" parent="Root"]
@@ -344,9 +366,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -230.0
-offset_top = -240.0
+offset_top = -270.0
 offset_right = 230.0
-offset_bottom = 240.0
+offset_bottom = 270.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("Style_pause")
@@ -428,6 +450,13 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "POKRAČOVAŤ"
+
+[node name="DebugMorningButton" type="Button" parent="Root/PauseOverlay/PausePanel/Margin/Stack"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "VÝVOJ: OKAMŽITE RÁNO (F10)"
 
 [node name="MainMenuButton" type="Button" parent="Root/PauseOverlay/PausePanel/Margin/Stack"]
 unique_name_in_owner = true
