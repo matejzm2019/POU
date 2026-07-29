@@ -30,6 +30,7 @@ func _run() -> void:
 	_check(NightManager.load_night(1), "Could not load Night 1 for gameplay validation.")
 	_check(NightManager.start_night(), "Could not start Night 1 for gameplay validation.")
 	await _validate_navigation(level)
+	await _validate_teacher_desk_navigation(level)
 	await _validate_pause_menu(level)
 	await _validate_homework_and_chase(level)
 	level.queue_free()
@@ -71,6 +72,7 @@ func _validate_resources() -> void:
 			_check(not teacher.active_nights.is_empty() and teacher.active_nights.has(8), "%s has invalid active nights." % teacher.display_name)
 			_check(teacher.chase_speed >= 3.8 and teacher.chase_speed <= 4.4, "%s does not use the slower chase configuration." % teacher.display_name)
 			_check(teacher.display_name == EXPECTED_TEACHER_NAMES.get(subject.subject_id, ""), "%s has the wrong teacher name." % subject.display_name)
+			_check(teacher.walk_animation == "Walking" and teacher.run_animation == "RunFast", "%s does not use the shared movement animation names." % teacher.display_name)
 	var headmistress := SchoolGameManager.get_headmistress_data()
 	_check(headmistress != null and headmistress.display_name == "Zuzana Čižmáriková", "Headmistress Zuzana Čižmáriková is missing.")
 	if headmistress != null:
@@ -90,6 +92,45 @@ func _validate_navigation(level: Node) -> void:
 	_check(region.navigation_mesh.get_polygon_count() > 0, "Runtime navigation mesh did not bake.")
 	_check(not FileAccess.get_file_as_string("res://scripts/levels/test_school.gd").contains("map_force_update"), "Runtime level still force-locks NavigationServer after baking.")
 	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+
+func _validate_teacher_desk_navigation(level: Node) -> void:
+	var player := level.find_child("Player", true, false) as FirstPersonController
+	var teacher := level.find_child("Teacher_01_*", true, false) as PlaceholderTeacher
+	_check(player != null and teacher != null, "Teacher-desk navigation setup is incomplete.")
+	if player == null or teacher == null:
+		return
+	var player_position := player.global_position
+	var start := Vector3(-20.5, 0.05, 21.9)
+	var target := Vector3(-14.5, 0.05, 21.9)
+	teacher.global_position = start
+	teacher.velocity = Vector3.ZERO
+	player.global_position = target
+	teacher.start_chase(player)
+	var animation_players := teacher.find_children("*", "AnimationPlayer", true, false)
+	_check(not animation_players.is_empty(), "Teacher 1 custom model has no AnimationPlayer.")
+	if not animation_players.is_empty():
+		var animation_player := animation_players[0] as AnimationPlayer
+		_check(animation_player.has_animation("RunFast"), "Teacher 1 custom model has no RunFast animation.")
+		if animation_player.has_animation("RunFast"):
+			_check(animation_player.get_animation("RunFast").loop_mode == Animation.LOOP_LINEAR, "Teacher 1 RunFast animation is not looping.")
+			var animation_position := animation_player.current_animation_position
+			for _frame in 4:
+				await get_tree().physics_frame
+			_check(animation_player.is_playing() and animation_player.current_animation == "RunFast", "Teacher 1 RunFast animation stopped during movement.")
+			_check(not is_equal_approx(animation_player.current_animation_position, animation_position), "Teacher 1 RunFast animation is stuck on one frame.")
+	var maximum_detour := 0.0
+	var deadline := Time.get_ticks_msec() + 7000
+	while teacher.global_position.distance_to(target) > 1.4 and Time.get_ticks_msec() < deadline:
+		await get_tree().physics_frame
+		maximum_detour = maxf(maximum_detour, absf(teacher.global_position.z - start.z))
+	_check(teacher.global_position.distance_to(target) <= 1.4, "A teacher got stuck while navigating around a teacher desk.")
+	_check(maximum_detour > 0.65, "Teacher navigation crossed the desk instead of routing around it.")
+	teacher.stop_chase()
+	teacher.reset_for_night()
+	teacher.set_observer_active(false)
+	player.global_position = player_position
 	await get_tree().physics_frame
 
 
@@ -129,14 +170,41 @@ func _validate_pause_menu(level: Node) -> void:
 
 
 func _validate_homework_and_chase(level: Node) -> void:
-	var player := level.find_child("Player", true, false) as Node3D
+	var player := level.find_child("Player", true, false) as FirstPersonController
 	_check(player != null, "School player is missing.")
 	_check(level.find_children("Homework_*", "", true, false).size() == 7, "Expected one homework station in each subject classroom.")
 	_check(level.find_children("Teacher_*", "", true, false).size() == 7, "Expected seven subject teachers in kabinet.")
 	_check(level.find_child("Headmistress_Zuzana_Cizmarikova", true, false) != null, "Expected Zuzana Čižmáriková in kabinet.")
 	_check(level.find_children("DeskHiding_*", "Area3D", true, false).size() == 42, "Expected one hiding spot under every student desk.")
+	for teacher_node in level.find_children("Teacher_*", "", true, false):
+		var data := teacher_node.get("teacher_data") as TeacherData
+		if data == null or data.model_scene == null:
+			continue
+		var bounds: AABB = teacher_node.call("get_custom_model_bounds")
+		if data.auto_fit_model:
+			_check(absf(bounds.size.y - data.model_height) < 0.05, "%s custom model was not normalized to character height." % data.display_name)
+		_check(absf(bounds.position.y - data.model_ground_offset) < 0.03, "%s custom model is not grounded." % data.display_name)
+		_check(bounds.size.x < 3.0 and bounds.size.z < 3.0, "%s custom model is large enough to span the school." % data.display_name)
+	var jana_data := SchoolGameManager.get_teacher_data("anglicky_jazyk")
+	if jana_data != null and jana_data.model_scene != null:
+		_check(is_equal_approx(jana_data.model_rotation_degrees.x, 90.0) and jana_data.model_ground_offset >= 0.08, "Jana Palajová model orientation or ground offset was not corrected.")
+		var jana_teacher := level.find_child("Teacher_07_*", true, false) as PlaceholderTeacher
+		if jana_teacher != null:
+			var jana_bounds := jana_teacher.get_custom_model_bounds()
+			var face_bounds := _find_material_bounds(jana_teacher, jana_teacher.get_node("ModelAnchor"), "face")
+			_check(not face_bounds.size.is_zero_approx(), "Jana Palajová face geometry could not be identified.")
+			_check(face_bounds.get_center().y > jana_bounds.get_center().y, "Jana Palajová is upside down or looking into the floor.")
 	if player == null:
 		return
+	var flashlight := player.get_node("Head/Camera3D/Flashlight") as SpotLight3D
+	var flashlight_fill := player.get_node("Head/Camera3D/FlashlightFill") as SpotLight3D
+	var flashlight_event := InputEventKey.new()
+	flashlight_event.physical_keycode = KEY_F
+	flashlight_event.pressed = true
+	player._input(flashlight_event)
+	_check(not flashlight.visible and not flashlight_fill.visible and not player.is_flashlight_enabled(), "F did not turn both flashlight layers off.")
+	player._input(flashlight_event)
+	_check(flashlight.visible and flashlight_fill.visible and player.is_flashlight_enabled(), "F did not turn both flashlight layers back on.")
 	var classroom_door := level.find_child("ClassroomDoor_07_anglicky_jazyk", true, false) as Node3D
 	var exit_door := level.find_child("SchoolExitDoor", true, false) as Node3D
 	_check(classroom_door != null, "English classroom door is missing.")
@@ -203,6 +271,16 @@ func _validate_homework_and_chase(level: Node) -> void:
 	while Time.get_ticks_msec() < move_deadline and chaser.global_position.distance_to(start_position) < 0.15:
 		await get_tree().physics_frame
 	_check(chaser.global_position.distance_to(start_position) >= 0.15, "Chasing teacher did not move toward the player.")
+	var last_seen_classroom_position := Vector3(-13.0, 0.05, 28.5)
+	player.global_position = Vector3(-20.0, 0.05, 28.5)
+	chaser.call("set_last_known_position", last_seen_classroom_position)
+	chaser.set("has_engaged", true)
+	SchoolGameManager.set("_escape_elapsed", SchoolGameManager.ESCAPE_TIME)
+	SchoolGameManager.call("_process", 0.01)
+	var chase_agent := chaser.get_node("NavigationAgent3D") as NavigationAgent3D
+	var expected_last_seen_target := NavigationServer3D.map_get_closest_point(chase_agent.get_navigation_map(), last_seen_classroom_position)
+	_check(SchoolGameManager.is_chase_active() and bool(chaser.call("is_searching")), "Losing sight of the player ended the chase instead of starting a classroom search.")
+	_check(chase_agent.target_position.distance_to(expected_last_seen_target) < 0.01, "The teacher forgot the classroom where the player was last seen.")
 	var hiding_spot := level.find_child("DeskHiding_*", true, false) as Node3D
 	_check(hiding_spot != null, "No desk hiding spot was available for the player.")
 	if hiding_spot != null:
@@ -315,6 +393,22 @@ func _capture_siren(_teacher_name: String) -> void:
 
 func _capture_caught(_teacher_name: String, _jumpscare_image: Texture2D, _jumpscare_sound: AudioStream) -> void:
 	_caught_events += 1
+
+
+func _find_material_bounds(root: Node, relative_to: Node3D, keyword: String) -> AABB:
+	var combined := AABB()
+	var found := false
+	var inverse := relative_to.global_transform.affine_inverse()
+	for child in root.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := child as MeshInstance3D
+		for surface in mesh_instance.mesh.get_surface_count():
+			var material := mesh_instance.mesh.surface_get_material(surface)
+			if material != null and material.resource_name.to_lower().contains(keyword):
+				var bounds := (inverse * mesh_instance.global_transform) * mesh_instance.get_aabb()
+				combined = combined.merge(bounds) if found else bounds
+				found = true
+				break
+	return combined
 
 
 func _check(condition: bool, message: String) -> void:

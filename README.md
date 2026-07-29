@@ -9,13 +9,16 @@ Godot 4 first-person horor zo slovenskej školy. Hráč sa môže voľne pohybov
 - Zamknutý kabinet so siedmimi konfigurovateľnými učiteľmi a riaditeľkou Zuzanou Čižmárikovou; hráč ho neotvorí ani nevojde za nimi
 - Osem dátovo riadených nocí, spoločný školský čas, analógové a digitálne hodiny
 - Pohyb z prvej osoby, otáčanie myšou, šprint, výdrž, drep, skok a interakcia
+- Baterka s 30-metrovým tieňovaným kužeľom, mäkkým dosvietením do 36 metrov a vyhladenými tieňmi
 - Osem presne osadených interiérových dverí a ranný východ na konci chodby
+- Štyri stropné svetlá v každej učebni a kabinete pre rovnomernejšie osvetlenie
 - Tri sady úloh v každej učebni, spolu 21 sád za noc
 - Nesprávna odpoveď vypne školské svetlá, spustí naháňačku a zablokuje danú úlohu na 30 sekúnd
 - Ostatní aktívni učitelia pri spozorovaní hráča spustia sirénu a odovzdajú jeho polohu prenasledovateľovi
 - Navigačný mesh školy, kolízny nábytok, hliadkovanie, prenasledovanie, hľadanie a únik
 - Schovanie pod každou zo 42 žiackych lavíc; učiteľ hráča pod lavicou nevidí a začne prehľadávať školu
 - Plnohodnotná pauza cez `Esc` s okamžitým nastavením jasu/gammy, pokračovaním a návratom do hlavného menu
+- Nastavenia obrazu s uloženými voľbami 1280 × 720, 1920 × 1080, 2560 × 1440 a režimom v okne alebo na celej obrazovke
 - Vymeniteľná hudba menu, školský ambient a priestorové kroky učiteľov s procedurálnymi náhradami
 - Noc 1 trvá 10 reálnych minút; ráno sa odomkne východ, ktorým sa dokončí level
 - Verziovaný JSON save systém a odomykanie nocí
@@ -65,6 +68,7 @@ res://
 | Drep / fyzické schovanie pod lavicu | podržať `C` a vojsť pod lavicu |
 | Skok | `Space` |
 | Otvoriť alebo zatvoriť dvere / domáca úloha | `E` |
+| Zapnúť alebo vypnúť baterku | `F` |
 | Pozastaviť hru / zavrieť pauzu | `Esc` |
 | Dokončiť noc (iba debug build) | `F8` |
 
@@ -89,11 +93,13 @@ Nesprávna odpoveď okamžite:
 
 Po priamom kontakte učiteľ neustále aktualizuje cieľ. Po úniku sa už nevráti do kabinetu: zostane vypustený a striedavo prechádza chodbou aj všetkými predmetovými učebňami. Každé interiérové dvere majú obojsmerný navigačný prechod; učiteľ ich otvorí až vtedy, keď k nim príde. Pri odchode z kabinetu jeho dvere za sebou zavrie, keď je priechod voľný. Otvorené triedne dvere vypnú kolíziu krídla, takže hráč aj učiteľ spoľahlivo prejdú medzi učebňou a chodbou. Lavice, stoličky a učiteľské stoly majú kolíziu aj pre učiteľov.
 
-Pod lavicu sa nelezie cez `E`. Podrž `C`, prikrč sa a fyzicky pod ňu vojdi. Hráč sa pod lavicou ďalej normálne pohybuje; skrytý je iba počas drepu v priestore priamo pod stolom. Prenasledovateľ ho tam nevidí ani nechytí a prepne sa do prehľadávania školy. Po vylezení ďalej roamuje, kým hráča znovu neuvidí, nedostane sirénové hlásenie alebo nepríde ráno. Počas jeho prehľadávania možno riešiť úlohy v iných triedach.
+Pod lavicu sa nelezie cez `E`. Podrž `C`, prikrč sa a fyzicky pod ňu vojdi. Hráč sa pod lavicou ďalej normálne pohybuje; skrytý je iba počas drepu v priestore priamo pod stolom. Keď učiteľ stratí dohľad, naháňačka sa neukončí: najprv ide na posledné miesto, kde hráča videl, vrátane inej triedy, a až potom prehľadáva školu. Pod lavicou hráča nevidí ani nechytí. Po vylezení ďalej roamuje, kým hráča znovu neuvidí, nedostane sirénové hlásenie alebo nepríde ráno. Počas jeho prehľadávania možno riešiť úlohy v iných triedach.
 
 Dvere používajú fyzický lokálny pánt a 0,45-sekundovú sinusovú tween animáciu. Viditeľná sieť sa otáča spolu s pántom; po otvorení zostane krídlo mimo otvoru. Pevná interakčná zóna zostáva pri zárubni, preto rovnaké `E` dvere aj zatvorí. Kabinetové dvere môže otvoriť iba AI. Samostatná hráčska kolízna vrstva zostáva aktívna aj pri otvorených kabinetových dverách, takže hráč nemôže vojsť za učiteľom.
 
 `Esc` úplne pozastaví SceneTree, školský čas, fyziku aj AI. Pauza ponúka posuvník jasu/gammy v rozsahu 50–150 %, tlačidlo pokračovania a bezpečný návrat do hlavného menu. Jas sa aplikuje na `WorldEnvironment` okamžite a ukladá sa do save súboru.
+
+V hlavnom menu otvor **NASTAVENIA**. Rozlíšenie ponúka iba podporované voľby 720p, 1080p a 1440p. Režim obrazovky možno prepnúť medzi **V OKNE** a **CELÁ OBRAZOVKA**. Zmena sa použije okamžite a spolu s režimom sa uloží do `SaveManager`, takže platí aj po ďalšom spustení.
 
 Noc 1 má `real_world_duration_seconds = 600.0`, teda presne 10 minút. Po dosiahnutí rána hra pokračuje: svetlá sa obnovia, naháňačka sa ukončí a HUD pošle hráča k dverám `VÝCHOD` na severnom konci chodby. Až interakcia s týmto východom dokončí noc a odomkne ďalšiu.
 
@@ -115,20 +121,22 @@ Ak chceš viac ako tri sady, zmeň aj `SchoolGameManager.SETS_PER_SUBJECT`, konf
 Godot môže importovať `.glb`, `.gltf` a `.fbx`; odporúčaný je binárny `.glb`.
 
 1. Skopíruj model aj jeho textúry do `res://assets/models/teachers/<meno>/` (na disku `D:\skibidi\assets\models\teachers\<meno>\`).
-2. Nechaj Godot dokončiť import. Model má byť v metroch, Y hore a jeho predná strana má smerovať pozdĺž lokálnej osi +Z.
-3. Ak potrebuješ upraviť orientáciu alebo uzly, vytvor zdedenú scénu v `enemies/<meno>.tscn` a model otoč v nej.
+2. Nechaj Godot dokončiť import. Odporúčaný model má Y hore a prednú stranu pozdĺž lokálnej osi +Z, ale rozdielna mierka ani stredový pivot už nie sú problém.
+3. Wrapper automaticky zmeria viditeľnú geometriu, nastaví ju na `model_height` (predvolene 2,3 m), vycentruje ju nad kolíziou a položí spodnú hranu na podlahu.
 4. Otvor správny `data/teachers/teacher_<n>.tres`.
-5. Pretiahni importovanú alebo zdedenú scénu do `model_scene` a dolaď `model_scale`.
+5. Pretiahni importovanú alebo zdedenú scénu do `model_scene`. `model_scale` slúži na dodatočné doladenie proporcií, `model_rotation_degrees` opraví orientáciu a `model_ground_offset` jemne posunie chodidlá.
 
 Nemeň `teacher_scene` v `levels/test_school.tscn` a nemaž `characters/teachers/placeholder_teacher.tscn`. Tento wrapper obsahuje AI, kolíziu a navigáciu. Keď je `model_scene` prázdne, zobrazí sa hotový vstavaný placeholder učiteľa. Keď neskôr priradíš vlastný model, skryje sa iba placeholder vizuál a vlastný model automaticky používa rovnaké prenasledovanie.
 
 ### Animácie
 
-Animácia nie je povinná. Učiteľ sa ako celá postava posúva dopredu aj bez nej. Ak ju model obsahuje, `placeholder_teacher.gd` nájde prvý `AnimationPlayer`; v `TeacherData` potom môžeš nastaviť presné názvy `idle_animation` a `run_animation`. Neexistujúci alebo prázdny názov nijako nezastaví AI.
+Animácia nie je povinná. Učiteľ sa ako celá postava posúva dopredu aj bez nej. Ak ju model obsahuje, `placeholder_teacher.gd` nájde prvý `AnimationPlayer`. Spoločná konvencia je `Walking` pre hliadku a hľadanie a `RunFast` pre naháňanie; oba klipy sa počas pohybu automaticky prehrávajú v slučke. Voliteľný pokojový klip nastav cez `idle_animation`. Názvy sú case-sensitive a dajú sa pre konkrétny model zmeniť cez `walk_animation` a `run_animation` v jeho `TeacherData`.
+
+Model Jindry Kanyicskovej v `teacher_1.tres` už používa `Walking` a `RunFast`. Ostatní učitelia aj riaditeľka zdedia rovnaké názvy, takže po priradení modelu s týmito klipmi netreba meniť skript. Prázdne `model_scene` bezpečne zobrazí placeholder.
 
 ### Konfigurácia učiteľa
 
-Každý `TeacherData` podporuje meno, predmet, model, mierku, voliteľné názvy animácií, rýchlosť hliadky a naháňačky, sluch, dohľad, uhol videnia, aktívne noci, chase hudbu, jumpscare obrázok, jumpscare zvuk a špeciálne správanie. Aktuálna AI používa model, voliteľné animácie, rýchlosti, dohľad, uhol, aktívne noci a jumpscare médiá.
+Každý `TeacherData` podporuje meno, predmet, model, automatické prispôsobenie výšky, mierku, rotáciu, odsadenie od podlahy, voliteľné názvy animácií, rýchlosť hliadky a naháňačky, sluch, dohľad, uhol videnia, aktívne noci, chase hudbu, jumpscare obrázok, jumpscare zvuk a špeciálne správanie. Aktuálna AI používa model, voliteľné animácie, rýchlosti, dohľad, uhol, aktívne noci a jumpscare médiá.
 
 | Predmet | Učiteľ/ka | Konfigurácia vlastného modelu |
 |---|---|---|
@@ -179,7 +187,7 @@ Všetky hodiny a HUD čítajú jediný zdroj `NightManager.current_in_game_time`
 
 ## Ukladanie
 
-`SaveManager` zapisuje verziovaný JSON do `user://detention_save.json`. Ukladá odomknutú/poslednú noc, dokončenia, najlepšie časy, úmrtia a nastavený jas. Neplatný súbor obnoví zo zálohy alebo z bezpečných predvolených hodnôt.
+`SaveManager` zapisuje verziovaný JSON do `user://detention_save.json`. Ukladá odomknutú/poslednú noc, dokončenia, najlepšie časy, úmrtia, jas, rozlíšenie a režim obrazovky. Neplatný súbor obnoví zo zálohy alebo z bezpečných predvolených hodnôt.
 
 Vývojový reset: zatvor hru, v Godot zvoľ **Project > Open User Data Folder** a odstráň `detention_save.json`, `.bak` a `.tmp`, alebo dočasne zavolaj `SaveManager.reset_progress()`.
 

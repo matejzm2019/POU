@@ -1,10 +1,13 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3 uid="uid://chy1m1eveek5q"]
 
-[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_script"]
-[ext_resource type="Shader" path="res://shaders/menu_background.gdshader" id="2_shader"]
+[ext_resource type="Script" uid="uid://cex6q4i527nqt" path="res://scripts/ui/main_menu.gd" id="1_script"]
+[ext_resource type="Shader" uid="uid://dddi0skvwltmb" path="res://shaders/menu_background.gdshader" id="2_shader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
 shader = ExtResource("2_shader")
+shader_parameter/top_color = Color(0.035, 0.055, 0.07, 1)
+shader_parameter/bottom_color = Color(0.006, 0.009, 0.015, 1)
+shader_parameter/glow_color = Color(0.22, 0.34, 0.31, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_panel"]
 bg_color = Color(0.025, 0.035, 0.041, 0.94)
@@ -31,6 +34,15 @@ border_color = Color(0.34, 0.58, 0.5, 0.65)
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 
+[sub_resource type="StyleBoxFlat" id="Style_button_pressed"]
+content_margin_left = 22.0
+content_margin_top = 13.0
+content_margin_right = 18.0
+content_margin_bottom = 13.0
+bg_color = Color(0.16, 0.23, 0.21, 1)
+border_width_left = 4
+border_color = Color(0.66, 0.95, 0.8, 1)
+
 [sub_resource type="StyleBoxFlat" id="Style_button_hover"]
 content_margin_left = 22.0
 content_margin_top = 13.0
@@ -41,24 +53,6 @@ border_width_left = 4
 border_color = Color(0.55, 0.88, 0.72, 1)
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
-
-[sub_resource type="StyleBoxFlat" id="Style_button_pressed"]
-content_margin_left = 22.0
-content_margin_top = 13.0
-content_margin_right = 18.0
-content_margin_bottom = 13.0
-bg_color = Color(0.16, 0.23, 0.21, 1)
-border_width_left = 4
-border_color = Color(0.66, 0.95, 0.8, 1)
-
-[sub_resource type="StyleBoxFlat" id="Style_button_disabled"]
-content_margin_left = 18.0
-content_margin_top = 13.0
-content_margin_right = 18.0
-content_margin_bottom = 13.0
-bg_color = Color(0.035, 0.043, 0.046, 0.72)
-border_width_left = 2
-border_color = Color(0.16, 0.2, 0.2, 0.5)
 
 [sub_resource type="StyleBoxFlat" id="Style_button_focus"]
 border_width_left = 1
@@ -111,7 +105,7 @@ corner_radius_bottom_left = 8
 shadow_color = Color(0, 0, 0, 0.75)
 shadow_size = 24
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=1792410297]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -120,7 +114,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=2015732217]
 material = SubResource("ShaderMaterial_bg")
 layout_mode = 1
 anchors_preset = 15
@@ -129,9 +123,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(1, 1, 1, 1)
 
-[node name="TopRule" type="ColorRect" parent="."]
+[node name="TopRule" type="ColorRect" parent="." unique_id=901927640]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -140,7 +133,7 @@ grow_horizontal = 2
 mouse_filter = 2
 color = Color(0.36, 0.66, 0.55, 0.75)
 
-[node name="SafeArea" type="MarginContainer" parent="."]
+[node name="SafeArea" type="MarginContainer" parent="." unique_id=1808993549]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -152,100 +145,101 @@ offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Columns" type="HBoxContainer" parent="SafeArea"]
+[node name="Columns" type="HBoxContainer" parent="SafeArea" unique_id=1790052903]
 layout_mode = 2
 theme_override_constants/separation = 70
 
-[node name="Identity" type="VBoxContainer" parent="SafeArea/Columns"]
+[node name="Identity" type="VBoxContainer" parent="SafeArea/Columns" unique_id=391472289]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="NightStamp" type="Label" parent="SafeArea/Columns/Identity"]
+[node name="NightStamp" type="Label" parent="SafeArea/Columns/Identity" unique_id=129705854]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.77, 0.68, 1)
 theme_override_font_sizes/font_size = 15
 text = "PONDELOK  •  23:47  •  VÝCHODNÉ KRÍDLO"
 
-[node name="UpperSpacer" type="Control" parent="SafeArea/Columns/Identity"]
+[node name="UpperSpacer" type="Control" parent="SafeArea/Columns/Identity" unique_id=879890863]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Kicker" type="Label" parent="SafeArea/Columns/Identity"]
+[node name="Kicker" type="Label" parent="SafeArea/Columns/Identity" unique_id=503070535]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.56, 0.66, 0.63, 1)
 theme_override_font_sizes/font_size = 18
 text = "VAROVALI ŤA, ABY SI NEZOSTÁVAL DLHO"
 
-[node name="Title" type="Label" parent="SafeArea/Columns/Identity"]
+[node name="Title" type="Label" parent="SafeArea/Columns/Identity" unique_id=729603684]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.91, 0.86, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_x = 4
 theme_override_constants/shadow_offset_y = 5
 theme_override_font_sizes/font_size = 68
-text = "NOČNÁ"
+text = "SOŠ Polytechnická"
 
-[node name="Subtitle" type="Label" parent="SafeArea/Columns/Identity"]
+[node name="Subtitle" type="Label" parent="SafeArea/Columns/Identity" unique_id=1721653191]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.73, 0.62, 1)
 theme_override_font_sizes/font_size = 24
-text = "ŠKOLA"
+text = "Zlaté Moravce"
 
-[node name="Story" type="Label" parent="SafeArea/Columns/Identity"]
+[node name="Story" type="Label" parent="SafeArea/Columns/Identity" unique_id=2033824483]
 custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_colors/font_color = Color(0.63, 0.66, 0.64, 1)
 theme_override_font_sizes/font_size = 16
-text = "Osem nocí. Zamknuté učebne.\nKaždé hodiny ťa sledujú."
+text = "Osem nocí. Zamknuté učebne.
+Každé hodiny ťa sledujú."
 
-[node name="LowerSpacer" type="Control" parent="SafeArea/Columns/Identity"]
+[node name="LowerSpacer" type="Control" parent="SafeArea/Columns/Identity" unique_id=2104976109]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="PhaseBadge" type="Label" parent="SafeArea/Columns/Identity"]
+[node name="PhaseBadge" type="Label" parent="SafeArea/Columns/Identity" unique_id=881975842]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.44, 0.55, 0.52, 1)
 theme_override_font_sizes/font_size = 13
-text = "SLOVENSKÁ VERZIA  /  DOMÁCE ÚLOHY A PRENASLEDOVANIE"
+text = "HEJZY JE KREJZY"
 
-[node name="MenuPanel" type="PanelContainer" parent="SafeArea/Columns"]
+[node name="MenuPanel" type="PanelContainer" parent="SafeArea/Columns" unique_id=1215158336]
 custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_panel")
 
-[node name="Margin" type="MarginContainer" parent="SafeArea/Columns/MenuPanel"]
+[node name="Margin" type="MarginContainer" parent="SafeArea/Columns/MenuPanel" unique_id=45492003]
 layout_mode = 2
 theme_override_constants/margin_left = 34
 theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 34
 theme_override_constants/margin_bottom = 30
 
-[node name="Options" type="VBoxContainer" parent="SafeArea/Columns/MenuPanel/Margin"]
+[node name="Options" type="VBoxContainer" parent="SafeArea/Columns/MenuPanel/Margin" unique_id=1190113978]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="OfficeLabel" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="OfficeLabel" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=844336539]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.69, 0.62, 1)
 theme_override_font_sizes/font_size = 14
 text = "HLAVNÁ KANCELÁRIA  /  NOČNÝ VSTUP"
 
-[node name="MenuTitle" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="MenuTitle" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=1483581148]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.89, 0.85, 1)
 theme_override_font_sizes/font_size = 30
 text = "PRIHLÁSENIE"
 
-[node name="Divider" type="HSeparator" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="Divider" type="HSeparator" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=822761364]
 layout_mode = 2
 
-[node name="Gap" type="Control" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="Gap" type="Control" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=577365425]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="StartButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="StartButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=1273052462]
 unique_name_in_owner = true
 layout_mode = 2
 focus_neighbor_top = NodePath("../QuitButton")
@@ -253,84 +247,84 @@ theme_override_colors/font_color = Color(0.84, 0.94, 0.89, 1)
 theme_override_colors/font_hover_color = Color(0.95, 1, 0.96, 1)
 theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "ZAČAŤ NOC 1"
 alignment = 0
 
-[node name="ContinueButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="ContinueButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=71720695]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Pokračovať v poslednej dostupnej vybratej noci."
 theme_override_colors/font_color = Color(0.74, 0.82, 0.78, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "POKRAČOVAŤ V NOCI 1"
 alignment = 0
 
-[node name="NightSelectButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="NightSelectButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=319606391]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Zobraziť odomknuté noci a ich náročnosť."
 theme_override_colors/font_color = Color(0.74, 0.82, 0.78, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "VÝBER NOCI"
 alignment = 0
 
-[node name="Row" type="HBoxContainer" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="Row" type="HBoxContainer" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=103161010]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="SettingsButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options/Row"]
+[node name="SettingsButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options/Row" unique_id=929184799]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.7, 0.77, 0.74, 1)
 theme_override_styles/normal = SubResource("Style_small_button")
-theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "NASTAVENIA"
 
-[node name="CreditsButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options/Row"]
+[node name="CreditsButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options/Row" unique_id=1491464857]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.7, 0.77, 0.74, 1)
 theme_override_styles/normal = SubResource("Style_small_button")
-theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "AUTORI"
 
-[node name="QuitButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="QuitButton" type="Button" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=246794950]
 unique_name_in_owner = true
 layout_mode = 2
 focus_neighbor_bottom = NodePath("../StartButton")
 theme_override_colors/font_color = Color(0.55, 0.59, 0.58, 1)
 theme_override_colors/font_hover_color = Color(0.86, 0.64, 0.61, 1)
 theme_override_styles/normal = SubResource("Style_small_button")
-theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_small_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "ODÍSŤ ZO ŠKOLY"
 
-[node name="Hint" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options"]
+[node name="Hint" type="Label" parent="SafeArea/Columns/MenuPanel/Margin/Options" unique_id=660596073]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.4, 0.39, 1)
 theme_override_font_sizes/font_size = 12
 text = "ENTER: VYBRAŤ  /  ESC: SPÄŤ"
 horizontal_alignment = 1
 
-[node name="SettingsPanel" type="Control" parent="."]
+[node name="SettingsPanel" type="Control" parent="." unique_id=948606730]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -340,7 +334,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Dim" type="ColorRect" parent="SettingsPanel"]
+[node name="Dim" type="ColorRect" parent="SettingsPanel" unique_id=347580564]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -349,7 +343,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.76)
 
-[node name="Panel" type="PanelContainer" parent="SettingsPanel"]
+[node name="Panel" type="PanelContainer" parent="SettingsPanel" unique_id=306824034]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -364,63 +358,97 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("Style_overlay")
 
-[node name="Margin" type="MarginContainer" parent="SettingsPanel/Panel"]
+[node name="Margin" type="MarginContainer" parent="SettingsPanel/Panel" unique_id=1060274370]
 layout_mode = 2
 theme_override_constants/margin_left = 42
 theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 42
 theme_override_constants/margin_bottom = 34
 
-[node name="Content" type="VBoxContainer" parent="SettingsPanel/Panel/Margin"]
+[node name="Content" type="VBoxContainer" parent="SettingsPanel/Panel/Margin" unique_id=134250499]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="Title" type="Label" parent="SettingsPanel/Panel/Margin/Content" unique_id=211273670]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 30
 text = "NASTAVENIA"
 
-[node name="Note" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="Note" type="Label" parent="SettingsPanel/Panel/Margin/Content" unique_id=222952124]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.46, 0.61, 0.55, 1)
-text = "Nastavenia sú zatiaľ iba vizuálny náhľad."
+text = "Nastavenie obrazu sa uloží automaticky."
 
-[node name="Rule" type="HSeparator" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="Rule" type="HSeparator" parent="SettingsPanel/Panel/Margin/Content" unique_id=2063996384]
 layout_mode = 2
 
-[node name="Mouse" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="Mouse" type="Label" parent="SettingsPanel/Panel/Margin/Content" unique_id=636311188]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
 theme_override_font_sizes/font_size = 17
 text = "CITLIVOSŤ MYŠI                              0.08"
 
-[node name="Volume" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="Volume" type="Label" parent="SettingsPanel/Panel/Margin/Content" unique_id=1410064242]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
 theme_override_font_sizes/font_size = 17
 text = "HLAVNÁ HLASITOSŤ                            80%"
 
-[node name="Display" type="Label" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="ResolutionRow" type="HBoxContainer" parent="SettingsPanel/Panel/Margin/Content" unique_id=345097841]
 layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Label" type="Label" parent="SettingsPanel/Panel/Margin/Content/ResolutionRow" unique_id=1799414456]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
 theme_override_font_sizes/font_size = 17
-text = "ROZLÍŠENIE                               1280 × 720"
+text = "ROZLÍŠENIE"
 
-[node name="Spacer" type="Control" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="ResolutionOption" type="OptionButton" parent="SettingsPanel/Panel/Margin/Content/ResolutionRow" unique_id=748018867]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(210, 42)
+layout_mode = 2
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/focus = SubResource("Style_button_focus")
+
+[node name="WindowModeRow" type="HBoxContainer" parent="SettingsPanel/Panel/Margin/Content" unique_id=1257865659]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Label" type="Label" parent="SettingsPanel/Panel/Margin/Content/WindowModeRow" unique_id=1028861681]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.69, 0.72, 0.7, 1)
+theme_override_font_sizes/font_size = 17
+text = "REŽIM OBRAZOVKY"
+
+[node name="WindowModeOption" type="OptionButton" parent="SettingsPanel/Panel/Margin/Content/WindowModeRow" unique_id=1770433485]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(210, 42)
+layout_mode = 2
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/focus = SubResource("Style_button_focus")
+
+[node name="Spacer" type="Control" parent="SettingsPanel/Panel/Margin/Content" unique_id=1069240517]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="SettingsBackButton" type="Button" parent="SettingsPanel/Panel/Margin/Content"]
+[node name="SettingsBackButton" type="Button" parent="SettingsPanel/Panel/Margin/Content" unique_id=1628180785]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "SPÄŤ"
 
-[node name="CreditsPanel" type="Control" parent="."]
+[node name="CreditsPanel" type="Control" parent="." unique_id=1627997384]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -430,7 +458,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Dim" type="ColorRect" parent="CreditsPanel"]
+[node name="Dim" type="ColorRect" parent="CreditsPanel" unique_id=507637911]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -439,7 +467,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.76)
 
-[node name="Panel" type="PanelContainer" parent="CreditsPanel"]
+[node name="Panel" type="PanelContainer" parent="CreditsPanel" unique_id=1132348347]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -454,51 +482,51 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("Style_overlay")
 
-[node name="Margin" type="MarginContainer" parent="CreditsPanel/Panel"]
+[node name="Margin" type="MarginContainer" parent="CreditsPanel/Panel" unique_id=436884608]
 layout_mode = 2
 theme_override_constants/margin_left = 42
 theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 42
 theme_override_constants/margin_bottom = 34
 
-[node name="Content" type="VBoxContainer" parent="CreditsPanel/Panel/Margin"]
+[node name="Content" type="VBoxContainer" parent="CreditsPanel/Panel/Margin" unique_id=516827883]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Title" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+[node name="Title" type="Label" parent="CreditsPanel/Panel/Margin/Content" unique_id=492770685]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
 theme_override_font_sizes/font_size = 30
 text = "AUTORI"
 
-[node name="Rule" type="HSeparator" parent="CreditsPanel/Panel/Margin/Content"]
+[node name="Rule" type="HSeparator" parent="CreditsPanel/Panel/Margin/Content" unique_id=1752820682]
 layout_mode = 2
 
-[node name="Project" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+[node name="Project" type="Label" parent="CreditsPanel/Panel/Margin/Content" unique_id=1912761694]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.74, 0.72, 1)
 theme_override_font_sizes/font_size = 18
-text = "NOČNÁ ŠKOLA"
+text = "SOŠP"
 
-[node name="Build" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+[node name="Build" type="Label" parent="CreditsPanel/Panel/Margin/Content" unique_id=79682230]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.59, 0.54, 1)
-text = "Slovenská hororová hra vytvorená v Godot 4 a GDScripte."
+text = "HEJZY"
 
-[node name="Tools" type="Label" parent="CreditsPanel/Panel/Margin/Content"]
+[node name="Tools" type="Label" parent="CreditsPanel/Panel/Margin/Content" unique_id=1779146389]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.58, 0.62, 0.6, 1)
-text = "Jadro: Godot Engine\nDočasná geometria: vytvorená v projekte\nPísmo: predvolené písmo Godot"
+text = "GODOT"
 
-[node name="Spacer" type="Control" parent="CreditsPanel/Panel/Margin/Content"]
+[node name="Spacer" type="Control" parent="CreditsPanel/Panel/Margin/Content" unique_id=1259792284]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CreditsBackButton" type="Button" parent="CreditsPanel/Panel/Margin/Content"]
+[node name="CreditsBackButton" type="Button" parent="CreditsPanel/Panel/Margin/Content" unique_id=923313908]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/focus = SubResource("Style_button_focus")
 text = "SPÄŤ"

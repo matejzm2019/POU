@@ -409,3 +409,75 @@ C:\Users\matej\Downloads\godot.exe --headless --verbose --path . res://scripts/v
 - Phase 1: 11 scenes loaded and instantiated; exit `0`.
 - Phase 2 systems and fresh-process persistence: both passed; exit `0`.
 - Phase 3 gameplay, navigation, cooldown, roaming and door behavior: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+
+## 2026-07-15 - Resolution and window-mode settings
+
+- Replaced the static resolution preview in the Slovak Settings panel with functional keyboard-accessible selectors.
+- Added the supported resolutions 1280 × 720, 1920 × 1080 and 2560 × 1440.
+- Added windowed and exclusive-fullscreen modes; windowed resolutions are centered on the current display.
+- Display choices apply immediately and persist together in `SaveManager.settings` across restarts.
+- Extended Phase 2 validation to verify exact choices, saving and fresh-process persistence.
+
+## 2026-07-15 - Flashlight falloff and classroom lighting
+
+- Increased the shadowed flashlight range from 13 m to 30 m and widened its useful cone.
+- Tuned shadow bias, normal bias and blur to suppress dark line/acne artifacts on distant surfaces.
+- Added a low-energy, shadow-free 36 m fill cone to soften the main beam boundary without flattening nearby shadows.
+- Replaced two central lights per room with four evenly distributed ceiling lights in every classroom and kabinet; each now has higher energy, range and emissive fixture brightness.
+- Added Phase 1 regressions for both flashlight layers and all 32 classroom lights.
+- Raised the positional shadow atlas to 4096 with full-depth precision and medium soft-shadow filtering after a GUI check exposed residual stair-stepping on a door-frame shadow.
+
+## 2026-07-16 - Last-seen classroom pursuit and imported-model fitting
+
+- Changed long-distance loss of sight from ending a chase to entering `SEARCH`; the blackout and active subject teacher remain until morning or an explicit gameplay reset.
+- Preserved the exact last-known player position when search starts. A teacher now follows the player into the classroom where they disappeared before choosing further school patrol points.
+- Removed direct movement toward unreachable navigation targets after a completed path, preventing teachers from continually pushing into walls or furniture while repathing.
+- Added automatic custom-model AABB fitting through a separate `ModelFit` node. Imported visuals are normalized to a configurable 2.3 m height, centered over the AI collision and grounded regardless of source units or pivot placement.
+- Added `auto_fit_model`, `model_height`, `model_rotation_degrees` and `model_ground_offset` to `TeacherData` while retaining `model_scale` for manual proportion tuning.
+- Corrected Jana Palajová's Bo Peep model by rotating it 90 degrees around X before fitting. The same fitter repairs the center-pivot teachers and Mária Šumná's extremely small source model.
+- Extended Phase 3 validation to check persistent last-seen search targets plus final height, floor alignment and maximum footprint for all seven assigned custom models.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 scene regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 2 systems and fresh-process persistence: `PHASE_2_VALIDATION_OK` and `PHASE_2_PERSISTENCE_OK`; both exit `0`.
+- Phase 3 gameplay, classroom search and custom-model bounds: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- Static project audit: `project.godot` config version 5, valid `res://main.tscn`, all eight night resources present, 72 quoted literal `res://` dependencies checked and none missing; `git diff --check` passed.
+
+## 2026-07-16 - Teacher-desk navigation, Jana grounding and flashlight toggle
+
+- Fixed intermittent path starvation: teachers no longer reset an unfinished route every physics frame while waiting for `NavigationAgent3D` to return its next point.
+- Clamped chase, search and patrol targets to the nearest valid navigation point instead of steering toward positions inside furniture.
+- Restored a 0.25 m navigation cell with an exact 0.5 m baked agent radius for smoother routes around teacher desks without radius-rounding warnings.
+- Kept Jana Palajová upright at +90 degrees and added a dedicated 0.08 m ground offset. Validation now identifies her `Face` material and requires it to remain above the body's center.
+- Added `F` as the Slovak flashlight toggle. Both the shadowed main beam and soft fill beam switch together; pause and homework screens keep gameplay input blocked.
+- Added a physical regression route with the teacher and player on opposite sides of a teacher desk. The teacher must visibly detour around its collision and reach the player.
+- Added a physical `KEY_F` regression that turns both flashlight layers off and back on.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 scene regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 2 systems and fresh-process persistence: `PHASE_2_VALIDATION_OK` and `PHASE_2_PERSISTENCE_OK`; both exit `0`.
+- Phase 3 desk navigation, Jana face/grounding, flashlight toggle and full gameplay: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- Direct `project.godot` main-scene startup smoke test for 120 frames: exit `0`.
+- Static audit: valid `res://main.tscn`, 72 quoted literal `res://` dependencies with none missing, and `git diff --check` passed.
+
+## 2026-07-29 - Looped teacher movement animations
+
+- Added a separate `walk_animation` setting with the shared `Walking` name and changed the shared chase name to `RunFast`.
+- Teacher 1 now plays `Walking` while patrolling/searching and `RunFast` while chasing.
+- Movement clips are forced to loop at runtime and restart if an imported `AnimationPlayer` stops on its final frame.
+- Models without an idle clip pause cleanly while stationary instead of walking in place.
+- Removed missing custom-model references from teachers 2–7; they use the built-in placeholders until replacement models are assigned.
+- Extended Phase 3 validation to prove that Teacher 1's `RunFast` animation advances during movement and remains looped.
+
+### Validation
+
+- Godot 4.7.1 editor/parser/import scan: exit `0`.
+- Phase 1 scene regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 2 systems: `PHASE_2_VALIDATION_OK`; exit `0`.
+- Phase 3 movement-animation and gameplay regression: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- Main-scene startup smoke test for 120 frames: exit `0`.
+- Static quoted-resource-path audit and `git diff --check`: passed.

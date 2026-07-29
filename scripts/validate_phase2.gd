@@ -145,6 +145,16 @@ func _validate_selection_locking() -> void:
 	await get_tree().process_frame
 	_check((menu.find_child("StartButton", true, false) as Button).disabled, "Settings modal did not disable underlying actions.")
 	_check(get_viewport().gui_get_focus_owner() == menu.find_child("SettingsBackButton", true, false), "Settings modal did not trap focus on its control.")
+	var resolution_option := menu.get_node("%ResolutionOption") as OptionButton
+	var window_mode_option := menu.get_node("%WindowModeOption") as OptionButton
+	_check(resolution_option.item_count == 3, "Settings must offer exactly 720p, 1080p and 1440p.")
+	_check(resolution_option.get_item_text(0) == "1280 × 720" and resolution_option.get_item_text(1) == "1920 × 1080" and resolution_option.get_item_text(2) == "2560 × 1440", "Resolution options are incorrect.")
+	_check(window_mode_option.item_count == 2 and window_mode_option.get_item_text(0) == "V OKNE" and window_mode_option.get_item_text(1) == "CELÁ OBRAZOVKA", "Window-mode options are incorrect.")
+	resolution_option.select(1)
+	resolution_option.item_selected.emit(1)
+	window_mode_option.select(1)
+	window_mode_option.item_selected.emit(1)
+	_check(SaveManager.get_resolution_index() == 1 and SaveManager.is_fullscreen_enabled(), "Display settings were not saved.")
 	(menu.find_child("SettingsBackButton", true, false) as Button).pressed.emit()
 	_check(not (menu.find_child("StartButton", true, false) as Button).disabled, "Closing Settings did not restore menu actions.")
 	menu.queue_free()
@@ -270,6 +280,7 @@ func _verify_persistence() -> void:
 	_check(best.has("1"), "Best Night 1 completion time did not persist.")
 	_check(int(SaveManager.data.get("last_selected_night", 0)) == 2, "Selected Night 2 did not persist.")
 	_check(SaveManager.get_continue_night() == 2, "Continue did not use the last selected unlocked night.")
+	_check(SaveManager.get_resolution_index() == 1 and SaveManager.is_fullscreen_enabled(), "Display settings did not persist across restart.")
 	SaveManager.reset_progress()
 	for suffix in ["", SaveManager.TEMP_SUFFIX, SaveManager.BACKUP_SUFFIX]:
 		var path: String = SaveManager.save_path + str(suffix)

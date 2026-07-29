@@ -9,6 +9,7 @@ const SAVE_PATH := "user://detention_save.json"
 const TEST_SAVE_PATH := "user://detention_phase2_test_save.json"
 const TEMP_SUFFIX := ".tmp"
 const BACKUP_SUFFIX := ".bak"
+const SUPPORTED_RESOLUTIONS := [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 
 var save_path := SAVE_PATH
 var data: Dictionary = {}
@@ -19,6 +20,7 @@ func _ready() -> void:
 	if "--phase2-test" in OS.get_cmdline_user_args():
 		save_path = TEST_SAVE_PATH
 	load_save()
+	apply_display_settings()
 
 
 func load_save() -> void:
@@ -126,6 +128,41 @@ func set_setting(key: String, value: Variant) -> bool:
 	settings[key] = value
 	data["settings"] = settings
 	return save_now()
+
+
+func get_resolution_index() -> int:
+	return clampi(_safe_int(get_setting("resolution_index", 0), 0), 0, SUPPORTED_RESOLUTIONS.size() - 1)
+
+
+func is_fullscreen_enabled() -> bool:
+	var value: Variant = get_setting("fullscreen", false)
+	return value if value is bool else false
+
+
+func set_display_settings(resolution_index: int, fullscreen: bool) -> bool:
+	var settings := data.get("settings", {}) as Dictionary
+	settings["resolution_index"] = clampi(resolution_index, 0, SUPPORTED_RESOLUTIONS.size() - 1)
+	settings["fullscreen"] = fullscreen
+	data["settings"] = settings
+	var saved := save_now()
+	apply_display_settings()
+	return saved
+
+
+func apply_display_settings() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var resolution: Vector2i = SUPPORTED_RESOLUTIONS[get_resolution_index()]
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(resolution)
+	if is_fullscreen_enabled():
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+		return
+	var screen := DisplayServer.window_get_current_screen()
+	var screen_size := DisplayServer.screen_get_size(screen)
+	var screen_position := DisplayServer.screen_get_position(screen)
+	var centered := Vector2i(maxi(0, floori((screen_size.x - resolution.x) * 0.5)), maxi(0, floori((screen_size.y - resolution.y) * 0.5)))
+	DisplayServer.window_set_position(screen_position + centered)
 
 
 func complete_night(night_number: int, completion_seconds: float) -> void:

@@ -83,7 +83,8 @@ func _process(delta: float) -> void:
 	var far_enough := chaser_3d.global_position.distance_to(_player.global_position) >= ESCAPE_DISTANCE
 	_escape_elapsed = _escape_elapsed + delta if far_enough and not can_see else 0.0
 	if _escape_elapsed >= ESCAPE_TIME:
-		end_chase()
+		_escape_elapsed = 0.0
+		_chaser.call("lose_player_and_search")
 
 
 func get_subjects() -> Array[SubjectData]:

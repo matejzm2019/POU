@@ -59,11 +59,21 @@ func _validate_player_rotation(player: FirstPersonController) -> void:
 
 
 func _validate_school(level: Node) -> void:
+	var player := level.find_child("Player", true, false) as FirstPersonController
 	_check(level.find_children("Classroom_*", "", true, false).size() == 7, "School should contain seven subject classrooms.")
 	_check(get_tree().get_nodes_in_group("teacher_enemies").size() == 8, "School should contain seven subject teachers and one headmistress.")
 	_check(level.find_children("ClassroomDoor_*", "", true, false).size() == 8, "School should contain eight fitted classroom doors.")
 	_check(level.find_children("DeskHiding_*", "Area3D", true, false).size() == 42, "Every student desk should have a hiding spot.")
 	_check(level.find_children("*ChairBack_*", "StaticBody3D", true, false).size() == 42, "Desk furniture should block teachers physically.")
+	var flashlight := player.find_child("Flashlight", true, false) as SpotLight3D
+	var flashlight_fill := player.find_child("FlashlightFill", true, false) as SpotLight3D
+	_check(flashlight != null and flashlight.spot_range >= 30.0 and flashlight.shadow_enabled and flashlight.shadow_blur > 1.0, "Player flashlight range or shadow smoothing is incorrect.")
+	_check(flashlight_fill != null and flashlight_fill.spot_range > flashlight.spot_range and not flashlight_fill.shadow_enabled, "Soft flashlight distance fill is missing.")
+	_check(int(ProjectSettings.get_setting("rendering/lights_and_shadows/positional_shadow/atlas_size", 0)) >= 4096 and not bool(ProjectSettings.get_setting("rendering/lights_and_shadows/positional_shadow/atlas_16_bits", true)), "Positional shadow atlas precision is too low.")
+	var classroom_lights := level.find_children("ClassroomLight_*", "OmniLight3D", true, false)
+	_check(classroom_lights.size() == 32, "Every classroom and kabinet should contain four ceiling lights.")
+	for light in classroom_lights:
+		_check((light as OmniLight3D).light_energy >= 1.35 and (light as OmniLight3D).omni_range >= 8.8, "A classroom light is too dim or too short-ranged.")
 	_check(level.find_children("DoorNavigationLink_*", "NavigationLink3D", true, false).size() == 8, "Every classroom door should have a bidirectional teacher navigation link.")
 	_check(level.find_children("Homework_*", "", true, false).size() == 7, "School should contain seven homework stations.")
 	_check(level.find_child("Kabinet", true, false) != null, "Kabinet učiteľov is missing.")

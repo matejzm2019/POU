@@ -31,6 +31,7 @@ var _released := false
 var _footstep_elapsed := 0.0
 var _doors_to_close: Array[Node3D] = []
 var _animation_player: AnimationPlayer
+var _custom_model_bounds := AABB()
 
 @onready var _placeholder: Node3D = $Placeholder
 @onready var _model_anchor: Node3D = $ModelAnchor
@@ -86,6 +87,7 @@ func _physics_process(delta: float) -> void:
 			_search(delta)
 		_:
 			_stop_horizontal(delta)
+	_update_animation()
 	_update_footsteps(delta)
 	_check_siren_sighting()
 
@@ -113,7 +115,7 @@ func start_chase(player: Node3D) -> void:
 	_caught_reported = false
 	_last_known_position = player.global_position
 	_set_navigation_target(_last_known_position)
-	_play_animation(teacher_data.run_animation if teacher_data != null else "Run")
+	_play_animation(teacher_data.run_animation if teacher_data != null else "RunFast")
 
 
 func stop_chase() -> void:
@@ -138,15 +140,15 @@ func set_last_known_position(position: Vector3) -> void:
 		_state = State.CHASE
 		_last_known_position = position
 		_set_navigation_target(position)
-		_play_animation(teacher_data.run_animation if teacher_data != null else "Run")
+		_play_animation(teacher_data.run_animation if teacher_data != null else "RunFast")
 
 
 func lose_player_and_search() -> void:
 	if _state != State.CHASE and _state != State.SEARCH:
 		return
 	_state = State.SEARCH
-	_select_next_search_target()
-	_play_animation(teacher_data.run_animation if teacher_data != null else "Run")
+	_set_navigation_target(_last_known_position)
+	_play_animation(teacher_data.walk_animation if teacher_data != null else "Walking")
 
 
 func can_see_player() -> bool:
@@ -190,6 +192,10 @@ func has_been_released() -> bool:
 	return _released
 
 
+func get_custom_model_bounds() -> AABB:
+	return _custom_model_bounds
+
+
 func _patrol(delta: float) -> void:
 	if _patrol_points.is_empty():
 		_state = State.IDLE
@@ -228,7 +234,7 @@ func _search(delta: float) -> void:
 		has_engaged = true
 		_last_known_position = _player.global_position
 		_set_navigation_target(_last_known_position)
-		_play_animation(teacher_data.run_animation if teacher_data != null else "Run")
+		_play_animation(teacher_data.run_animation if teacher_data != null else "RunFast")
 		return
 	if global_position.distance_to(_last_known_position) < 1.1:
 		_select_next_search_target()
@@ -251,8 +257,8 @@ func _move_toward_target(target: Vector3, speed: float, delta: float) -> void:
 	var direction := next_position - global_position
 	direction.y = 0.0
 	if direction.length_squared() < 0.0025:
-		direction = target - global_position
-		direction.y = 0.0
+		_stop_horizontal(delta)
+		return
 	direction = direction.normalized()
 	velocity.x = move_toward(velocity.x, direction.x * speed, speed * 6.0 * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, speed * 6.0 * delta)
@@ -274,7 +280,8 @@ func _stop_horizontal(delta: float) -> void:
 func _set_navigation_target(target: Vector3) -> void:
 	if _navigation_refresh_elapsed <= 0.0 or _last_navigation_target.distance_squared_to(target) > 0.25:
 		_last_navigation_target = target
-		_agent.target_position = target
+		var navigation_map := _agent.get_navigation_map()
+		_agent.target_position = NavigationServer3D.map_get_closest_point(navigation_map, target) if navigation_map.is_valid() else target
 		_navigation_refresh_elapsed = 0.5
 
 
@@ -351,8 +358,11 @@ func _build_visual() -> void:
 			return
 		var model := instance as Node3D
 		_placeholder.hide()
-		model.scale = teacher_data.model_scale if teacher_data != null else fallback_model_scale
-		_model_anchor.add_child(model)
+		var fit_node := Node3D.new()
+		fit_node.name = "ModelFit"
+		_model_anchor.add_child(fit_node)
+		fit_node.add_child(model)
+		_fit_custom_model(model, fit_node)
 		var players := model.find_children("*", "AnimationPlayer", true, false)
 		if not players.is_empty():
 			_animation_player = players[0] as AnimationPlayer
@@ -364,8 +374,74 @@ func _build_visual() -> void:
 			(mesh as MeshInstance3D).material_override = material
 
 
+func _fit_custom_model(model: Node3D, fit_node: Node3D) -> void:
+	var manual_scale := teacher_data.model_scale if teacher_data != null else fallback_model_scale
+	model.scale = Vector3.ONE
+	model.rotation_degrees = teacher_data.model_rotation_degrees if teacher_data != null else Vector3.ZERO
+	var bounds := _calculate_visual_bounds(model, fit_node)
+	if bounds.size.y <= 0.001:
+		push_warning("Model učiteľa nemá použiteľnú 3D geometriu na automatické zarovnanie.")
+		return
+	var fit_scale := manual_scale
+	if teacher_data == null or teacher_data.auto_fit_model:
+		var target_height := teacher_data.model_height if teacher_data != null else 2.3
+		fit_scale *= target_height / bounds.size.y
+	fit_node.scale = fit_scale
+	var center := bounds.get_center()
+	var ground_offset := teacher_data.model_ground_offset if teacher_data != null else 0.0
+	fit_node.position = Vector3(
+		-center.x * fit_scale.x,
+		-bounds.position.y * fit_scale.y + ground_offset,
+		-center.z * fit_scale.z
+	)
+	_custom_model_bounds = _calculate_visual_bounds(fit_node, _model_anchor)
+
+
+func _calculate_visual_bounds(root: Node3D, relative_to: Node3D) -> AABB:
+	var meshes: Array[Node] = root.find_children("*", "MeshInstance3D", true, false)
+	if root is MeshInstance3D:
+		meshes.push_front(root)
+	var combined := AABB()
+	var has_bounds := false
+	var inverse := relative_to.global_transform.affine_inverse()
+	for child in meshes:
+		var mesh_instance := child as MeshInstance3D
+		if mesh_instance.mesh == null:
+			continue
+		var transformed := (inverse * mesh_instance.global_transform) * mesh_instance.get_aabb()
+		if transformed.size.is_zero_approx():
+			continue
+		combined = combined.merge(transformed) if has_bounds else transformed
+		has_bounds = true
+	return combined
+
+
+func _update_animation() -> void:
+	if _animation_player == null:
+		return
+	var moving := Vector2(velocity.x, velocity.z).length() > 0.1
+	if not moving:
+		var idle_name := teacher_data.idle_animation if teacher_data != null else "Idle"
+		if not idle_name.is_empty() and _animation_player.has_animation(idle_name):
+			_play_animation(idle_name)
+		elif _animation_player.is_playing():
+			_animation_player.pause()
+		return
+	var animation_name := (
+		teacher_data.run_animation if teacher_data != null else "RunFast"
+	) if _state == State.CHASE else (
+		teacher_data.walk_animation if teacher_data != null else "Walking"
+	)
+	_play_animation(animation_name)
+
+
 func _play_animation(animation_name: String) -> void:
-	if _animation_player != null and _animation_player.has_animation(animation_name) and _animation_player.current_animation != animation_name:
+	if _animation_player == null or animation_name.is_empty() or not _animation_player.has_animation(animation_name):
+		return
+	var animation := _animation_player.get_animation(animation_name)
+	if animation != null and animation.loop_mode == Animation.LOOP_NONE:
+		animation.loop_mode = Animation.LOOP_LINEAR
+	if _animation_player.current_animation != animation_name or not _animation_player.is_playing():
 		_animation_player.play(animation_name)
 
 

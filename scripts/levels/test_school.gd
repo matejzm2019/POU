@@ -358,12 +358,14 @@ func _build_lighting() -> void:
 		var row_z: float = ROOM_ROWS[row_index]
 		for side_value in [-1.0, 1.0]:
 			var center_x := float(side_value) * 13.0
-			_add_ceiling_light("ClassroomLight_%d_%s_A" % [row_index, str(side_value)], Vector3(center_x - 4.0, 3.82, row_z), 1.15, 7.5, false)
-			_add_ceiling_light("ClassroomLight_%d_%s_B" % [row_index, str(side_value)], Vector3(center_x + 4.0, 3.82, row_z), 1.05, 7.5, false)
+			for x_index in 2:
+				for z_index in 2:
+					var light_position := Vector3(center_x - 4.0 + x_index * 8.0, 3.82, row_z - 4.5 + z_index * 9.0)
+					_add_ceiling_light("ClassroomLight_%d_%s_%d_%d" % [row_index, str(side_value), x_index, z_index], light_position, 1.35, 8.8, false)
 
 
 func _add_ceiling_light(label: String, light_position: Vector3, energy: float, light_range: float, shadows: bool) -> void:
-	var fixture := _box("%sFixture" % label, light_position + Vector3(0, 0.08, 0), Vector3(2.6, 0.08, 0.34), Color("c6d1c6"), false, 1.7)
+	var fixture := _box("%sFixture" % label, light_position + Vector3(0, 0.08, 0), Vector3(2.6, 0.08, 0.34), Color("c6d1c6"), false, 2.1)
 	fixture.add_to_group("school_light_fixtures")
 	var light := OmniLight3D.new()
 	light.name = label
@@ -381,7 +383,7 @@ func _build_navigation() -> void:
 	navigation_mesh.agent_height = 2.0
 	navigation_mesh.agent_radius = 0.5
 	navigation_mesh.agent_max_climb = 0.25
-	navigation_mesh.cell_size = 0.5
+	navigation_mesh.cell_size = 0.25
 	navigation_mesh.cell_height = 0.25
 	navigation_mesh.region_min_size = 1.0
 	navigation_mesh.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS

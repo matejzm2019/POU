@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="GameAudioData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="GameAudioData" format=3 uid="uid://cprjqr5efe3a5"]
 
-[ext_resource type="Script" path="res://data/audio/game_audio_data.gd" id="1_data"]
+[ext_resource type="AudioStream" uid="uid://bejqw42266evg" path="res://audio/Betka z amatérov.mp3" id="1_bbqt5"]
+[ext_resource type="Script" uid="uid://bx3qjf67djr65" path="res://data/audio/game_audio_data.gd" id="1_data"]
+[ext_resource type="AudioStream" uid="uid://cci55f7e607p1" path="res://audio/Alžbeta z amatérov.mp3" id="2_bbqt5"]
 
 [resource]
 script = ExtResource("1_data")
-menu_volume_db = -15.0
-ambient_volume_db = -19.0
-footstep_volume_db = -7.0
+menu_music = ExtResource("1_bbqt5")
+school_ambient = ExtResource("2_bbqt5")

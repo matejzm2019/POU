@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="TeacherData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TeacherData" format=3 uid="uid://dpaonjxiutw30"]
 
-[ext_resource type="Script" path="res://data/teachers/teacher_data.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://bm26sef8m6arm" path="res://assets/images/jumpscares/SOS-pol-154-Vx-Vlastne.jpg" id="1_275j3"]
+[ext_resource type="Script" uid="uid://bs8kqbf5q6mwf" path="res://data/teachers/teacher_data.gd" id="1_data"]
 
 [resource]
 script = ExtResource("1_data")
@@ -11,4 +12,5 @@ walk_speed = 1.95
 chase_speed = 4.3
 hearing_range = 17.0
 vision_range = 20.0
+jumpscare_image = ExtResource("1_275j3")
 active_nights = PackedInt32Array(7, 8)

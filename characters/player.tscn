@@ -46,12 +46,29 @@ script = ExtResource("2_interaction")
 
 [node name="Flashlight" type="SpotLight3D" parent="Head/Camera3D"]
 position = Vector3(0.12, -0.08, -0.12)
-light_color = Color(0.78, 0.83, 0.76, 1)
-light_energy = 2.4
+light_color = Color(0.82, 0.86, 0.8, 1)
+light_energy = 3.0
+light_specular = 0.65
 shadow_enabled = true
-spot_range = 13.0
-spot_angle = 25.0
-spot_angle_attenuation = 1.2
+shadow_bias = 0.25
+shadow_normal_bias = 2.0
+shadow_opacity = 0.78
+shadow_blur = 2.4
+spot_range = 30.0
+spot_attenuation = 0.58
+spot_angle = 30.0
+spot_angle_attenuation = 0.65
+
+[node name="FlashlightFill" type="SpotLight3D" parent="Head/Camera3D"]
+position = Vector3(0.12, -0.08, -0.12)
+light_color = Color(0.7, 0.76, 0.7, 1)
+light_energy = 0.48
+light_specular = 0.25
+shadow_enabled = false
+spot_range = 36.0
+spot_attenuation = 0.72
+spot_angle = 34.0
+spot_angle_attenuation = 0.55
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
 

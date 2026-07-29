@@ -22,6 +22,8 @@ extends CharacterBody3D
 @onready var _clearance: ShapeCast3D = $StandingClearance
 @onready var _interaction: InteractionComponent = $Head/Camera3D/InteractionRay
 @onready var _hud: GameHUD = $HUD
+@onready var _flashlight: SpotLight3D = $Head/Camera3D/Flashlight
+@onready var _flashlight_fill: SpotLight3D = $Head/Camera3D/FlashlightFill
 
 var _pitch := 0.0
 var _stamina := 100.0
@@ -55,6 +57,10 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if get_tree().paused or SchoolGameManager.homework_open:
+		return
+	if event.is_action_pressed("flashlight_toggle"):
+		_set_flashlight_enabled(not _flashlight.visible)
+		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion
@@ -123,6 +129,15 @@ func set_desk_overlap(spot: Node3D, inside: bool) -> void:
 
 func is_hidden() -> bool:
 	return _hidden
+
+
+func is_flashlight_enabled() -> bool:
+	return _flashlight.visible and _flashlight_fill.visible
+
+
+func _set_flashlight_enabled(enabled: bool) -> void:
+	_flashlight.visible = enabled
+	_flashlight_fill.visible = enabled
 
 
 func _sync_hidden_state() -> void:

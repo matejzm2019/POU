@@ -251,7 +251,7 @@ offset_bottom = -28.0
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.48, 0.53, 0.51, 0.72)
 theme_override_font_sizes/font_size = 12
-text = "MYŠ: ROZHLIADANIE  /  WASD: POHYB  /  SHIFT: ŠPRINT  /  C: DREP  /  E: POUŽIŤ"
+text = "MYŠ: ROZHLIADANIE  /  WASD: POHYB  /  SHIFT: ŠPRINT  /  C: DREP  /  E: POUŽIŤ  /  F: BATERKA"
 
 [node name="DebugCompleteHint" type="Label" parent="Root"]
 unique_name_in_owner = true

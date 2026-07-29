@@ -6,8 +6,13 @@ extends Resource
 @export var subject_id := ""
 @export var model_scene: PackedScene
 @export var model_scale := Vector3.ONE
+@export var auto_fit_model := true
+@export_range(0.5, 3.0, 0.05) var model_height := 2.3
+@export var model_rotation_degrees := Vector3.ZERO
+@export_range(-1.0, 1.0, 0.01) var model_ground_offset := 0.0
 @export var idle_animation := "Idle"
-@export var run_animation := "Run"
+@export var walk_animation := "Walking"
+@export var run_animation := "RunFast"
 @export_range(1.0, 10.0, 0.1) var walk_speed := 2.4
 @export_range(1.0, 14.0, 0.1) var chase_speed := 5.2
 @export_range(1.0, 50.0, 0.5) var hearing_range := 14.0

@@ -7,9 +7,12 @@ signal night_selection_requested
 
 @onready var _settings_panel: Control = %SettingsPanel
 @onready var _credits_panel: Control = %CreditsPanel
+@onready var _resolution_option: OptionButton = %ResolutionOption
+@onready var _window_mode_option: OptionButton = %WindowModeOption
 
 
 func _ready() -> void:
+	_setup_display_settings()
 	%StartButton.pressed.connect(func() -> void: start_requested.emit())
 	%ContinueButton.pressed.connect(func() -> void: continue_requested.emit(SaveManager.get_continue_night()))
 	%NightSelectButton.pressed.connect(func() -> void: night_selection_requested.emit())
@@ -20,6 +23,21 @@ func _ready() -> void:
 	%QuitButton.pressed.connect(get_tree().quit)
 	%ContinueButton.text = "POKRAČOVAŤ V NOCI %d" % SaveManager.get_continue_night()
 	%StartButton.grab_focus()
+
+
+func _setup_display_settings() -> void:
+	for resolution in SaveManager.SUPPORTED_RESOLUTIONS:
+		_resolution_option.add_item("%d × %d" % [resolution.x, resolution.y])
+	_window_mode_option.add_item("V OKNE")
+	_window_mode_option.add_item("CELÁ OBRAZOVKA")
+	_resolution_option.select(SaveManager.get_resolution_index())
+	_window_mode_option.select(1 if SaveManager.is_fullscreen_enabled() else 0)
+	_resolution_option.item_selected.connect(_on_display_settings_changed)
+	_window_mode_option.item_selected.connect(_on_display_settings_changed)
+
+
+func _on_display_settings_changed(_index: int) -> void:
+	SaveManager.set_display_settings(_resolution_option.selected, _window_mode_option.selected == 1)
 
 
 func _unhandled_input(event: InputEvent) -> void:

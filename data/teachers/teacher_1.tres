@@ -1,14 +1,19 @@
-[gd_resource type="Resource" script_class="TeacherData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TeacherData" format=3 uid="uid://c8f5pfuc57ksk"]
 
-[ext_resource type="Script" path="res://data/teachers/teacher_data.gd" id="1_data"]
+[ext_resource type="Script" uid="uid://bs8kqbf5q6mwf" path="res://data/teachers/teacher_data.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://deid1n6ywc3i" path="res://assets/images/jumpscares/SOS-pol-044-Vx-Vlastne.jpg" id="1_ddu8g"]
+[ext_resource type="PackedScene" uid="uid://umone6ook13t" path="res://assets/models/teachers/kanickova.glb" id="2_ddu8g"]
 
 [resource]
 script = ExtResource("1_data")
 teacher_id = "teacher_1"
 display_name = "Jindra Kanyicsková"
 subject_id = "dejepis"
+model_scene = ExtResource("2_ddu8g")
+auto_fit_model = false
+idle_animation = ""
 walk_speed = 1.7
 chase_speed = 3.8
-hearing_range = 14.0
 vision_range = 17.0
+jumpscare_image = ExtResource("1_ddu8g")
 active_nights = PackedInt32Array(2, 3, 4, 5, 6, 7, 8)
