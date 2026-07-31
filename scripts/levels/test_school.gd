@@ -8,7 +8,22 @@ const CORRIDOR_WINDOW_WIDTH := 8.0
 const WINDOW_BOTTOM := 1.0
 const WINDOW_TOP := 3.35
 const EXTERIOR_WINDOW_WIDTH := 12.0
+const FLOOR_HEIGHT := 4.4
+const FLOOR_COUNT := 3
+const STAIR_START_Z := 12.5
+const STAIR_END_Z := 18.5
 const DESK_HIDING_SPOT_SCRIPT := preload("res://systems/hiding/desk_hiding_spot.gd")
+const CLASSROOM_DECORATOR := preload("res://scripts/levels/classroom_decorator.gd")
+const UPPER_ROOM_NAMES := {
+	"classroom": "VŠEOBECNÁ UČEBŇA",
+	"library": "KNIŽNICA",
+	"science_lab": "PRÍRODOVEDNÉ LABORATÓRIUM",
+	"study_room": "ŠTUDOVŇA",
+	"art_room": "VÝTVARNÝ ATELIÉR",
+	"computer_lab": "POČÍTAČOVÉ LABORATÓRIUM",
+	"music_room": "HUDOBNÁ UČEBŇA",
+	"archive": "ŠKOLSKÝ ARCHÍV",
+}
 
 @export var door_scene: PackedScene
 @export var teacher_scene: PackedScene
@@ -18,11 +33,15 @@ const DESK_HIDING_SPOT_SCRIPT := preload("res://systems/hiding/desk_hiding_spot.
 @onready var _sun_light: DirectionalLight3D = $SunLight
 
 var _materials: Dictionary = {}
+var _upper_patrol_points := PackedVector3Array()
 
 
 func _ready() -> void:
 	add_to_group("school_navigation_source")
+	_build_floor_markers()
 	_build_shell()
+	_build_upper_floors()
+	_build_stairs()
 	_build_corridor()
 	_place_exit_door()
 	_build_subject_classrooms()
@@ -37,7 +56,6 @@ func _ready() -> void:
 func _build_shell() -> void:
 	var wall := Color("34373a")
 	_box("SchoolFloor", Vector3(0, -0.1, 0), Vector3(46, 0.2, 77), Color("25282a"))
-	_box("SchoolCeiling", Vector3(0, 4.2, 0), Vector3(46, 0.2, 77), Color("17191b"))
 	_box("NorthExteriorWallLeft", Vector3(-11.95, 2.05, -SCHOOL_HALF_Z), Vector3(22.1, 4.3, 0.3), wall)
 	_box("NorthExteriorWallRight", Vector3(11.95, 2.05, -SCHOOL_HALF_Z), Vector3(22.1, 4.3, 0.3), wall)
 	_box("NorthExitHeader", Vector3(0, 3.55, -SCHOOL_HALF_Z), Vector3(1.8, 1.3, 0.3), wall)
@@ -56,6 +74,190 @@ func _build_shell() -> void:
 		for side_value in [-1.0, 1.0]:
 			var side := float(side_value)
 			_build_corridor_wall_row(side, row_index, row_z, wall, not (side > 0.0 and row_index == ROOM_ROWS.size() - 1))
+
+
+func _build_floor_markers() -> void:
+	for floor_index in FLOOR_COUNT:
+		var floor_root := Node3D.new()
+		floor_root.name = "SchoolFloor_%d" % (floor_index + 1)
+		floor_root.position.y = floor_index * FLOOR_HEIGHT
+		floor_root.add_to_group("school_floor")
+		floor_root.set_meta("floor_index", floor_index)
+		add_child(floor_root)
+
+
+func _build_upper_floors() -> void:
+	var room_kinds := ["classroom", "library", "science_lab", "study_room", "art_room", "computer_lab", "music_room", "archive"]
+	for floor_index in range(1, FLOOR_COUNT):
+		var base_y := floor_index * FLOOR_HEIGHT
+		_build_floor_slab(floor_index, base_y)
+		_box("UpperCorridorFloor_F%d" % (floor_index + 1), Vector3(0, base_y + 0.015, 0), Vector3(5.7, 0.03, 76.4), Color("20292b"), false)
+		_box("UpperNorthWall_F%d" % (floor_index + 1), Vector3(0, base_y + 2.05, -SCHOOL_HALF_Z), Vector3(46, 4.3, 0.3), Color("34373a"))
+		_box("UpperSouthWall_F%d" % (floor_index + 1), Vector3(0, base_y + 2.05, SCHOOL_HALF_Z), Vector3(46, 4.3, 0.3), Color("34373a"))
+		for divider_z in [-19.0, 0.0, 19.0]:
+			for side_value in [-1.0, 1.0]:
+				var side := float(side_value)
+				_box("UpperDivider_F%d_%s_%s" % [floor_index + 1, "W" if side < 0.0 else "E", str(divider_z)], Vector3(side * 13.0, base_y + 2.05, divider_z), Vector3(20, 4.3, 0.25), Color("34373a"))
+		for row_index in ROOM_ROWS.size():
+			var row_z: float = ROOM_ROWS[row_index]
+			for side_index in 2:
+				var side := -1.0 if side_index == 0 else 1.0
+				var room_slot := row_index * 2 + side_index
+				_build_upper_facade(floor_index, side, row_index, row_z, base_y)
+				_build_upper_corridor_wall(floor_index, side, row_index, row_z, base_y)
+				_build_upper_room(floor_index, side, row_index, row_z, base_y, room_kinds[room_slot])
+		_add_floor_sign(floor_index, base_y)
+		for marker_index in 4:
+			_add_upper_patrol_marker(floor_index, marker_index, Vector3(0, base_y + 0.05, -30.0 + marker_index * 20.0))
+		for light_index in 8:
+			_add_ceiling_light("UpperCorridorLight_F%d_%02d" % [floor_index + 1, light_index], Vector3(0, base_y + 3.82, -34.0 + light_index * 9.5), 1.2, 7.0, false)
+	_box("SchoolRoof", Vector3(0, FLOOR_COUNT * FLOOR_HEIGHT - 0.1, 0), Vector3(46, 0.2, 77), Color("17191b"))
+
+
+func _build_floor_slab(floor_index: int, base_y: float) -> void:
+	var slab_y := base_y - 0.1
+	var color := Color("25282a")
+	_box("FloorSlab_F%d_North" % (floor_index + 1), Vector3(0, slab_y, -13.25), Vector3(46, 0.2, 50.5), color)
+	_box("FloorSlab_F%d_South" % (floor_index + 1), Vector3(0, slab_y, 29.75), Vector3(46, 0.2, 17.5), color)
+	_box("FloorSlab_F%d_WestBridge" % (floor_index + 1), Vector3(-13, slab_y, 16.5), Vector3(20, 0.2, 9), color)
+	_box("FloorSlab_F%d_EastBridge" % (floor_index + 1), Vector3(13, slab_y, 16.5), Vector3(20, 0.2, 9), color)
+
+
+func _build_upper_facade(floor_index: int, side: float, row_index: int, row_z: float, base_y: float) -> void:
+	var prefix := "UpperFacade_F%d_%s_%d" % [floor_index + 1, "W" if side < 0.0 else "E", row_index + 1]
+	var wall_x := side * 23.0
+	var width := 19.0
+	var window_width := 8.0
+	var edge_width := (width - window_width) * 0.5
+	var wall := Color("34373a")
+	_box("%sBefore" % prefix, Vector3(wall_x, base_y + 2.05, row_z - window_width * 0.5 - edge_width * 0.5), Vector3(0.3, 4.3, edge_width), wall)
+	_box("%sAfter" % prefix, Vector3(wall_x, base_y + 2.05, row_z + window_width * 0.5 + edge_width * 0.5), Vector3(0.3, 4.3, edge_width), wall)
+	_box("%sSill" % prefix, Vector3(wall_x, base_y + WINDOW_BOTTOM * 0.5, row_z), Vector3(0.3, WINDOW_BOTTOM, window_width), wall)
+	_box("%sHeader" % prefix, Vector3(wall_x, base_y + WINDOW_TOP + (4.2 - WINDOW_TOP) * 0.5, row_z), Vector3(0.3, 4.2 - WINDOW_TOP, window_width), wall)
+	_build_window_bank(prefix, "F%d_R%d" % [floor_index + 1, row_index + 1], wall_x, side * 22.88, row_z, window_width, base_y + WINDOW_BOTTOM, base_y + WINDOW_TOP, 4, self)
+
+
+func _build_upper_corridor_wall(floor_index: int, side: float, row_index: int, row_z: float, base_y: float) -> void:
+	var prefix := "UpperCorridorWall_F%d_%s_%d" % [floor_index + 1, "W" if side < 0.0 else "E", row_index + 1]
+	var wall_x := side * 3.0
+	var wall := Color("34373a")
+	_box("%sA" % prefix, Vector3(wall_x, base_y + 2.05, row_z - 5.2), Vector3(0.25, 4.3, 8.6), wall)
+	_box("%sDoorHeader" % prefix, Vector3(wall_x, base_y + 3.55, row_z), Vector3(0.25, 1.3, 1.8), wall)
+	var edge_width := 8.6 - CORRIDOR_WINDOW_WIDTH
+	var window_center_z := row_z + CORRIDOR_WINDOW_CENTER_OFFSET_Z
+	_box("%sWindowBefore" % prefix, Vector3(wall_x, base_y + 2.05, row_z + 0.9 + edge_width * 0.25), Vector3(0.25, 4.3, edge_width * 0.5), wall)
+	_box("%sWindowAfter" % prefix, Vector3(wall_x, base_y + 2.05, row_z + 9.5 - edge_width * 0.25), Vector3(0.25, 4.3, edge_width * 0.5), wall)
+	_box("%sWindowSill" % prefix, Vector3(wall_x, base_y + WINDOW_BOTTOM * 0.5, window_center_z), Vector3(0.25, WINDOW_BOTTOM, CORRIDOR_WINDOW_WIDTH), wall)
+	_box("%sWindowHeader" % prefix, Vector3(wall_x, base_y + WINDOW_TOP + (4.2 - WINDOW_TOP) * 0.5, window_center_z), Vector3(0.25, 4.2 - WINDOW_TOP, CORRIDOR_WINDOW_WIDTH), wall)
+	_build_window_bank("UpperCorridorWindow", "F%d_%s_%d" % [floor_index + 1, "W" if side < 0.0 else "E", row_index + 1], wall_x, side * 3.22, window_center_z, CORRIDOR_WINDOW_WIDTH, base_y + WINDOW_BOTTOM, base_y + WINDOW_TOP, 3, self)
+
+
+func _build_upper_room(floor_index: int, side: float, row_index: int, row_z: float, base_y: float, room_kind: String) -> void:
+	var side_name := "West" if side < 0.0 else "East"
+	var room_id := "F%d_%s_%d" % [floor_index + 1, side_name, row_index + 1]
+	var center := Vector3(side * 13.0, base_y, row_z)
+	var room := Node3D.new()
+	room.name = "UpperRoom_%s" % room_id
+	room.add_to_group("school_upper_room")
+	room.add_to_group("school_classrooms")
+	room.set_meta("floor_index", floor_index)
+	room.set_meta("room_id", room_id)
+	room.set_meta("room_kind", room_kind)
+	add_child(room)
+	var accent := Color("43575a").lightened(0.05 * row_index)
+	_box("%sFloor" % room_id, center + Vector3(0, 0.012, 0), Vector3(19.6, 0.025, 18.6), accent.darkened(0.48), false, 0.0, room)
+	var decoration := CLASSROOM_DECORATOR.decorate(room, center, room_kind, accent, side)
+	decoration.set_meta("floor_index", floor_index)
+	_place_room_sign("F%d-%02d  %s" % [floor_index + 1, row_index * 2 + (2 if side > 0.0 else 1), str(UPPER_ROOM_NAMES.get(room_kind, "UČEBŇA"))], Vector3(side * 2.82, base_y + 3.03, row_z), side, room)
+	var anchor := Marker3D.new()
+	anchor.name = "DecorationAnchor"
+	anchor.position = center + Vector3(0, 0.05, 0)
+	anchor.add_to_group("school_room_decorator_anchor")
+	anchor.set_meta("floor_index", floor_index)
+	anchor.set_meta("room_id", room_id)
+	anchor.set_meta("room_kind", room_kind)
+	room.add_child(anchor)
+	_add_ceiling_light("UpperRoomLight_%s" % room_id, center + Vector3(0, 3.82, 0), 1.25, 9.0, false)
+
+
+func _add_floor_sign(floor_index: int, base_y: float) -> void:
+	var sign := Label3D.new()
+	sign.name = "FloorSign_F%d" % (floor_index + 1)
+	sign.text = "%d. POSCHODIE\nUČEBNE F%d-01 – F%d-08" % [floor_index, floor_index + 1, floor_index + 1]
+	sign.font_size = 42
+	sign.pixel_size = 0.005
+	sign.outline_size = 7
+	sign.modulate = Color("a9c5ba")
+	sign.position = Vector3(-2.82, base_y + 2.35, 10.5)
+	sign.rotation.y = PI * 0.5
+	add_child(sign)
+
+
+func _add_upper_patrol_marker(floor_index: int, marker_index: int, marker_position: Vector3) -> void:
+	var marker := Marker3D.new()
+	marker.name = "TeacherPatrol_F%d_%02d" % [floor_index + 1, marker_index + 1]
+	marker.position = marker_position
+	marker.add_to_group("teacher_patrol_marker")
+	marker.set_meta("floor_index", floor_index)
+	add_child(marker)
+	_upper_patrol_points.append(marker_position)
+
+
+func _build_stairs() -> void:
+	for from_floor in range(FLOOR_COUNT - 1):
+		_build_stair(from_floor)
+
+
+func _build_stair(from_floor: int) -> void:
+	var base_y := from_floor * FLOOR_HEIGHT
+	var stair := Node3D.new()
+	stair.name = "SchoolStair_%d_to_%d" % [from_floor + 1, from_floor + 2]
+	stair.add_to_group("school_stair")
+	stair.set_meta("from_floor_index", from_floor)
+	stair.set_meta("to_floor_index", from_floor + 1)
+	add_child(stair)
+	var run := STAIR_END_Z - STAIR_START_Z
+	var rise := FLOOR_HEIGHT * 0.5
+	var angle := atan(rise / run)
+	var length := sqrt(run * run + rise * rise)
+	var flight_a := _box("FlightA", Vector3(-1.35, base_y + rise * 0.5, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(2.2, 0.22, length), Color("4a5052"), true, 0.0, stair)
+	flight_a.rotation.x = -angle
+	var flight_b := _box("FlightB", Vector3(1.35, base_y + rise * 1.5, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(2.2, 0.22, length), Color("4a5052"), true, 0.0, stair)
+	flight_b.rotation.x = angle
+	_box("MidLanding", Vector3(0, base_y + rise - 0.1, STAIR_END_Z + 0.8), Vector3(5.5, 0.2, 2.0), Color("4a5052"), true, 0.0, stair)
+	_box("TopLanding", Vector3(0, base_y + FLOOR_HEIGHT - 0.1, STAIR_START_Z - 0.75), Vector3(5.5, 0.2, 2.5), Color("4a5052"), true, 0.0, stair)
+	var rail_a := _box("FlightARail", Vector3(-2.5, base_y + rise * 0.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
+	rail_a.rotation.x = -angle
+	var rail_b := _box("FlightBRail", Vector3(2.5, base_y + rise * 1.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
+	rail_b.rotation.x = angle
+	var inner_rail_a := _box("FlightAInnerRail", Vector3(-0.2, base_y + rise * 0.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
+	inner_rail_a.rotation.x = -angle
+	var inner_rail_b := _box("FlightBInnerRail", Vector3(0.2, base_y + rise * 1.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
+	inner_rail_b.rotation.x = angle
+	_box("LandingGuard", Vector3(0, base_y + rise + 0.55, STAIR_END_Z + 1.75), Vector3(5.6, 1.2, 0.12), Color("252c2e"), true, 0.0, stair)
+	_add_stair_navigation_link(stair, "FlightALink", Vector3(-1.35, base_y + 0.2, STAIR_START_Z), Vector3(-1.35, base_y + rise + 0.2, STAIR_END_Z))
+	_add_stair_navigation_link(stair, "LandingLink", Vector3(-1.35, base_y + rise + 0.2, STAIR_END_Z + 0.35), Vector3(1.35, base_y + rise + 0.2, STAIR_END_Z + 0.35))
+	_add_stair_navigation_link(stair, "FlightBLink", Vector3(1.35, base_y + rise + 0.2, STAIR_END_Z), Vector3(1.35, base_y + FLOOR_HEIGHT + 0.2, STAIR_START_Z))
+	_add_stair_access_marker(stair, "BottomAccess", from_floor, Vector3(-1.35, base_y + 0.05, STAIR_START_Z - 0.5))
+	_add_stair_access_marker(stair, "TopAccess", from_floor + 1, Vector3(1.35, base_y + FLOOR_HEIGHT + 0.05, STAIR_START_Z - 0.5))
+
+
+func _add_stair_navigation_link(parent: Node3D, link_name: String, start: Vector3, end: Vector3) -> void:
+	var link := NavigationLink3D.new()
+	link.name = link_name
+	link.start_position = start
+	link.end_position = end
+	link.bidirectional = true
+	parent.add_child(link)
+
+
+func _add_stair_access_marker(parent: Node3D, marker_name: String, floor_index: int, marker_position: Vector3) -> void:
+	var marker := Marker3D.new()
+	marker.name = marker_name
+	marker.position = marker_position
+	marker.add_to_group("school_stair_access")
+	marker.set_meta("floor_index", floor_index)
+	parent.add_child(marker)
 
 
 func _build_exterior_wall_row(side: float, row_index: int, row_z: float, color: Color, has_window: bool) -> void:
@@ -98,12 +300,12 @@ func _build_corridor() -> void:
 	for side_value in [-1.0, 1.0]:
 		var side := float(side_value)
 		var side_name := "West" if side < 0.0 else "East"
-		var locker_positions := [-36.0, -19.0, 0.0, 19.0, 36.0]
+		var locker_positions := [-36.0, -22.0, 0.0, 24.0, 36.0]
 		for locker_index in locker_positions.size():
 			_box("%sLockerBank_%d" % [side_name, locker_index], Vector3(side * 2.72, 1.15, locker_positions[locker_index]), Vector3(0.38, 2.3, 2.5), Color("35464d"))
 	var directory := Label3D.new()
 	directory.name = "SchoolDirectory"
-	directory.text = "NOČNÁ ŠKOLA\nDEJEPIS  |  MATEMATIKA\nSLOVENSKÝ JAZYK  |  ELEKTROTECHNIKA\nEKONOMIKA  |  APLIKOVANÁ INFORMATIKA\nANGLICKÝ JAZYK  |  KABINET"
+	directory.text = "NOČNÁ ŠKOLA\nPRÍZEMIE: PREDMETOVÉ UČEBNE A KABINET\n1. POSCHODIE: KNIŽNICA A LABORATÓRIÁ\n2. POSCHODIE: ATELIÉR, INFORMATIKA A ARCHÍV"
 	directory.font_size = 34
 	directory.pixel_size = 0.0055
 	directory.outline_size = 7
@@ -156,6 +358,7 @@ func _build_classroom(subject: SubjectData, center: Vector3, side: float, index:
 	var teacher_desk_position := center + Vector3(-4.5, 0, -6.6)
 	_build_teacher_desk(subject.subject_id, teacher_desk_position, subject.accent_color, room)
 	_build_subject_props(subject.subject_id, center, subject.accent_color, room)
+	CLASSROOM_DECORATOR.decorate(room, center, subject.subject_id, subject.accent_color, side)
 	_place_homework_station(subject, teacher_desk_position + Vector3(0, 1.0, 0), room)
 	_place_door(subject.subject_id, Vector3(side * 3.0, 0, center.z), side, room, index, false)
 	_place_room_sign("%s  %s" % [subject.room_code, subject.display_name], Vector3(side * 2.82, 3.03, center.z), side, room)
@@ -267,6 +470,7 @@ func _school_patrol(offset: int) -> PackedVector3Array:
 		Vector3(-13, 0.05, 28.5),
 		Vector3(0, 0.05, 34.0),
 	])
+	base.append_array(_upper_patrol_points)
 	var patrol := PackedVector3Array()
 	for index in base.size():
 		patrol.append(base[(index + offset) % base.size()])

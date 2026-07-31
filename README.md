@@ -1,11 +1,14 @@
 # Nočná škola
 
-Godot 4 first-person horor zo slovenskej školy. Hráč sa môže voľne pohybovať medzi siedmimi predmetovými učebňami, otvárať dvere, riešiť domáce úlohy a utekať pred učiteľom príslušného predmetu. Kabinet je iba pre učiteľov.
+Godot 4 first-person horor z trojposchodovej slovenskej školy. Hráč sa môže voľne pohybovať po prízemí a dvoch horných poschodiach, otvárať dvere, riešiť domáce úlohy a utekať pred učiteľom príslušného predmetu. Kabinet je iba pre učiteľov.
 
 ## Aktuálny obsah
 
 - Slovenské hlavné menu, výber noci, načítanie, HUD, obrazovka úloh a dokončenie noci
-- Celá školská chodba so siedmimi učebňami: Dejepis, Matematika, Slovenský jazyk, Elektrotechnika, Ekonomika, Aplikovaná informatika a Anglický jazyk
+- Tri plne priechodné podlažia: prízemie so siedmimi predmetovými učebňami a dve horné poschodia so 16 ďalšími miestnosťami
+- Dve široké schodiská s medzipodestami, zábradlím a navigačnými prepojeniami pre hráča aj učiteľov
+- Knižnice, laboratóriá, študovne, výtvarný ateliér, hudobná učebňa, počítačové laboratórium, archív a všeobecné učebne
+- Prepracované interiéry 23 miestností s lavicami, stoličkami, tabuľami, tematickými nápismi, skriňami, policami, radiátormi a stropným osvetlením
 - Zamknutý kabinet so siedmimi konfigurovateľnými učiteľmi a riaditeľkou Zuzanou Čižmárikovou; hráč ho neotvorí ani nevojde za nimi
 - Osem dátovo riadených nocí a spoločný školský čas zobrazený v HUD
 - Pohyb z prvej osoby, otáčanie myšou, šprint, výdrž, drep, skok a interakcia
@@ -16,7 +19,7 @@ Godot 4 first-person horor zo slovenskej školy. Hráč sa môže voľne pohybov
 - Tri sady úloh v každej učebni, spolu 21 sád za noc
 - Nesprávna odpoveď vypne školské svetlá, spustí naháňačku a zablokuje danú úlohu na 30 sekúnd
 - Ostatní aktívni učitelia pri spozorovaní hráča potichu odovzdajú jeho polohu prenasledovateľovi
-- Navigačný mesh školy, kolízny nábytok, hliadkovanie, prenasledovanie, hľadanie a únik
+- Viacposchodový navigačný mesh školy, kolízny nábytok, hliadkovanie, prenasledovanie, hľadanie a únik
 - Schovanie pod každou zo 42 žiackych lavíc; učiteľ hráča pod lavicou nevidí a začne prehľadávať školu
 - Plnohodnotná pauza cez `Esc` s okamžitým nastavením jasu/gammy, pokračovaním a návratom do hlavného menu
 - Nastavenia obrazu s uloženými voľbami 1280 × 720, 1920 × 1080, 2560 × 1440 a režimom v okne alebo na celej obrazovke
@@ -45,7 +48,9 @@ res://
 |  `- audio/                       centrálna GameAudioData konfigurácia
 |- enemies/                        miesto pre zdedené scény importovaných postáv
 |- levels/                         škola a opakovateľné objekty
-|- scripts/                        level, UI a automatické validátory
+|- scripts/
+|  |- levels/classroom_decorator.gd  modulárne zariadenie všetkých učební
+|  `- ...                         level, UI a automatické validátory
 |- systems/
 |  |- audio/                       menu, ambient a náhradné kroky
 |  |- night/                       NightData, SchoolTime a NightManager
@@ -82,6 +87,13 @@ C:\Users\matej\Downloads\godot.exe --path . --editor
 Stlač `F5`; projekt spustí `main.tscn`. Hlavná scéna aj autoloady `AudioManager`, `SaveManager`, `NightManager` a `SchoolGameManager` sú už nastavené.
 
 ## Herný priebeh
+
+### Rozloženie školy
+
+- **Prízemie:** sedem predmetových učební, všetkých 21 sád domácich úloh, zamknutý kabinet a ranný východ.
+- **1. poschodie:** osem ďalších učební vrátane knižnice, laboratória a študovne.
+- **2. poschodie:** osem ďalších učební vrátane ateliéru, počítačového laboratória, hudobnej učebne a archívu.
+- Obe schodiská sú súčasťou navigácie. Vypustení učitelia hliadkujú aj na horných poschodiach a vstupujú do tamojších učební.
 
 V každej učebni je na učiteľskom stole zošit. Interakcia otvorí nasledujúcu z troch sád daného predmetu. Správna odpoveď započíta postup aktuálne spustenej noci. Dokončenie všetkých 21 sád už noc neukončí predčasne.
 
@@ -204,7 +216,7 @@ C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_ph
 C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase3.tscn -- --phase2-test
 ```
 
-Phase 3 test overuje 7 predmetov, 7 učiteľov, Zuzanu Čižmárikovú a jej boosty, 21 otázok, 30-sekundový cooldown, vymeniteľnú audio konfiguráciu, roaming cez triedy, zatvorenie kabinetu, dvere, fyzický drep, pauzu, navigation mesh, výpadok, tiché hlásenie polohy, chytenie, jumpscare, ranný východ a reset noci.
+Phase 1 navyše overuje tri podlažia, dve schodiská, 16 horných miestností a 23 zariadených učební. Phase 3 overuje viacposchodovú navigáciu, cestu z prízemia na druhé poschodie, horné hliadkové trasy a reálny výstup učiteľa po schodoch. Zachované sú aj kontroly 7 predmetov, 7 učiteľov, Zuzany Čižmárikovej a jej boostov, 21 otázok, cooldownu, dverí, fyzického drepu, výpadku, chytenia, jumpscare, ranného východu a resetu noci.
 
 ## Export pre Windows
 

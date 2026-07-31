@@ -568,3 +568,21 @@ C:\Users\matej\Downloads\godot.exe --headless --verbose --path . res://scripts/v
 - Phase 1 loaded all 11 scenes, including the standalone jumpscare overlay, without node errors: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
 - Phase 3 verifies the catching teacher reference, camera target, locked attack pose and full restart flow: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
 - GUI inspection at 1280 × 720 confirmed a centered close-up of Alžbeta Kéryová's live 3D model with the attack pose, cinematic bars and no HUD.
+
+## 2026-07-30 - Trojposchodová škola a prerobené učebne
+
+- Rozšírená škola z prízemia na tri plne priechodné podlažia.
+- Pridaných 16 horných miestností: všeobecné učebne, knižnice, laboratóriá, študovne, ateliér, počítačové laboratórium, hudobná učebňa a archív.
+- Pridané dve široké schodiská s medzipodestami, kolíziou, zábradlím a `NavigationLink3D` prepojeniami.
+- Učiteľské trasy teraz zahŕňajú všetky poschodia a validátor fyzicky overuje výstup učiteľa po schodoch.
+- Pridaný modulárny `ClassroomDecorator` pre 23 miestností s tematickými tabuľami, lavicami, stoličkami, skrinkami, policami, radiátormi, plagátmi, drobnými rekvizitami a stropným osvetlením.
+- Horné chodby majú okná do učební, smerové tabule, skrinky, svetlá a vonkajšie okenné banky.
+- Existujúcich sedem predmetových učební, 21 domácich úloh, kabinet, dvere a ranný východ zostali zachované.
+
+### Validation
+
+- Godot editor/parser/import scan: exit `0`.
+- Phase 1 multi-floor scene regression: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 3 navigation, live teacher stair climb and gameplay regression: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- GUI inspection confirmed the redesigned ground classroom, both stair levels, upper corridor, upper classroom and three-storey exterior.
+- `git diff --check` passed.

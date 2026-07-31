@@ -1,5 +1,6 @@
 extends Node
 
+const FLOOR_HEIGHT := 4.4
 const SCENES := [
 	"res://main.tscn",
 	"res://ui/main_menu.tscn",
@@ -12,6 +13,17 @@ const SCENES := [
 	"res://levels/props/classroom_door.tscn",
 	"res://levels/props/homework_station.tscn",
 	"res://levels/test_school.tscn",
+]
+const EXPECTED_DECORATION_FEATURES := [
+	"wall_trim",
+	"teaching_wall",
+	"student_furniture",
+	"teacher_furniture",
+	"storage",
+	"notices",
+	"utilities",
+	"ceiling_fixtures",
+	"floor_detail",
 ]
 
 var _failures: Array[String] = []
@@ -60,7 +72,79 @@ func _validate_player_rotation(player: FirstPersonController) -> void:
 
 func _validate_school(level: Node) -> void:
 	var player := level.find_child("Player", true, false) as FirstPersonController
-	_check(level.find_children("Classroom_*", "", true, false).size() == 7, "School should contain seven subject classrooms.")
+	var classrooms := level.find_children("Classroom_*", "", true, false)
+	_check(classrooms.size() == 7, "School should contain seven subject classrooms.")
+	for classroom in classrooms:
+		var decorations := classroom.find_children("ClassroomDecoration_*", "Node3D", true, false)
+		_check(decorations.size() == 1, "%s should have exactly one decoration marker." % classroom.name)
+		if decorations.size() != 1:
+			continue
+		var decoration := decorations[0] as Node3D
+		_check(decoration.is_in_group("decorated_classroom"), "%s decoration is missing its integration group." % classroom.name)
+		_check(decoration.get_meta("subject_id", "") == classroom.get_meta("subject_id", ""), "%s decoration has the wrong subject marker." % classroom.name)
+		_check(decoration.get_meta("decorator_version", 0) == 1, "%s decoration version marker is invalid." % classroom.name)
+		_check(Array(decoration.get_meta("features", PackedStringArray())) == EXPECTED_DECORATION_FEATURES, "%s decoration feature manifest is incomplete." % classroom.name)
+		for marker in [
+			["WallFinish", "classroom_wall_trim"],
+			["Furniture", "classroom_furniture"],
+			["Storage", "classroom_storage"],
+			["Displays", "classroom_notice"],
+			["Ceiling", "classroom_ceiling_fixture"],
+		]:
+			var category := decoration.get_node_or_null(marker[0])
+			_check(category != null and category.is_in_group(marker[1]), "%s decoration is missing the %s marker." % [classroom.name, marker[1]])
+	var floors := _nodes_in_level_group(level, &"school_floor")
+	_check(floors.size() == 3, "School should contain exactly three floor roots.")
+	var floor_indices: Dictionary = {}
+	for floor in floors:
+		var floor_index := int(floor.get_meta("floor_index", -1))
+		floor_indices[floor_index] = true
+		_check(floor.name == "SchoolFloor_%d" % (floor_index + 1), "A school floor root has an invalid name or floor_index.")
+		_check(absf((floor as Node3D).global_position.y - floor_index * FLOOR_HEIGHT) < 0.01, "%s is at the wrong elevation." % floor.name)
+	_check(floor_indices.has(0) and floor_indices.has(1) and floor_indices.has(2), "School floor indices should cover 0 through 2.")
+	var stairs := _nodes_in_level_group(level, &"school_stair")
+	_check(stairs.size() == 2, "School should contain two stair connections.")
+	var stair_pairs: Dictionary = {}
+	for stair in stairs:
+		var from_floor := int(stair.get_meta("from_floor_index", -1))
+		var to_floor := int(stair.get_meta("to_floor_index", -1))
+		stair_pairs["%d:%d" % [from_floor, to_floor]] = true
+		_check(to_floor == from_floor + 1, "%s does not connect adjacent floors." % stair.name)
+		for part in ["FlightA", "MidLanding", "FlightB"]:
+			_check(stair.get_node_or_null(part) is StaticBody3D, "%s is missing collidable %s geometry." % [stair.name, part])
+		for access_name in ["BottomAccess", "TopAccess"]:
+			var access := stair.get_node_or_null(access_name)
+			_check(access is Marker3D and access.is_in_group("school_stair_access"), "%s is missing its %s accessibility marker." % [stair.name, access_name])
+	_check(stair_pairs.has("0:1") and stair_pairs.has("1:2"), "Stairs should connect floors 1-2 and 2-3.")
+	var access_markers := _nodes_in_level_group(level, &"school_stair_access")
+	_check(access_markers.size() == 4, "School stairs should expose four accessibility markers.")
+	var access_counts := {0: 0, 1: 0, 2: 0}
+	for marker in access_markers:
+		var floor_index := int(marker.get_meta("floor_index", -1))
+		access_counts[floor_index] = int(access_counts.get(floor_index, 0)) + 1
+		_check(absf((marker as Node3D).global_position.y - (floor_index * FLOOR_HEIGHT + 0.05)) < 0.3, "%s accessibility marker is off its floor." % marker.name)
+	_check(access_counts == {0: 1, 1: 2, 2: 1}, "Stair accessibility markers do not cover all floor transitions.")
+	var upper_rooms := _nodes_in_level_group(level, &"school_upper_room")
+	_check(upper_rooms.size() == 16, "School should contain sixteen upper-floor rooms.")
+	var upper_room_counts := {1: 0, 2: 0}
+	for room in upper_rooms:
+		var floor_index := int(room.get_meta("floor_index", -1))
+		upper_room_counts[floor_index] = int(upper_room_counts.get(floor_index, 0)) + 1
+		_check(room.is_in_group("school_classrooms"), "%s is missing the school classroom marker." % room.name)
+		_check(not str(room.get_meta("room_id", "")).is_empty() and not str(room.get_meta("room_kind", "")).is_empty(), "%s has incomplete room metadata." % room.name)
+		var anchor := room.get_node_or_null("DecorationAnchor")
+		_check(anchor is Marker3D and anchor.is_in_group("school_room_decorator_anchor"), "%s is missing its decorator anchor." % room.name)
+		var decorations := room.find_children("ClassroomDecoration_*", "Node3D", true, false)
+		_check(decorations.size() == 1, "%s should have exactly one decoration root." % room.name)
+		if decorations.size() == 1:
+			var decoration := decorations[0]
+			_check(decoration.is_in_group("decorated_classroom"), "%s decoration is missing its integration group." % room.name)
+			_check(int(decoration.get_meta("floor_index", -1)) == floor_index, "%s decoration has the wrong floor_index." % room.name)
+			_check(decoration.get_meta("subject_id", "") == room.get_meta("room_kind", ""), "%s decoration has the wrong room marker." % room.name)
+	_check(upper_room_counts == {1: 8, 2: 8}, "Each upper floor should contain eight rooms.")
+	_check(_nodes_in_level_group(level, &"school_room_decorator_anchor").size() == 16, "Every upper-floor room should expose one decorator anchor.")
+	_check(_nodes_in_level_group(level, &"school_classrooms").size() == 24, "School classroom markers should include seven subjects, kabinet, and sixteen upper rooms.")
+	_check(_nodes_in_level_group(level, &"decorated_classroom").size() == 23, "All seven subject and sixteen upper rooms should be decorated.")
 	_check(get_tree().get_nodes_in_group("teacher_enemies").size() == 8, "School should contain seven subject teachers and one headmistress.")
 	_check(level.find_children("ClassroomDoor_*", "", true, false).size() == 8, "School should contain eight fitted classroom doors.")
 	_check(level.find_children("DeskHiding_*", "Area3D", true, false).size() == 42, "Every student desk should have a hiding spot.")
@@ -128,6 +212,14 @@ func _validate_door(door: Node) -> void:
 	var shape := collision_node.shape as BoxShape3D
 	_check(mesh != null and mesh.size.is_equal_approx(Vector3(1.8, 2.9, 0.12)), "Door mesh does not fill the 1.8 x 2.9 opening.")
 	_check(shape != null and shape.size.is_equal_approx(Vector3(1.8, 2.9, 0.12)), "Door collision does not match the fitted door mesh.")
+
+
+func _nodes_in_level_group(level: Node, group_name: StringName) -> Array[Node]:
+	var nodes: Array[Node] = []
+	for node in get_tree().get_nodes_in_group(group_name):
+		if node == level or level.is_ancestor_of(node):
+			nodes.append(node)
+	return nodes
 
 
 func _check(condition: bool, message: String) -> void:

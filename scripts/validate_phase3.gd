@@ -1,5 +1,7 @@
 extends Node
 
+const FLOOR_HEIGHT := 4.4
+
 var _failures: Array[String] = []
 var _caught_events := 0
 
@@ -29,6 +31,7 @@ func _run() -> void:
 	_check(NightManager.load_night(1), "Could not load Night 1 for gameplay validation.")
 	_check(NightManager.start_night(), "Could not start Night 1 for gameplay validation.")
 	await _validate_navigation(level)
+	await _validate_teacher_stair_navigation(level)
 	await _validate_teacher_desk_navigation(level)
 	await _validate_pause_menu(level)
 	await _validate_homework_and_chase(level)
@@ -81,16 +84,103 @@ func _validate_resources() -> void:
 
 
 func _validate_navigation(level: Node) -> void:
-	var region := level.find_child("NavigationRegion3D", true, false) as NavigationRegion3D
-	_check(region != null, "NavigationRegion3D is missing.")
-	if region == null:
+	var regions := level.find_children("*", "NavigationRegion3D", true, false)
+	_check(not regions.is_empty(), "NavigationRegion3D is missing.")
+	if regions.is_empty():
 		return
 	var deadline := Time.get_ticks_msec() + 15000
-	while Time.get_ticks_msec() < deadline and region.navigation_mesh.get_polygon_count() == 0:
+	while Time.get_ticks_msec() < deadline:
+		var all_baked := true
+		for region in regions:
+			if (region as NavigationRegion3D).navigation_mesh == null or (region as NavigationRegion3D).navigation_mesh.get_polygon_count() == 0:
+				all_baked = false
+				break
+		if all_baked:
+			break
 		await get_tree().process_frame
-	_check(region.navigation_mesh.get_polygon_count() > 0, "Runtime navigation mesh did not bake.")
+	for region in regions:
+		_check((region as NavigationRegion3D).navigation_mesh != null and (region as NavigationRegion3D).navigation_mesh.get_polygon_count() > 0, "%s navigation mesh did not bake." % region.name)
 	_check(not FileAccess.get_file_as_string("res://scripts/levels/test_school.gd").contains("map_force_update"), "Runtime level still force-locks NavigationServer after baking.")
 	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var access_markers := _nodes_in_level_group(level, &"school_stair_access")
+	var lower_access: Node3D
+	var upper_access: Node3D
+	for marker in access_markers:
+		if int(marker.get_meta("floor_index", -1)) == 0:
+			lower_access = marker as Node3D
+		elif int(marker.get_meta("floor_index", -1)) == 2:
+			upper_access = marker as Node3D
+	_check(lower_access != null and upper_access != null, "Three-floor navigation access markers are incomplete.")
+	if lower_access != null and upper_access != null:
+		var navigation_map := (level.find_child("NavigationAgent3D", true, false) as NavigationAgent3D).get_navigation_map()
+		var map_deadline := Time.get_ticks_msec() + 15000
+		while NavigationServer3D.map_get_iteration_id(navigation_map) == 0 and Time.get_ticks_msec() < map_deadline:
+			await get_tree().physics_frame
+		_check(NavigationServer3D.map_get_iteration_id(navigation_map) > 0, "Navigation map did not synchronize after baking.")
+		var path := NavigationServer3D.map_get_path(navigation_map, lower_access.global_position, upper_access.global_position, true)
+		while path.size() < 2 and Time.get_ticks_msec() < map_deadline:
+			await get_tree().physics_frame
+			path = NavigationServer3D.map_get_path(navigation_map, lower_access.global_position, upper_access.global_position, true)
+		_check(path.size() > 1, "Navigation map has no path from floor 1 to floor 3.")
+		if path.size() > 1:
+			var minimum_y := path[0].y
+			var maximum_y := path[0].y
+			for point in path:
+				minimum_y = minf(minimum_y, point.y)
+				maximum_y = maxf(maximum_y, point.y)
+			_check(maximum_y - minimum_y > FLOOR_HEIGHT * 1.5, "Navigation path does not traverse all three floors.")
+	var patrol_markers := _nodes_in_level_group(level, &"teacher_patrol_marker")
+	_check(patrol_markers.size() == 8, "Expected four teacher patrol markers on each upper floor.")
+	var patrol_counts := {1: 0, 2: 0}
+	for marker in patrol_markers:
+		var floor_index := int(marker.get_meta("floor_index", -1))
+		patrol_counts[floor_index] = int(patrol_counts.get(floor_index, 0)) + 1
+		_check(absf((marker as Node3D).global_position.y - (floor_index * FLOOR_HEIGHT + 0.05)) < 0.3, "%s patrol marker is off its floor." % marker.name)
+	_check(patrol_counts == {1: 4, 2: 4}, "Upper-floor patrol markers are not evenly distributed.")
+	for teacher in _nodes_in_level_group(level, &"teacher_enemies"):
+		var patrol_points: PackedVector3Array = teacher.get("_patrol_points")
+		for marker in patrol_markers:
+			var includes_marker := false
+			for point in patrol_points:
+				if point.distance_to((marker as Node3D).global_position) < 0.05:
+					includes_marker = true
+					break
+			_check(includes_marker, "%s patrol route omits %s." % [teacher.name, marker.name])
+
+
+func _validate_teacher_stair_navigation(level: Node) -> void:
+	var teacher := level.find_child("Teacher_01_*", true, false) as PlaceholderTeacher
+	var player := level.find_child("Player", true, false) as Node3D
+	var bottom_access: Node3D
+	var upper_target: Node3D
+	for marker in _nodes_in_level_group(level, &"school_stair_access"):
+		if int(marker.get_meta("floor_index", -1)) == 0:
+			bottom_access = marker as Node3D
+			break
+	for marker in _nodes_in_level_group(level, &"teacher_patrol_marker"):
+		if int(marker.get_meta("floor_index", -1)) == 1:
+			upper_target = marker as Node3D
+			break
+	_check(teacher != null and bottom_access != null and upper_target != null, "Teacher stair navigation setup is incomplete.")
+	if teacher == null or bottom_access == null or upper_target == null:
+		return
+	var target := Node3D.new()
+	level.add_child(target)
+	target.global_position = upper_target.global_position
+	teacher.global_position = bottom_access.global_position
+	teacher.velocity = Vector3.ZERO
+	await get_tree().physics_frame
+	teacher.start_chase(target)
+	var deadline := Time.get_ticks_msec() + 14000
+	while teacher.global_position.y < upper_target.global_position.y - 0.8 and Time.get_ticks_msec() < deadline:
+		await get_tree().physics_frame
+	_check(teacher.global_position.y >= upper_target.global_position.y - 0.8, "Teacher could not follow the navigation path up the stairs.")
+	teacher.stop_chase()
+	teacher.reset_for_night()
+	teacher.set_observer_active(false)
+	teacher.set_player_reference(player)
+	target.queue_free()
 	await get_tree().physics_frame
 
 
@@ -401,6 +491,14 @@ func _validate_stationary_player_catch(level: Node) -> void:
 
 func _capture_caught(_teacher: Node3D, _teacher_name: String, _jumpscare_image: Texture2D, _jumpscare_sound: AudioStream) -> void:
 	_caught_events += 1
+
+
+func _nodes_in_level_group(level: Node, group_name: StringName) -> Array[Node]:
+	var nodes: Array[Node] = []
+	for node in get_tree().get_nodes_in_group(group_name):
+		if node == level or level.is_ancestor_of(node):
+			nodes.append(node)
+	return nodes
 
 
 func _check(condition: bool, message: String) -> void:
