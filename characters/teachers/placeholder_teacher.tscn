@@ -31,6 +31,8 @@ height = 2.3
 [node name="PlaceholderTeacher" type="CharacterBody3D"]
 collision_layer = 4
 collision_mask = 3
+floor_constant_speed = true
+floor_snap_length = 0.3
 script = ExtResource("1_script")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -94,7 +96,7 @@ mesh = SubResource("Mesh_leg")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 path_height_offset = 0.05
-path_desired_distance = 0.65
+path_desired_distance = 0.5
 target_desired_distance = 0.8
 radius = 0.38
 height = 2.3

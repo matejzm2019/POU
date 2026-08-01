@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://tvkd88uyh7cq"]
+
+[ext_resource type="Script" path="res://scripts/visual_stair_review.gd" id="1"]
+
+[node name="VisualStairReview" type="Node3D" unique_id=1201394579]
+script = ExtResource("1")

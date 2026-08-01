@@ -1,6 +1,8 @@
 extends Node
 
 const FLOOR_HEIGHT := 4.4
+const STAIR_OPENING_CENTER := Vector3(6.1, 0.0, 43.3)
+const STAIR_STEPS_PER_FLIGHT := 13
 const SCENES := [
 	"res://main.tscn",
 	"res://ui/main_menu.tscn",
@@ -104,6 +106,11 @@ func _validate_school(level: Node) -> void:
 	_check(floor_indices.has(0) and floor_indices.has(1) and floor_indices.has(2), "School floor indices should cover 0 through 2.")
 	var stairs := _nodes_in_level_group(level, &"school_stair")
 	_check(stairs.size() == 2, "School should contain two stair connections.")
+	var visual_polish := level.get_node_or_null("SchoolVisualPolish")
+	_check(visual_polish is Node3D and visual_polish.is_in_group("school_visual_polish"), "School visual polish was not integrated.")
+	if visual_polish != null:
+		_check(visual_polish.find_children("*", "MultiMeshInstance3D", true, false).size() == 4, "School visual polish should use four batched MultiMeshes.")
+		_check(visual_polish.find_children("FloorIdentity_*", "Label3D", true, false).size() == 3, "Every floor needs one readable identity sign.")
 	var stair_pairs: Dictionary = {}
 	for stair in stairs:
 		var from_floor := int(stair.get_meta("from_floor_index", -1))
@@ -112,6 +119,13 @@ func _validate_school(level: Node) -> void:
 		_check(to_floor == from_floor + 1, "%s does not connect adjacent floors." % stair.name)
 		for part in ["FlightA", "MidLanding", "FlightB"]:
 			_check(stair.get_node_or_null(part) is StaticBody3D, "%s is missing collidable %s geometry." % [stair.name, part])
+		for flight_name in ["FlightA", "FlightB"]:
+			var ramp := stair.get_node_or_null(flight_name)
+			_check(ramp != null and ramp.find_children("*", "CollisionShape3D", true, false).size() == 1, "%s needs one smooth invisible collision ramp." % flight_name)
+			_check(ramp != null and ramp.find_children("*", "MeshInstance3D", true, false).is_empty(), "%s collision ramp should remain invisible behind the visible steps." % flight_name)
+			for step_index in STAIR_STEPS_PER_FLIGHT:
+				var step_name := "%s_Step_%02d" % [flight_name, step_index + 1]
+				_check(stair.get_node_or_null(step_name) is MeshInstance3D, "%s is missing visible stair step %s." % [stair.name, step_name])
 		for access_name in ["BottomAccess", "TopAccess"]:
 			var access := stair.get_node_or_null(access_name)
 			_check(access is Marker3D and access.is_in_group("school_stair_access"), "%s is missing its %s accessibility marker." % [stair.name, access_name])
@@ -124,8 +138,23 @@ func _validate_school(level: Node) -> void:
 		access_counts[floor_index] = int(access_counts.get(floor_index, 0)) + 1
 		_check(absf((marker as Node3D).global_position.y - (floor_index * FLOOR_HEIGHT + 0.05)) < 0.3, "%s accessibility marker is off its floor." % marker.name)
 	_check(access_counts == {0: 1, 1: 2, 2: 1}, "Stair accessibility markers do not cover all floor transitions.")
+	for floor_index in range(1, 3):
+		var opening_point := STAIR_OPENING_CENTER + Vector3.UP * floor_index * FLOOR_HEIGHT
+		var opening_is_visually_clear := true
+		for mesh_node in level.find_children("*", "MeshInstance3D", true, false):
+			var mesh_instance := mesh_node as MeshInstance3D
+			var box := mesh_instance.mesh as BoxMesh
+			if box == null:
+				continue
+			var local_point := mesh_instance.to_local(opening_point)
+			if absf(local_point.x) <= box.size.x * 0.5 and absf(local_point.y) <= box.size.y * 0.5 + 0.02 and absf(local_point.z) <= box.size.z * 0.5:
+				opening_is_visually_clear = false
+				break
+		_check(opening_is_visually_clear, "Floor %d visually covers the stairwell opening." % (floor_index + 1))
 	var upper_rooms := _nodes_in_level_group(level, &"school_upper_room")
 	_check(upper_rooms.size() == 16, "School should contain sixteen upper-floor rooms.")
+	var upper_room_lights := level.find_children("UpperRoomLight_*", "OmniLight3D", true, false)
+	_check(upper_room_lights.size() == 64, "Every upper-floor room should have four real ceiling lights.")
 	var upper_room_counts := {1: 0, 2: 0}
 	for room in upper_rooms:
 		var floor_index := int(room.get_meta("floor_index", -1))
@@ -134,6 +163,12 @@ func _validate_school(level: Node) -> void:
 		_check(not str(room.get_meta("room_id", "")).is_empty() and not str(room.get_meta("room_kind", "")).is_empty(), "%s has incomplete room metadata." % room.name)
 		var anchor := room.get_node_or_null("DecorationAnchor")
 		_check(anchor is Marker3D and anchor.is_in_group("school_room_decorator_anchor"), "%s is missing its decorator anchor." % room.name)
+		if anchor is Marker3D:
+			for light_x in [-4.0, 4.0]:
+				for light_z in [-4.5, 4.5]:
+					var expected_light_position := (anchor as Marker3D).global_position + Vector3(light_x, 3.55, light_z)
+					var has_matching_light := upper_room_lights.any(func(light: Node) -> bool: return (light as Node3D).global_position.distance_to(expected_light_position) < 0.05)
+					_check(has_matching_light, "%s has a visible ceiling fixture without a matching light." % room.name)
 		var decorations := room.find_children("ClassroomDecoration_*", "Node3D", true, false)
 		_check(decorations.size() == 1, "%s should have exactly one decoration root." % room.name)
 		if decorations.size() == 1:
@@ -145,6 +180,7 @@ func _validate_school(level: Node) -> void:
 	_check(_nodes_in_level_group(level, &"school_room_decorator_anchor").size() == 16, "Every upper-floor room should expose one decorator anchor.")
 	_check(_nodes_in_level_group(level, &"school_classrooms").size() == 24, "School classroom markers should include seven subjects, kabinet, and sixteen upper rooms.")
 	_check(_nodes_in_level_group(level, &"decorated_classroom").size() == 23, "All seven subject and sixteen upper rooms should be decorated.")
+	_check(level.find_children("*CorridorFloor_*", "MeshInstance3D", true, false).size() == 12, "Corridor floors should be split into local light-safe sections.")
 	_check(get_tree().get_nodes_in_group("teacher_enemies").size() == 8, "School should contain seven subject teachers and one headmistress.")
 	_check(level.find_children("ClassroomDoor_*", "", true, false).size() == 8, "School should contain eight fitted classroom doors.")
 	_check(level.find_children("DeskHiding_*", "Area3D", true, false).size() == 42, "Every student desk should have a hiding spot.")
@@ -154,6 +190,7 @@ func _validate_school(level: Node) -> void:
 	_check(flashlight != null and flashlight.spot_range >= 30.0 and flashlight.shadow_enabled and flashlight.shadow_blur > 1.0, "Player flashlight range or shadow smoothing is incorrect.")
 	_check(flashlight_fill != null and flashlight_fill.spot_range > flashlight.spot_range and not flashlight_fill.shadow_enabled, "Soft flashlight distance fill is missing.")
 	_check(int(ProjectSettings.get_setting("rendering/lights_and_shadows/positional_shadow/atlas_size", 0)) >= 4096 and not bool(ProjectSettings.get_setting("rendering/lights_and_shadows/positional_shadow/atlas_16_bits", true)), "Positional shadow atlas precision is too low.")
+	_check(int(ProjectSettings.get_setting("rendering/limits/opengl/max_renderable_lights", 0)) >= 128, "Compatibility renderer light budget is too low for the school.")
 	var classroom_lights := level.find_children("ClassroomLight_*", "OmniLight3D", true, false)
 	_check(classroom_lights.size() == 32, "Every classroom and kabinet should contain four ceiling lights.")
 	for light in classroom_lights:

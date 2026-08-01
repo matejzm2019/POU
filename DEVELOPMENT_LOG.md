@@ -586,3 +586,36 @@ C:\Users\matej\Downloads\godot.exe --headless --verbose --path . res://scripts/v
 - Phase 3 navigation, live teacher stair climb and gameplay regression: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
 - GUI inspection confirmed the redesigned ground classroom, both stair levels, upper corridor, upper classroom and three-storey exterior.
 - `git diff --check` passed.
+
+## 2026-07-31 - Vizuálny polish školy, normálne schody a rozdelené hliadky
+
+- Zjednotená farebná paleta chodieb a učební, obmedzené rušivé dekorácie a zdieľané materiály pre čistejší vzhľad aj nižší počet zdrojov.
+- Pridaný samostatný `SchoolVisualPolish` s obkladom chodieb, lemovaním podláh a orientačnými tabuľami podlaží.
+- Schodisko presunuté do bočnej veže na južnom konci chodby. Každý prechod má dve ramená po 11 viditeľných stupňov, medzipodestu, zábradlie, okná a svetlá.
+- Horné podlahy sú pri schodisku skutočne otvorené; odstránená bola vizuálna aj kolízna plocha, ktorá predtým prechádzala cez schody.
+- Pod viditeľnými stupňami zostali plynulé skryté kolízne rampy. Medzipodesta má šikmý spoj a zábradlie má pri otočke medzeru, aby sa hráč ani AI nezasekli.
+- Horné učebne dostali vlastné hliadkové body. Osem učiteľov sa rozdeľuje medzi podlažia v pomere 3/3/2, strieda smer trasy a rezervuje rozdielne ciele.
+- Stabilizované obnovovanie cieľa `NavigationAgent3D`, aby učiteľ pri pohybe po schodoch neprepočítaval rovnakú trasu každú polsekundu.
+
+### Validation
+
+- Godot editor/parser/import scan: exit `0`.
+- Phase 1 overuje vizuálny polish, 44 stupňov a reálne podlahové otvory: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 3 overuje rozdelené ciele, podlažia a fyzický prechod živého učiteľa po schodoch: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- GUI kontrola potvrdila chodbu, schodiskovú vežu, medzipodestu, otvor horného podlažia, upravenú učebňu a trojpodlažný exteriér.
+
+## 2026-08-01 - Prestavba schodiska a stabilné osvetlenie
+
+- Každé schodiskové rameno má 13 pravidelných stupňov s približne 16,9 cm výškou a 32 cm nášľapom; oba prechody spolu obsahujú 52 viditeľných stupňov.
+- Šikmá provizórna plocha medzipodesty bola nahradená vodorovnou podestou a tenkým kovovým zábradlím so stĺpikmi a madlom.
+- Rozšírené otvory horných podláh odstránili kolíziu nad hlavou pri výstupe. Skryté plynulé rampy, samostatná navigácia podesty a pohyb učiteľa zarovnaný s podlahou umožňujú spoľahlivý prechod medzi poschodiami.
+- Každá z 16 horných miestností má štyri skutočné `OmniLight3D` svetlá presne pod svietidlami, spolu 64 horných triednych svetiel.
+- Veľké podlahy chodieb boli rozdelené na 12 lokálnych segmentov a Compatibility rozpočet bol zvýšený na 128 vykresľovaných svetiel, aby svetlá pri pohybe kamery náhodne nevypadávali.
+- Betón schodov dostal neutrálny drsný materiál a zábradlia jednotnú tmavú kovovú povrchovú úpravu.
+
+### Validation
+
+- Godot editor/parser/import scan: exit `0`.
+- Phase 1 kontroluje 52 stupňov, 64 horných svetiel, 12 segmentov chodieb a svetelný rozpočet: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
+- Phase 3 fyzicky overuje, že živý učiteľ vyjde po schodoch medzi poschodiami: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
+- GUI kontrola pri 1280 × 720 potvrdila normálne proporcie stupňov, vodorovnú podestu, priechodný otvor a funkčné osvetlenie schodiskovej veže.

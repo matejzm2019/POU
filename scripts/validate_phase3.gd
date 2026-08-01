@@ -31,6 +31,7 @@ func _run() -> void:
 	_check(NightManager.load_night(1), "Could not load Night 1 for gameplay validation.")
 	_check(NightManager.start_night(), "Could not start Night 1 for gameplay validation.")
 	await _validate_navigation(level)
+	await _validate_teacher_patrol_distribution(level)
 	await _validate_teacher_stair_navigation(level)
 	await _validate_teacher_desk_navigation(level)
 	await _validate_pause_menu(level)
@@ -118,18 +119,22 @@ func _validate_navigation(level: Node) -> void:
 		while NavigationServer3D.map_get_iteration_id(navigation_map) == 0 and Time.get_ticks_msec() < map_deadline:
 			await get_tree().physics_frame
 		_check(NavigationServer3D.map_get_iteration_id(navigation_map) > 0, "Navigation map did not synchronize after baking.")
-		var path := NavigationServer3D.map_get_path(navigation_map, lower_access.global_position, upper_access.global_position, true)
-		while path.size() < 2 and Time.get_ticks_msec() < map_deadline:
-			await get_tree().physics_frame
+		var path := PackedVector3Array()
+		var path_height_span := 0.0
+		while Time.get_ticks_msec() < map_deadline:
 			path = NavigationServer3D.map_get_path(navigation_map, lower_access.global_position, upper_access.global_position, true)
+			if path.size() > 1:
+				var path_minimum_y := path[0].y
+				var path_maximum_y := path[0].y
+				for point in path:
+					path_minimum_y = minf(path_minimum_y, point.y)
+					path_maximum_y = maxf(path_maximum_y, point.y)
+				path_height_span = path_maximum_y - path_minimum_y
+				if path_height_span > FLOOR_HEIGHT * 1.5:
+					break
+			await get_tree().physics_frame
 		_check(path.size() > 1, "Navigation map has no path from floor 1 to floor 3.")
-		if path.size() > 1:
-			var minimum_y := path[0].y
-			var maximum_y := path[0].y
-			for point in path:
-				minimum_y = minf(minimum_y, point.y)
-				maximum_y = maxf(maximum_y, point.y)
-			_check(maximum_y - minimum_y > FLOOR_HEIGHT * 1.5, "Navigation path does not traverse all three floors.")
+		_check(path_height_span > FLOOR_HEIGHT * 1.5, "Navigation path does not traverse all three floors.")
 	var patrol_markers := _nodes_in_level_group(level, &"teacher_patrol_marker")
 	_check(patrol_markers.size() == 8, "Expected four teacher patrol markers on each upper floor.")
 	var patrol_counts := {1: 0, 2: 0}
@@ -149,38 +154,58 @@ func _validate_navigation(level: Node) -> void:
 			_check(includes_marker, "%s patrol route omits %s." % [teacher.name, marker.name])
 
 
+func _validate_teacher_patrol_distribution(level: Node) -> void:
+	var teachers := _nodes_in_level_group(level, &"teacher_enemies")
+	var destinations: Array[Vector3] = []
+	var destination_floors: Dictionary[int, int] = {}
+	var directions: Dictionary[int, bool] = {}
+	for teacher in teachers:
+		teacher.call("reset_for_night")
+		teacher.call("set_observer_active", true)
+	await get_tree().physics_frame
+	for teacher in teachers:
+		var destination := teacher.call("get_patrol_destination") as Vector3
+		_check(destination.is_finite(), "%s has no patrol destination." % teacher.name)
+		for other_destination in destinations:
+			_check(destination.distance_to(other_destination) > 0.45, "%s shares a patrol destination with another active teacher." % teacher.name)
+		destinations.append(destination)
+		var floor_index := roundi(destination.y / FLOOR_HEIGHT)
+		destination_floors[floor_index] = destination_floors.get(floor_index, 0) + 1
+		directions[int(teacher.get("_patrol_direction"))] = true
+	_check(destinations.size() == teachers.size(), "Not every active teacher received a patrol destination.")
+	_check(destination_floors.size() == 3, "Active teachers are not distributed across all three floors.")
+	_check(directions.size() == 2, "All teachers follow the school patrol in the same direction.")
+	for teacher in teachers:
+		teacher.call("reset_for_night")
+		teacher.call("set_observer_active", false)
+	await get_tree().physics_frame
+
+
 func _validate_teacher_stair_navigation(level: Node) -> void:
-	var teacher := level.find_child("Teacher_01_*", true, false) as PlaceholderTeacher
+	var teacher := level.find_child("Teacher_02_*", true, false) as PlaceholderTeacher
 	var player := level.find_child("Player", true, false) as Node3D
 	var bottom_access: Node3D
-	var upper_target: Node3D
 	for marker in _nodes_in_level_group(level, &"school_stair_access"):
 		if int(marker.get_meta("floor_index", -1)) == 0:
 			bottom_access = marker as Node3D
 			break
-	for marker in _nodes_in_level_group(level, &"teacher_patrol_marker"):
-		if int(marker.get_meta("floor_index", -1)) == 1:
-			upper_target = marker as Node3D
-			break
-	_check(teacher != null and bottom_access != null and upper_target != null, "Teacher stair navigation setup is incomplete.")
-	if teacher == null or bottom_access == null or upper_target == null:
+	_check(teacher != null and bottom_access != null, "Teacher stair navigation setup is incomplete.")
+	if teacher == null or bottom_access == null:
 		return
-	var target := Node3D.new()
-	level.add_child(target)
-	target.global_position = upper_target.global_position
+	teacher.reset_for_night()
 	teacher.global_position = bottom_access.global_position
 	teacher.velocity = Vector3.ZERO
 	await get_tree().physics_frame
-	teacher.start_chase(target)
-	var deadline := Time.get_ticks_msec() + 14000
-	while teacher.global_position.y < upper_target.global_position.y - 0.8 and Time.get_ticks_msec() < deadline:
+	teacher.set_observer_active(true)
+	var upper_target := teacher.get_patrol_destination()
+	_check(upper_target.y > FLOOR_HEIGHT - 0.3, "The live patrol teacher did not select an upper-floor destination.")
+	var deadline := Time.get_ticks_msec() + 20000
+	while teacher.global_position.y < upper_target.y - 0.8 and Time.get_ticks_msec() < deadline:
 		await get_tree().physics_frame
-	_check(teacher.global_position.y >= upper_target.global_position.y - 0.8, "Teacher could not follow the navigation path up the stairs.")
-	teacher.stop_chase()
+	_check(teacher.global_position.y >= upper_target.y - 0.8, "A live patrol teacher could not walk between floors; final position %s, target %s." % [teacher.global_position, upper_target])
 	teacher.reset_for_night()
 	teacher.set_observer_active(false)
 	teacher.set_player_reference(player)
-	target.queue_free()
 	await get_tree().physics_frame
 
 

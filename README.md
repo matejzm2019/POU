@@ -6,7 +6,7 @@ Godot 4 first-person horor z trojposchodovej slovenskej školy. Hráč sa môže
 
 - Slovenské hlavné menu, výber noci, načítanie, HUD, obrazovka úloh a dokončenie noci
 - Tri plne priechodné podlažia: prízemie so siedmimi predmetovými učebňami a dve horné poschodia so 16 ďalšími miestnosťami
-- Dve široké schodiská s medzipodestami, zábradlím a navigačnými prepojeniami pre hráča aj učiteľov
+- Bočná schodisková veža na južnom konci chodby s 52 normálne dimenzovanými stupňami, vodorovnými medzipodestami, kovovým zábradlím a navigačnými prepojeniami pre hráča aj učiteľov
 - Knižnice, laboratóriá, študovne, výtvarný ateliér, hudobná učebňa, počítačové laboratórium, archív a všeobecné učebne
 - Prepracované interiéry 23 miestností s lavicami, stoličkami, tabuľami, tematickými nápismi, skriňami, policami, radiátormi a stropným osvetlením
 - Zamknutý kabinet so siedmimi konfigurovateľnými učiteľmi a riaditeľkou Zuzanou Čižmárikovou; hráč ho neotvorí ani nevojde za nimi
@@ -16,6 +16,7 @@ Godot 4 first-person horor z trojposchodovej slovenskej školy. Hráč sa môže
 - Osem presne osadených interiérových dverí a ranný východ na konci chodby
 - Rámové okná medzi chodbou a triedami aj bežné vonkajšie okná so stenou, parapetom a nadpražím
 - Štyri stropné svetlá v každej učebni a kabinete pre rovnomernejšie osvetlenie
+- Spoľahlivé osvetlenie v Compatibility rendereri vďaka lokálne deleným podlahám a rozpočtu 128 vykresľovaných svetiel
 - Tri sady úloh v každej učebni, spolu 21 sád za noc
 - Nesprávna odpoveď vypne školské svetlá, spustí naháňačku a zablokuje danú úlohu na 30 sekúnd
 - Ostatní aktívni učitelia pri spozorovaní hráča potichu odovzdajú jeho polohu prenasledovateľovi
@@ -50,6 +51,7 @@ res://
 |- levels/                         škola a opakovateľné objekty
 |- scripts/
 |  |- levels/classroom_decorator.gd  modulárne zariadenie všetkých učební
+|  |- levels/school_visual_polish.gd jednotná paleta a detaily chodieb
 |  `- ...                         level, UI a automatické validátory
 |- systems/
 |  |- audio/                       menu, ambient a náhradné kroky
@@ -93,7 +95,8 @@ Stlač `F5`; projekt spustí `main.tscn`. Hlavná scéna aj autoloady `AudioMana
 - **Prízemie:** sedem predmetových učební, všetkých 21 sád domácich úloh, zamknutý kabinet a ranný východ.
 - **1. poschodie:** osem ďalších učební vrátane knižnice, laboratória a študovne.
 - **2. poschodie:** osem ďalších učební vrátane ateliéru, počítačového laboratória, hudobnej učebne a archívu.
-- Obe schodiská sú súčasťou navigácie. Vypustení učitelia hliadkujú aj na horných poschodiach a vstupujú do tamojších učební.
+- Schodisková veža je na bočnom konci chodby. Otvory v stropoch a podlahách sú skutočne vyrezané, takže cez schody neprechádza neviditeľná ani viditeľná podlaha.
+- Učitelia sa pri štarte deterministicky rozdelia medzi podlažia v pomere 3/3/2, striedajú smer hliadky a rezervujú si rôzne ciele. Nezhromažďujú sa preto všetci v jednej triede a cez schodiskovú vežu prechádzajú aj medzi poschodiami.
 
 V každej učebni je na učiteľskom stole zošit. Interakcia otvorí nasledujúcu z troch sád daného predmetu. Správna odpoveď započíta postup aktuálne spustenej noci. Dokončenie všetkých 21 sád už noc neukončí predčasne.
 
@@ -216,7 +219,7 @@ C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_ph
 C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase3.tscn -- --phase2-test
 ```
 
-Phase 1 navyše overuje tri podlažia, dve schodiská, 16 horných miestností a 23 zariadených učební. Phase 3 overuje viacposchodovú navigáciu, cestu z prízemia na druhé poschodie, horné hliadkové trasy a reálny výstup učiteľa po schodoch. Zachované sú aj kontroly 7 predmetov, 7 učiteľov, Zuzany Čižmárikovej a jej boostov, 21 otázok, cooldownu, dverí, fyzického drepu, výpadku, chytenia, jumpscare, ranného východu a resetu noci.
+Phase 1 navyše overuje tri podlažia, dva schodiskové prechody v jednej bočnej veži, 52 viditeľných stupňov, skutočné podlahové otvory, 64 horných triednych svetiel, lokálne delené podlahy chodieb, svetelný rozpočet, 16 horných miestností a 23 zariadených učební. Phase 3 overuje viacposchodovú navigáciu, rozdelenie učiteľov medzi podlažia, rozdielne rezervované ciele a reálny výstup učiteľa po schodoch. Zachované sú aj kontroly 7 predmetov, 7 učiteľov, Zuzany Čižmárikovej a jej boostov, 21 otázok, cooldownu, dverí, fyzického drepu, výpadku, chytenia, jumpscare, ranného východu a resetu noci.
 
 ## Export pre Windows
 

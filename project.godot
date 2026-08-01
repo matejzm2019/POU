@@ -95,4 +95,5 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/positional_shadow/atlas_16_bits=false
+limits/opengl/max_renderable_lights=128
 environment/defaults/default_clear_color=Color(0.004, 0.006, 0.012, 1)

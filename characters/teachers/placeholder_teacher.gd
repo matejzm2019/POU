@@ -22,9 +22,9 @@ var _player: Node3D
 var _home_position := Vector3.ZERO
 var _patrol_points := PackedVector3Array()
 var _patrol_index := 0
+var _patrol_direction := 1
 var _last_known_position := Vector3.ZERO
 var _last_navigation_target := Vector3.INF
-var _navigation_refresh_elapsed := 0.0
 var _sighting_cooldown := 0.0
 var _caught_reported := false
 var _released := false
@@ -44,6 +44,7 @@ func configure(data: TeacherData, home_position: Vector3, patrol_points: PackedV
 	_home_position = home_position
 	_patrol_points = patrol_points
 	outfit_color = color
+	_initialize_patrol_phase()
 
 
 func _ready() -> void:
@@ -51,10 +52,12 @@ func _ready() -> void:
 		_home_position = global_position
 	_apply_teacher_data()
 	_build_visual()
-	_agent.path_desired_distance = 0.65
+	_agent.path_desired_distance = 0.5
 	_agent.target_desired_distance = 0.8
 	_agent.radius = 0.38
 	_agent.height = 2.3
+	floor_constant_speed = true
+	floor_snap_length = 0.3
 	_steps.stream = teacher_data.footstep_sound if teacher_data != null and teacher_data.footstep_sound != null else AudioManager.get_teacher_footstep()
 	_steps.volume_db = AudioManager.get_footstep_volume_db()
 	SchoolGameManager.register_teacher(self)
@@ -67,7 +70,6 @@ func _exit_tree() -> void:
 
 func _physics_process(delta: float) -> void:
 	_sighting_cooldown = maxf(0.0, _sighting_cooldown - delta)
-	_navigation_refresh_elapsed = maxf(0.0, _navigation_refresh_elapsed - delta)
 	if NightManager.is_night_paused:
 		velocity.x = 0.0
 		velocity.z = 0.0
@@ -94,7 +96,7 @@ func set_observer_active(active: bool) -> void:
 		return
 	_state = State.PATROL if (active or _released) and not _patrol_points.is_empty() else State.IDLE
 	if _state == State.PATROL:
-		_set_navigation_target(_patrol_points[_patrol_index])
+		_select_next_patrol_target(false)
 	else:
 		_play_animation(teacher_data.idle_animation if teacher_data != null else "Idle")
 
@@ -126,6 +128,9 @@ func reset_for_night() -> void:
 	_released = false
 	has_engaged = false
 	_caught_reported = false
+	_state = State.IDLE
+	_initialize_patrol_phase()
+	_last_navigation_target = Vector3.INF
 	global_position = _home_position
 	velocity = Vector3.ZERO
 	_doors_to_close.clear()
@@ -183,6 +188,10 @@ func has_been_released() -> bool:
 	return _released
 
 
+func get_patrol_destination() -> Vector3:
+	return _patrol_points[_patrol_index] if not _patrol_points.is_empty() else Vector3.INF
+
+
 func get_custom_model_bounds() -> AABB:
 	return _custom_model_bounds
 
@@ -225,9 +234,8 @@ func _patrol(delta: float) -> void:
 		return
 	var target := _patrol_points[_patrol_index]
 	if global_position.distance_to(target) < 1.1:
-		_patrol_index = (_patrol_index + 1) % _patrol_points.size()
+		_select_next_patrol_target()
 		target = _patrol_points[_patrol_index]
-		_set_navigation_target(target)
 	_move_toward_target(target, teacher_data.walk_speed if teacher_data != null else 2.4, delta)
 
 
@@ -283,10 +291,14 @@ func _move_toward_target(target: Vector3, speed: float, delta: float) -> void:
 		_stop_horizontal(delta)
 		return
 	direction = direction.normalized()
-	velocity.x = move_toward(velocity.x, direction.x * speed, speed * 6.0 * delta)
-	velocity.z = move_toward(velocity.z, direction.z * speed, speed * 6.0 * delta)
-	if not is_on_floor():
+	var desired_velocity := direction * speed
+	if is_on_floor():
+		desired_velocity = desired_velocity.slide(get_floor_normal()).normalized() * speed
+		velocity.y = desired_velocity.y
+	else:
 		velocity += get_gravity() * delta
+	velocity.x = move_toward(velocity.x, desired_velocity.x, speed * 6.0 * delta)
+	velocity.z = move_toward(velocity.z, desired_velocity.z, speed * 6.0 * delta)
 	move_and_slide()
 	if not direction.is_zero_approx():
 		look_at(global_position + direction, Vector3.UP, true)
@@ -301,11 +313,10 @@ func _stop_horizontal(delta: float) -> void:
 
 
 func _set_navigation_target(target: Vector3) -> void:
-	if _navigation_refresh_elapsed <= 0.0 or _last_navigation_target.distance_squared_to(target) > 0.25:
+	if _last_navigation_target.distance_squared_to(target) > 0.25 or _agent.is_navigation_finished():
 		_last_navigation_target = target
 		var navigation_map := _agent.get_navigation_map()
 		_agent.target_position = NavigationServer3D.map_get_closest_point(navigation_map, target) if navigation_map.is_valid() else target
-		_navigation_refresh_elapsed = 0.5
 
 
 func _update_nearby_doors() -> void:
@@ -333,11 +344,47 @@ func _door_is_clear(door: Node3D) -> bool:
 	return true
 
 
-func _select_next_patrol_target() -> void:
+func _select_next_patrol_target(advance: bool = true) -> void:
 	if _patrol_points.is_empty():
 		return
-	_patrol_index = (_patrol_index + 1) % _patrol_points.size()
+	var first_step := 1 if advance else 0
+	for step in range(first_step, _patrol_points.size() + first_step):
+		var candidate_index := posmod(_patrol_index + step * _patrol_direction, _patrol_points.size())
+		var candidate := _patrol_points[candidate_index]
+		var claimed := false
+		for teacher in get_tree().get_nodes_in_group("teacher_enemies"):
+			if teacher == self or not teacher.has_method("get_patrol_destination") or not bool(teacher.call("is_patrolling")):
+				continue
+			if candidate.distance_squared_to(teacher.call("get_patrol_destination") as Vector3) < 0.25:
+				claimed = true
+				break
+		if not claimed:
+			_patrol_index = candidate_index
+			break
 	_set_navigation_target(_patrol_points[_patrol_index])
+
+
+func _initialize_patrol_phase() -> void:
+	if _patrol_points.is_empty() or teacher_data == null:
+		return
+	var slot := 7 if teacher_data.is_headmistress else maxi(0, teacher_data.teacher_id.get_slice("_", 1).to_int() - 1)
+	var floor_levels := PackedFloat32Array()
+	for point in _patrol_points:
+		var known_floor := false
+		for floor_y in floor_levels:
+			if absf(point.y - floor_y) < 1.0:
+				known_floor = true
+				break
+		if not known_floor:
+			floor_levels.append(point.y)
+	floor_levels.sort()
+	var desired_floor := slot % floor_levels.size()
+	var floor_points := PackedInt32Array()
+	for index in _patrol_points.size():
+		if absf(_patrol_points[index].y - floor_levels[desired_floor]) < 1.0:
+			floor_points.append(index)
+	_patrol_index = floor_points[(slot / floor_levels.size()) % floor_points.size()]
+	_patrol_direction = 1 if slot % 2 == 0 else -1
 
 
 func _update_footsteps(delta: float) -> void:

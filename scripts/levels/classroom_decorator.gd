@@ -63,6 +63,8 @@ const WHITEBOARD_SUBJECTS := [
 	"aplikovana_informatika",
 ]
 
+static var _material_cache := {}
+
 
 static func decorate(room: Node3D, center: Vector3, subject_id: String, accent: Color, side: float) -> Node3D:
 	if not is_instance_valid(room):
@@ -126,18 +128,19 @@ static func _section(parent: Node3D, node_name: String, group := "") -> Node3D:
 
 
 static func _make_materials(accent: Color, whiteboard: bool) -> Dictionary:
+	var muted_accent := Color("405b53").lerp(accent, 0.22)
 	return {
-		"accent": _material(accent.lightened(0.08), 0.72),
-		"band": _material(accent.darkened(0.5), 0.9),
-		"board": _material(Color("e8e5d8") if whiteboard else Color("18382f"), 0.82),
-		"board_frame": _material(Color("afb5b2"), 0.34, 0.72),
-		"cork": _material(Color("8d6747"), 0.95),
-		"dark": _material(Color("252a2c"), 0.72, 0.62),
-		"floor_line": _material(accent.darkened(0.62), 1.0),
-		"light": _material(Color("d8e4d8"), 0.34, 0.0, 1.6),
-		"metal": _material(Color("596064"), 0.38, 0.74),
-		"paper": _material(Color("ded9c8"), 0.96),
-		"wood": _material(accent.darkened(0.12), 0.76),
+		"accent": _material(muted_accent, 0.78),
+		"band": _material(Color("355149"), 0.9),
+		"board": _material(Color("ebe8de") if whiteboard else Color("213d35"), 0.84),
+		"board_frame": _material(Color("a8aaa3"), 0.42, 0.5),
+		"cork": _material(Color("8d6a49"), 0.96),
+		"dark": _material(Color("303635"), 0.82, 0.18),
+		"floor_line": _material(Color("777a72"), 1.0),
+		"light": _material(Color("e8eddf"), 0.38, 0.0, 1.35),
+		"metal": _material(Color("59625f"), 0.48, 0.5),
+		"paper": _material(Color("e9e4d6"), 0.96),
+		"wood": _material(Color("9b744d"), 0.8),
 	}
 
 
@@ -289,8 +292,9 @@ static func _build_utilities(parent: Node3D, side: float, materials: Dictionary)
 	_multibox(parent, "RadiatorFins", Vector3(0.18, 0.82, 0.28), materials["paper"], fins)
 	_box(parent, "RadiatorTop", Vector3(radiator_x - signf(side) * 0.04, 0.96, -0.08), Vector3(0.24, 0.08, 5.2), materials["metal"])
 	_box(parent, "RadiatorPipe", Vector3(radiator_x, 0.16, 2.55), Vector3(0.12, 0.22, 0.85), materials["metal"])
-	_box(parent, "LightSwitch", Vector3(8.65, 1.25, -9.0), Vector3(0.24, 0.34, 0.055), materials["paper"])
-	_box(parent, "PowerOutlet", Vector3(7.95, 0.3, -9.0), Vector3(0.34, 0.22, 0.055), materials["paper"])
+	var corridor_x := -signf(side) * 9.7
+	_box(parent, "LightSwitch", Vector3(corridor_x, 1.25, -1.35), Vector3(0.055, 0.34, 0.24), materials["paper"])
+	_box(parent, "PowerOutlet", Vector3(corridor_x, 0.3, -2.0), Vector3(0.055, 0.22, 0.34), materials["paper"])
 
 
 static func _build_ceiling(parent: Node3D, materials: Dictionary) -> void:
@@ -303,22 +307,17 @@ static func _build_ceiling(parent: Node3D, materials: Dictionary) -> void:
 	_multibox(parent, "CeilingLightHousings", Vector3(2.92, 0.1, 0.54), materials["metal"], housings)
 	var fixture := _multibox(parent, "CeilingLightDiffusers", Vector3(2.58, 0.055, 0.31), materials["light"], diffusers)
 	fixture.add_to_group("school_light_fixtures")
-	var rails := [
-		Transform3D(Basis.IDENTITY, Vector3(-9.35, 4.08, 0)),
-		Transform3D(Basis.IDENTITY, Vector3(9.35, 4.08, 0)),
-	]
-	_multibox(parent, "CeilingEdgeRails", Vector3(0.08, 0.08, 18.3), materials["dark"], rails)
 
 
 static func _build_floor_detail(parent: Node3D, materials: Dictionary) -> void:
 	var long_lines := []
 	var cross_lines := []
-	for x in [-6.6, -3.3, 0.0, 3.3, 6.6]:
+	for x in [-9.35, 9.35]:
 		long_lines.append(Transform3D(Basis.IDENTITY, Vector3(x, 0.033, 0)))
-	for z in [-6.2, -3.1, 0.0, 3.1, 6.2]:
+	for z in [-8.85, 8.85]:
 		cross_lines.append(Transform3D(Basis.IDENTITY, Vector3(0, 0.034, z)))
-	_multibox(parent, "FloorLongSeams", Vector3(0.018, 0.006, 18.25), materials["floor_line"], long_lines)
-	_multibox(parent, "FloorCrossSeams", Vector3(19.15, 0.006, 0.018), materials["floor_line"], cross_lines)
+	_multibox(parent, "FloorLongBorders", Vector3(0.04, 0.006, 18.25), materials["floor_line"], long_lines)
+	_multibox(parent, "FloorCrossBorders", Vector3(19.15, 0.006, 0.04), materials["floor_line"], cross_lines)
 
 
 static func _box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material, collision := false) -> Node3D:
@@ -390,6 +389,9 @@ static func _label(parent: Node3D, node_name: String, text: String, position: Ve
 
 
 static func _material(color: Color, roughness: float, metallic := 0.0, emission := 0.0) -> StandardMaterial3D:
+	var key := "%s:%0.2f:%0.2f:%0.2f" % [color.to_html(), roughness, metallic, emission]
+	if _material_cache.has(key):
+		return _material_cache[key] as StandardMaterial3D
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.roughness = roughness
@@ -398,4 +400,5 @@ static func _material(color: Color, roughness: float, metallic := 0.0, emission 
 		material.emission_enabled = true
 		material.emission = color
 		material.emission_energy_multiplier = emission
+	_material_cache[key] = material
 	return material

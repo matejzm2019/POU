@@ -10,10 +10,20 @@ const WINDOW_TOP := 3.35
 const EXTERIOR_WINDOW_WIDTH := 12.0
 const FLOOR_HEIGHT := 4.4
 const FLOOR_COUNT := 3
-const STAIR_START_Z := 12.5
-const STAIR_END_Z := 18.5
+const STAIR_TOWER_MIN_X := -2.8
+const STAIR_TOWER_MAX_X := 10.4
+const STAIR_TOWER_MIN_Z := 38.35
+const STAIR_TOWER_MAX_Z := 45.9
+const STAIR_START_X := 4.29
+const STAIR_END_X := 8.45
+const STAIR_LANDING_EAST_X := STAIR_TOWER_MAX_X - 0.3
+const STAIR_FLIGHT_A_Z := 41.175
+const STAIR_FLIGHT_B_Z := 43.075
+const STAIR_FLIGHT_WIDTH := 1.65
+const STAIR_STEPS_PER_FLIGHT := 13
 const DESK_HIDING_SPOT_SCRIPT := preload("res://systems/hiding/desk_hiding_spot.gd")
 const CLASSROOM_DECORATOR := preload("res://scripts/levels/classroom_decorator.gd")
+const SCHOOL_VISUAL_POLISH := preload("res://scripts/levels/school_visual_polish.gd")
 const UPPER_ROOM_NAMES := {
 	"classroom": "VŠEOBECNÁ UČEBŇA",
 	"library": "KNIŽNICA",
@@ -47,6 +57,7 @@ func _ready() -> void:
 	_build_subject_classrooms()
 	_build_kabinet()
 	_build_lighting()
+	SCHOOL_VISUAL_POLISH.apply(self)
 	_build_navigation()
 	SchoolGameManager.blackout_changed.connect(_set_blackout)
 	NightManager.time_updated.connect(_update_daylight)
@@ -59,7 +70,9 @@ func _build_shell() -> void:
 	_box("NorthExteriorWallLeft", Vector3(-11.95, 2.05, -SCHOOL_HALF_Z), Vector3(22.1, 4.3, 0.3), wall)
 	_box("NorthExteriorWallRight", Vector3(11.95, 2.05, -SCHOOL_HALF_Z), Vector3(22.1, 4.3, 0.3), wall)
 	_box("NorthExitHeader", Vector3(0, 3.55, -SCHOOL_HALF_Z), Vector3(1.8, 1.3, 0.3), wall)
-	_box("SouthExteriorWall", Vector3(0, 2.05, SCHOOL_HALF_Z), Vector3(46, 4.3, 0.3), wall)
+	_box("SouthExteriorWallLeft", Vector3(-13, 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), wall)
+	_box("SouthExteriorWallRight", Vector3(13, 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), wall)
+	_box("GroundStairPortalHeader", Vector3(0, 3.55, SCHOOL_HALF_Z), Vector3(6, 1.3, 0.3), Color("445054"))
 	for row_index in ROOM_ROWS.size():
 		var row_z: float = ROOM_ROWS[row_index]
 		_build_exterior_wall_row(-1.0, row_index, row_z, wall, true)
@@ -91,9 +104,12 @@ func _build_upper_floors() -> void:
 	for floor_index in range(1, FLOOR_COUNT):
 		var base_y := floor_index * FLOOR_HEIGHT
 		_build_floor_slab(floor_index, base_y)
-		_box("UpperCorridorFloor_F%d" % (floor_index + 1), Vector3(0, base_y + 0.015, 0), Vector3(5.7, 0.03, 76.4), Color("20292b"), false)
+		for corridor_index in ROOM_ROWS.size():
+			_box("UpperCorridorFloor_F%d_%02d" % [floor_index + 1, corridor_index + 1], Vector3(0, base_y + 0.015, ROOM_ROWS[corridor_index]), Vector3(5.7, 0.03, 19.1), Color("20292b"), false)
 		_box("UpperNorthWall_F%d" % (floor_index + 1), Vector3(0, base_y + 2.05, -SCHOOL_HALF_Z), Vector3(46, 4.3, 0.3), Color("34373a"))
-		_box("UpperSouthWall_F%d" % (floor_index + 1), Vector3(0, base_y + 2.05, SCHOOL_HALF_Z), Vector3(46, 4.3, 0.3), Color("34373a"))
+		_box("UpperSouthWallLeft_F%d" % (floor_index + 1), Vector3(-13, base_y + 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), Color("34373a"))
+		_box("UpperSouthWallRight_F%d" % (floor_index + 1), Vector3(13, base_y + 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), Color("34373a"))
+		_box("UpperStairPortalHeader_F%d" % (floor_index + 1), Vector3(0, base_y + 3.55, SCHOOL_HALF_Z), Vector3(6, 1.3, 0.3), Color("445054"))
 		for divider_z in [-19.0, 0.0, 19.0]:
 			for side_value in [-1.0, 1.0]:
 				var side := float(side_value)
@@ -108,19 +124,26 @@ func _build_upper_floors() -> void:
 				_build_upper_room(floor_index, side, row_index, row_z, base_y, room_kinds[room_slot])
 		_add_floor_sign(floor_index, base_y)
 		for marker_index in 4:
-			_add_upper_patrol_marker(floor_index, marker_index, Vector3(0, base_y + 0.05, -30.0 + marker_index * 20.0))
+			var side := -13.0 if (marker_index + floor_index) % 2 == 0 else 13.0
+			_add_upper_patrol_marker(floor_index, marker_index, Vector3(side, base_y + 0.05, ROOM_ROWS[marker_index]))
 		for light_index in 8:
 			_add_ceiling_light("UpperCorridorLight_F%d_%02d" % [floor_index + 1, light_index], Vector3(0, base_y + 3.82, -34.0 + light_index * 9.5), 1.2, 7.0, false)
 	_box("SchoolRoof", Vector3(0, FLOOR_COUNT * FLOOR_HEIGHT - 0.1, 0), Vector3(46, 0.2, 77), Color("17191b"))
+	_box("StairTowerRoof", Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, FLOOR_COUNT * FLOOR_HEIGHT - 0.1, (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5), Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 0.2, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), Color("17191b"))
 
 
 func _build_floor_slab(floor_index: int, base_y: float) -> void:
 	var slab_y := base_y - 0.1
 	var color := Color("25282a")
-	_box("FloorSlab_F%d_North" % (floor_index + 1), Vector3(0, slab_y, -13.25), Vector3(46, 0.2, 50.5), color)
-	_box("FloorSlab_F%d_South" % (floor_index + 1), Vector3(0, slab_y, 29.75), Vector3(46, 0.2, 17.5), color)
-	_box("FloorSlab_F%d_WestBridge" % (floor_index + 1), Vector3(-13, slab_y, 16.5), Vector3(20, 0.2, 9), color)
-	_box("FloorSlab_F%d_EastBridge" % (floor_index + 1), Vector3(13, slab_y, 16.5), Vector3(20, 0.2, 9), color)
+	_box("FloorSlab_F%d" % (floor_index + 1), Vector3(0, slab_y, 0), Vector3(46, 0.2, 77), color)
+	var tower_center_z := (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5
+	var tower_depth := STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z
+	var opening_north := STAIR_FLIGHT_A_Z - STAIR_FLIGHT_WIDTH * 0.5
+	var opening_south := STAIR_FLIGHT_B_Z + STAIR_FLIGHT_WIDTH * 0.5
+	_box("StairFloorWest_F%d" % (floor_index + 1), Vector3((STAIR_TOWER_MIN_X + STAIR_START_X) * 0.5, slab_y, tower_center_z), Vector3(STAIR_START_X - STAIR_TOWER_MIN_X, 0.2, tower_depth), color)
+	_box("StairFloorEast_F%d" % (floor_index + 1), Vector3((STAIR_LANDING_EAST_X + STAIR_TOWER_MAX_X) * 0.5, slab_y, tower_center_z), Vector3(STAIR_TOWER_MAX_X - STAIR_LANDING_EAST_X, 0.2, tower_depth), color)
+	_box("StairFloorNorth_F%d" % (floor_index + 1), Vector3((STAIR_START_X + STAIR_LANDING_EAST_X) * 0.5, slab_y, (STAIR_TOWER_MIN_Z + opening_north) * 0.5), Vector3(STAIR_LANDING_EAST_X - STAIR_START_X, 0.2, opening_north - STAIR_TOWER_MIN_Z), color)
+	_box("StairFloorSouth_F%d" % (floor_index + 1), Vector3((STAIR_START_X + STAIR_LANDING_EAST_X) * 0.5, slab_y, (opening_south + STAIR_TOWER_MAX_Z) * 0.5), Vector3(STAIR_LANDING_EAST_X - STAIR_START_X, 0.2, STAIR_TOWER_MAX_Z - opening_south), color)
 
 
 func _build_upper_facade(floor_index: int, side: float, row_index: int, row_z: float, base_y: float) -> void:
@@ -177,7 +200,9 @@ func _build_upper_room(floor_index: int, side: float, row_index: int, row_z: flo
 	anchor.set_meta("room_id", room_id)
 	anchor.set_meta("room_kind", room_kind)
 	room.add_child(anchor)
-	_add_ceiling_light("UpperRoomLight_%s" % room_id, center + Vector3(0, 3.82, 0), 1.25, 9.0, false)
+	for light_x in [-4.0, 4.0]:
+		for light_z in [-4.5, 4.5]:
+			_add_ceiling_light("UpperRoomLight_%s_%s_%s" % [room_id, str(light_x), str(light_z)], center + Vector3(light_x, 3.82, light_z), 1.35, 8.8, false, false)
 
 
 func _add_floor_sign(floor_index: int, base_y: float) -> void:
@@ -199,13 +224,42 @@ func _add_upper_patrol_marker(floor_index: int, marker_index: int, marker_positi
 	marker.position = marker_position
 	marker.add_to_group("teacher_patrol_marker")
 	marker.set_meta("floor_index", floor_index)
+	marker.set_meta("zone_id", "floor_%d_classrooms" % floor_index)
+	marker.set_meta("room_id", "F%d_%s_%d" % [floor_index + 1, "West" if marker_position.x < 0.0 else "East", marker_index + 1])
 	add_child(marker)
 	_upper_patrol_points.append(marker_position)
 
 
 func _build_stairs() -> void:
+	_build_stair_tower()
 	for from_floor in range(FLOOR_COUNT - 1):
 		_build_stair(from_floor)
+
+
+func _build_stair_tower() -> void:
+	var wall := Color("343b3e")
+	var tower_center := Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, -0.1, (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5)
+	_box("StairTowerGroundFloor", tower_center, Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 0.2, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), Color("25282a"))
+	for floor_index in FLOOR_COUNT:
+		var base_y := floor_index * FLOOR_HEIGHT
+		var window_width := 5.4
+		var edge_depth := (STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z - window_width) * 0.5
+		var window_center_z := (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5
+		_box("StairTowerWestWall_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MIN_X, base_y + 2.05, window_center_z), Vector3(0.3, 4.3, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), wall)
+		_box("StairTowerSouthWall_F%d" % (floor_index + 1), Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, base_y + 2.05, STAIR_TOWER_MAX_Z), Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 4.3, 0.3), wall)
+		_box("StairTowerEastBefore_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 2.05, STAIR_TOWER_MIN_Z + edge_depth * 0.5), Vector3(0.3, 4.3, edge_depth), wall)
+		_box("StairTowerEastAfter_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 2.05, STAIR_TOWER_MAX_Z - edge_depth * 0.5), Vector3(0.3, 4.3, edge_depth), wall)
+		_box("StairTowerEastSill_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 0.45, window_center_z), Vector3(0.3, 0.9, window_width), wall)
+		_box("StairTowerEastHeader_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 3.75, window_center_z), Vector3(0.3, 0.9, window_width), wall)
+		_build_window_bank("StairTowerWindow", "F%d" % (floor_index + 1), STAIR_TOWER_MAX_X, STAIR_TOWER_MAX_X - 0.12, window_center_z, window_width, base_y + 0.9, base_y + 3.3, 3, self)
+		_add_ceiling_light("StairTowerLight_F%d" % (floor_index + 1), Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, base_y + 3.82, window_center_z), 1.35, 8.0, false)
+	for floor_index in range(1, FLOOR_COUNT):
+		var floor_y := floor_index * FLOOR_HEIGHT
+		var opening_north := STAIR_FLIGHT_A_Z - STAIR_FLIGHT_WIDTH * 0.5
+		var opening_south := STAIR_FLIGHT_B_Z + STAIR_FLIGHT_WIDTH * 0.5
+		_add_stair_guard(self, "StairwellNorthGuard_F%d" % (floor_index + 1), Vector3(STAIR_START_X, floor_y, opening_north), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_north))
+		_add_stair_guard(self, "StairwellSouthGuard_F%d" % (floor_index + 1), Vector3(STAIR_START_X, floor_y, opening_south), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_south))
+		_add_stair_guard(self, "StairwellEastGuard_F%d" % (floor_index + 1), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_north), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_south))
 
 
 func _build_stair(from_floor: int) -> void:
@@ -216,30 +270,111 @@ func _build_stair(from_floor: int) -> void:
 	stair.set_meta("from_floor_index", from_floor)
 	stair.set_meta("to_floor_index", from_floor + 1)
 	add_child(stair)
-	var run := STAIR_END_Z - STAIR_START_Z
+	var run := STAIR_END_X - STAIR_START_X
 	var rise := FLOOR_HEIGHT * 0.5
 	var angle := atan(rise / run)
-	var length := sqrt(run * run + rise * rise)
-	var flight_a := _box("FlightA", Vector3(-1.35, base_y + rise * 0.5, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(2.2, 0.22, length), Color("4a5052"), true, 0.0, stair)
-	flight_a.rotation.x = -angle
-	var flight_b := _box("FlightB", Vector3(1.35, base_y + rise * 1.5, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(2.2, 0.22, length), Color("4a5052"), true, 0.0, stair)
-	flight_b.rotation.x = angle
-	_box("MidLanding", Vector3(0, base_y + rise - 0.1, STAIR_END_Z + 0.8), Vector3(5.5, 0.2, 2.0), Color("4a5052"), true, 0.0, stair)
-	_box("TopLanding", Vector3(0, base_y + FLOOR_HEIGHT - 0.1, STAIR_START_Z - 0.75), Vector3(5.5, 0.2, 2.5), Color("4a5052"), true, 0.0, stair)
-	var rail_a := _box("FlightARail", Vector3(-2.5, base_y + rise * 0.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
-	rail_a.rotation.x = -angle
-	var rail_b := _box("FlightBRail", Vector3(2.5, base_y + rise * 1.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
-	rail_b.rotation.x = angle
-	var inner_rail_a := _box("FlightAInnerRail", Vector3(-0.2, base_y + rise * 0.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
-	inner_rail_a.rotation.x = -angle
-	var inner_rail_b := _box("FlightBInnerRail", Vector3(0.2, base_y + rise * 1.5 + 0.62, (STAIR_START_Z + STAIR_END_Z) * 0.5), Vector3(0.12, 1.05, length), Color("252c2e"), true, 0.0, stair)
-	inner_rail_b.rotation.x = angle
-	_box("LandingGuard", Vector3(0, base_y + rise + 0.55, STAIR_END_Z + 1.75), Vector3(5.6, 1.2, 0.12), Color("252c2e"), true, 0.0, stair)
-	_add_stair_navigation_link(stair, "FlightALink", Vector3(-1.35, base_y + 0.2, STAIR_START_Z), Vector3(-1.35, base_y + rise + 0.2, STAIR_END_Z))
-	_add_stair_navigation_link(stair, "LandingLink", Vector3(-1.35, base_y + rise + 0.2, STAIR_END_Z + 0.35), Vector3(1.35, base_y + rise + 0.2, STAIR_END_Z + 0.35))
-	_add_stair_navigation_link(stair, "FlightBLink", Vector3(1.35, base_y + rise + 0.2, STAIR_END_Z), Vector3(1.35, base_y + FLOOR_HEIGHT + 0.2, STAIR_START_Z))
-	_add_stair_access_marker(stair, "BottomAccess", from_floor, Vector3(-1.35, base_y + 0.05, STAIR_START_Z - 0.5))
-	_add_stair_access_marker(stair, "TopAccess", from_floor + 1, Vector3(1.35, base_y + FLOOR_HEIGHT + 0.05, STAIR_START_Z - 0.5))
+	var collision_overlap := 0.9
+	var collision_run := run + collision_overlap
+	var collision_rise := rise + collision_overlap * rise / run
+	var collision_length := sqrt(collision_run * collision_run + collision_rise * collision_rise)
+	var collision_center_x := (STAIR_START_X + STAIR_END_X + collision_overlap) * 0.5
+	_add_stair_collision(stair, "FlightA", Vector3(collision_center_x, base_y + collision_rise * 0.5 - 0.06, STAIR_FLIGHT_A_Z), Vector3(collision_length, 0.12, STAIR_FLIGHT_WIDTH), Vector3(0, 0, angle))
+	_add_stair_collision(stair, "FlightB", Vector3(collision_center_x, base_y + rise * 1.5 - (collision_rise - rise) * 0.5 - 0.06, STAIR_FLIGHT_B_Z), Vector3(collision_length, 0.12, STAIR_FLIGHT_WIDTH), Vector3(0, 0, -angle))
+	var step_tread := run / STAIR_STEPS_PER_FLIGHT
+	var step_rise := rise / STAIR_STEPS_PER_FLIGHT
+	for step_index in STAIR_STEPS_PER_FLIGHT:
+		var step_height := step_rise * (step_index + 1)
+		_box("FlightA_Step_%02d" % (step_index + 1), Vector3(STAIR_START_X + step_tread * (step_index + 0.5), base_y + step_height * 0.5, STAIR_FLIGHT_A_Z), Vector3(step_tread + 0.01, step_height, STAIR_FLIGHT_WIDTH), Color("727779"), false, 0.0, stair)
+		_box("FlightB_Step_%02d" % (step_index + 1), Vector3(STAIR_END_X - step_tread * (step_index + 0.5), base_y + rise + step_height * 0.5, STAIR_FLIGHT_B_Z), Vector3(step_tread + 0.01, step_height, STAIR_FLIGHT_WIDTH), Color("727779"), false, 0.0, stair)
+	var landing_north := STAIR_FLIGHT_A_Z - STAIR_FLIGHT_WIDTH * 0.5
+	var landing_south := STAIR_FLIGHT_B_Z + STAIR_FLIGHT_WIDTH * 0.5
+	var landing_west := STAIR_END_X
+	var landing_east := STAIR_LANDING_EAST_X
+	var landing_center_x := (landing_west + landing_east) * 0.5
+	var landing_center_z := (STAIR_FLIGHT_A_Z + STAIR_FLIGHT_B_Z) * 0.5
+	var landing_collision_size := Vector3(landing_east - landing_west, 0.04, landing_south - landing_north)
+	var landing_flat_start := STAIR_END_X + 0.75
+	_add_stair_collision(stair, "MidLanding", Vector3((landing_flat_start + landing_east) * 0.5, base_y + rise - 0.09, landing_center_z), Vector3(landing_east - landing_flat_start, 0.18, landing_collision_size.z), Vector3.ZERO)
+	_box("MidLandingSurface", Vector3(landing_center_x, base_y + rise - 0.09, landing_center_z), Vector3(landing_collision_size.x, 0.18, landing_collision_size.z), Color("727779"), false, 0.0, stair)
+	_box("TopLanding", Vector3((STAIR_TOWER_MIN_X + STAIR_START_X) * 0.5, base_y + FLOOR_HEIGHT + 0.005, (STAIR_FLIGHT_A_Z + STAIR_FLIGHT_B_Z) * 0.5), Vector3(STAIR_START_X - STAIR_TOWER_MIN_X, 0.01, STAIR_FLIGHT_B_Z - STAIR_FLIGHT_A_Z + STAIR_FLIGHT_WIDTH), Color("727779"), false, 0.0, stair)
+	_add_stair_flight_rail(stair, "FlightARail", STAIR_FLIGHT_A_Z - STAIR_FLIGHT_WIDTH * 0.5, base_y, rise, false)
+	_add_stair_flight_rail(stair, "FlightAInnerRail", STAIR_FLIGHT_A_Z + STAIR_FLIGHT_WIDTH * 0.5, base_y, rise, false, true)
+	_add_stair_flight_rail(stair, "FlightBRail", STAIR_FLIGHT_B_Z + STAIR_FLIGHT_WIDTH * 0.5, base_y + rise, rise, true)
+	_add_stair_flight_rail(stair, "FlightBInnerRail", STAIR_FLIGHT_B_Z - STAIR_FLIGHT_WIDTH * 0.5, base_y + rise, rise, true, true)
+	_add_stair_guard(stair, "LandingNorthGuard", Vector3(STAIR_END_X, base_y + rise, landing_north), Vector3(landing_east, base_y + rise, landing_north))
+	_add_stair_guard(stair, "LandingSouthGuard", Vector3(STAIR_END_X, base_y + rise, landing_south), Vector3(landing_east, base_y + rise, landing_south))
+	_add_stair_guard(stair, "LandingGuard", Vector3(landing_east, base_y + rise, landing_north), Vector3(landing_east, base_y + rise, landing_south))
+	var nav_ramp_x := STAIR_END_X - 0.7
+	var nav_landing_x := STAIR_END_X + 0.25
+	_add_stair_landing_navigation(stair, base_y + rise + 0.3, landing_north + 0.45, landing_south - 0.45, nav_landing_x, landing_east - 0.45)
+	_add_stair_navigation_link(stair, "FlightALink", Vector3(STAIR_START_X - 0.35, base_y + 0.05, STAIR_FLIGHT_A_Z), Vector3(nav_ramp_x, base_y + rise + 0.05, STAIR_FLIGHT_A_Z))
+	_add_stair_navigation_link(stair, "LandingInLink", Vector3(nav_ramp_x, base_y + rise + 0.05, STAIR_FLIGHT_A_Z), Vector3(nav_landing_x, base_y + rise + 0.3, STAIR_FLIGHT_A_Z))
+	_add_stair_navigation_link(stair, "LandingOutLink", Vector3(nav_landing_x, base_y + rise + 0.3, STAIR_FLIGHT_B_Z), Vector3(nav_ramp_x, base_y + rise + 0.85, STAIR_FLIGHT_B_Z))
+	_add_stair_navigation_link(stair, "FlightBLink", Vector3(nav_ramp_x, base_y + rise + 0.85, STAIR_FLIGHT_B_Z), Vector3(STAIR_START_X - 0.35, base_y + FLOOR_HEIGHT + 0.05, STAIR_FLIGHT_B_Z))
+	_add_stair_access_marker(stair, "BottomAccess", from_floor, Vector3(1.25, base_y + 0.05, STAIR_FLIGHT_A_Z))
+	_add_stair_access_marker(stair, "TopAccess", from_floor + 1, Vector3(1.25, base_y + FLOOR_HEIGHT + 0.05, STAIR_FLIGHT_B_Z))
+
+
+func _add_stair_flight_rail(parent: Node3D, rail_name: String, rail_z: float, bottom_y: float, rise: float, reverse: bool, open_at_landing := false) -> void:
+	var run := STAIR_END_X - STAIR_START_X
+	var rail_end_x := STAIR_END_X - (1.25 if open_at_landing else 0.0)
+	var end_progress := (rail_end_x - STAIR_START_X) / run
+	var start_y := bottom_y + (rise if reverse else 0.0)
+	var end_y := bottom_y + (rise * (1.0 - end_progress) if reverse else rise * end_progress)
+	var rail_delta := Vector2(rail_end_x - STAIR_START_X, end_y - start_y)
+	var rail_position := Vector3((STAIR_START_X + rail_end_x) * 0.5, (start_y + end_y) * 0.5 + 0.95, rail_z)
+	var rail := _box(rail_name, rail_position, Vector3(rail_delta.length(), 0.06, 0.06), Color("273235"), not open_at_landing, 0.0, parent)
+	rail.rotation.z = rail_delta.angle()
+	if open_at_landing:
+		var collision_end_progress := 0.4
+		var collision_end := Vector3(lerpf(STAIR_START_X, rail_end_x, collision_end_progress), lerpf(start_y, end_y, collision_end_progress) + 0.95, rail_z)
+		var collision_start := Vector3(STAIR_START_X, start_y + 0.95, rail_z)
+		var collision_delta := collision_end - collision_start
+		_add_stair_collision(parent, "%sCollision" % rail_name, (collision_start + collision_end) * 0.5, Vector3(collision_delta.length(), 0.06, 0.06), Vector3(0, 0, atan2(collision_delta.y, collision_delta.x)))
+	for post_index in 6:
+		var progress := post_index / 5.0
+		var post_x := lerpf(STAIR_START_X, rail_end_x, progress)
+		var post_y := lerpf(start_y, end_y, progress)
+		_box("%sPost_%02d" % [rail_name, post_index + 1], Vector3(post_x, post_y + 0.475, rail_z), Vector3(0.05, 0.95, 0.05), Color("273235"), not open_at_landing or progress <= 0.4, 0.0, parent)
+
+
+func _add_stair_guard(parent: Node3D, guard_name: String, start: Vector3, end: Vector3) -> void:
+	var delta := end - start
+	var length := Vector2(delta.x, delta.z).length()
+	var rail_size := Vector3(length, 0.06, 0.06) if absf(delta.x) > absf(delta.z) else Vector3(0.06, 0.06, length)
+	_box(guard_name, (start + end) * 0.5 + Vector3.UP * 0.95, rail_size, Color("273235"), true, 0.0, parent)
+	_box("%sMidRail" % guard_name, (start + end) * 0.5 + Vector3.UP * 0.5, rail_size, Color("273235"), true, 0.0, parent)
+	var span_count := ceili(length / 0.9)
+	for post_index in span_count + 1:
+		_box("%sPost_%02d" % [guard_name, post_index + 1], start.lerp(end, post_index / float(span_count)) + Vector3.UP * 0.475, Vector3(0.05, 0.95, 0.05), Color("273235"), true, 0.0, parent)
+
+
+func _add_stair_collision(parent: Node3D, body_name: String, body_position: Vector3, size: Vector3, body_rotation: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.name = body_name
+	body.position = body_position
+	body.rotation = body_rotation
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	parent.add_child(body)
+
+
+func _add_stair_landing_navigation(parent: Node3D, navigation_y: float, north_z: float, south_z: float, west_x: float, east_x: float) -> void:
+	var navigation_mesh := NavigationMesh.new()
+	navigation_mesh.vertices = PackedVector3Array([
+		Vector3(west_x, navigation_y, north_z),
+		Vector3(west_x, navigation_y, south_z),
+		Vector3(east_x, navigation_y, south_z),
+		Vector3(east_x, navigation_y, north_z),
+	])
+	navigation_mesh.add_polygon(PackedInt32Array([0, 1, 2, 3]))
+	var region := NavigationRegion3D.new()
+	region.name = "LandingNavigationRegion"
+	region.navigation_mesh = navigation_mesh
+	parent.add_child(region)
 
 
 func _add_stair_navigation_link(parent: Node3D, link_name: String, start: Vector3, end: Vector3) -> void:
@@ -294,7 +429,8 @@ func _build_corridor_wall_row(side: float, row_index: int, row_z: float, color: 
 
 
 func _build_corridor() -> void:
-	_box("CorridorFloor", Vector3(0, 0.015, 0), Vector3(5.7, 0.03, 76.4), Color("1d2426"), false)
+	for corridor_index in ROOM_ROWS.size():
+		_box("CorridorFloor_%02d" % (corridor_index + 1), Vector3(0, 0.015, ROOM_ROWS[corridor_index]), Vector3(5.7, 0.03, 19.1), Color("1d2426"), false)
 	for z in range(-36, 38, 4):
 		_box("CorridorTile_%d" % z, Vector3(0, 0.035, z), Vector3(5.6, 0.012, 0.055), Color("394044"), false)
 	for side_value in [-1.0, 1.0]:
@@ -472,8 +608,9 @@ func _school_patrol(offset: int) -> PackedVector3Array:
 	])
 	base.append_array(_upper_patrol_points)
 	var patrol := PackedVector3Array()
+	var stride := 1 + posmod(offset * 2, base.size() - 1)
 	for index in base.size():
-		patrol.append(base[(index + offset) % base.size()])
+		patrol.append(base[(offset + index * stride) % base.size()])
 	return patrol
 
 
@@ -652,9 +789,10 @@ func _build_lighting() -> void:
 					_add_ceiling_light("ClassroomLight_%d_%s_%d_%d" % [row_index, str(side_value), x_index, z_index], light_position, 1.35, 8.8, false)
 
 
-func _add_ceiling_light(label: String, light_position: Vector3, energy: float, light_range: float, shadows: bool) -> void:
-	var fixture := _box("%sFixture" % label, light_position + Vector3(0, 0.08, 0), Vector3(2.6, 0.08, 0.34), Color("c6d1c6"), false, 2.1)
-	fixture.add_to_group("school_light_fixtures")
+func _add_ceiling_light(label: String, light_position: Vector3, energy: float, light_range: float, shadows: bool, create_fixture := true) -> void:
+	if create_fixture:
+		var fixture := _box("%sFixture" % label, light_position + Vector3(0, 0.08, 0), Vector3(2.6, 0.08, 0.34), Color("c6d1c6"), false, 2.1)
+		fixture.add_to_group("school_light_fixtures")
 	var light := OmniLight3D.new()
 	light.name = label
 	light.position = light_position - Vector3(0, 0.22, 0)
