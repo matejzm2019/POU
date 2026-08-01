@@ -31,7 +31,7 @@ func _validate_phase2() -> void:
 
 func _validate_night_resources() -> void:
 	var nights := NightManager.get_all_nights()
-	var expected_counts := [0, 1, 2, 3, 4, 5, 6, 7]
+	var expected_counts := [0, 1, 2, 3, 4, 5, 6, 8]
 	_check(nights.size() == 8, "Expected eight NightData resources.")
 	for index in mini(nights.size(), 8):
 		var data := nights[index]

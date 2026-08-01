@@ -76,6 +76,10 @@ func _validate_resources() -> void:
 			_check(teacher.chase_speed >= 3.8 and teacher.chase_speed <= 4.4, "%s does not use the slower chase configuration." % teacher.display_name)
 			_check(teacher.display_name == EXPECTED_TEACHER_NAMES.get(subject.subject_id, ""), "%s has the wrong teacher name." % subject.display_name)
 			_check(teacher.walk_animation == "Walking" and teacher.run_animation == "RunFast", "%s does not use the shared movement animation names." % teacher.display_name)
+	var gym_teacher := SchoolGameManager.get_teacher_data("telocvik")
+	_check(gym_teacher != null and gym_teacher.teacher_id == "teacher_8" and gym_teacher.display_name == "Juraj Krajči", "PE teacher Juraj Krajči is missing.")
+	if gym_teacher != null:
+		_check(gym_teacher.active_nights.has(8) and gym_teacher.chase_speed == 4.4, "Juraj Krajči has invalid Night 8 AI data.")
 	var headmistress := SchoolGameManager.get_headmistress_data()
 	_check(headmistress != null and headmistress.display_name == "Zuzana Čižmáriková", "Headmistress Zuzana Čižmáriková is missing.")
 	if headmistress != null:
@@ -107,6 +111,8 @@ func _validate_navigation(level: Node) -> void:
 	var access_markers := _nodes_in_level_group(level, &"school_stair_access")
 	var lower_access: Node3D
 	var upper_access: Node3D
+	var gym_markers := _nodes_in_level_group(level, &"gym_patrol_marker")
+	_check(gym_markers.size() == 4, "Standalone gym should expose four navigation patrol markers.")
 	for marker in access_markers:
 		if int(marker.get_meta("floor_index", -1)) == 0:
 			lower_access = marker as Node3D
@@ -135,6 +141,10 @@ func _validate_navigation(level: Node) -> void:
 			await get_tree().physics_frame
 		_check(path.size() > 1, "Navigation map has no path from floor 1 to floor 3.")
 		_check(path_height_span > FLOOR_HEIGHT * 1.5, "Navigation path does not traverse all three floors.")
+		if gym_markers.size() == 4:
+			var deepest_gym_point := (gym_markers.back() as Node3D).global_position
+			var closest_gym_navigation := NavigationServer3D.map_get_closest_point(navigation_map, deepest_gym_point)
+			_check(closest_gym_navigation.distance_to(deepest_gym_point) < 1.5, "Standalone gym hall is not covered by the school navigation mesh.")
 	var patrol_markers := _nodes_in_level_group(level, &"teacher_patrol_marker")
 	_check(patrol_markers.size() == 8, "Expected four teacher patrol markers on each upper floor.")
 	var patrol_counts := {1: 0, 2: 0}
@@ -145,7 +155,7 @@ func _validate_navigation(level: Node) -> void:
 	_check(patrol_counts == {1: 4, 2: 4}, "Upper-floor patrol markers are not evenly distributed.")
 	for teacher in _nodes_in_level_group(level, &"teacher_enemies"):
 		var patrol_points: PackedVector3Array = teacher.get("_patrol_points")
-		for marker in patrol_markers:
+		for marker in patrol_markers + gym_markers:
 			var includes_marker := false
 			for point in patrol_points:
 				if point.distance_to((marker as Node3D).global_position) < 0.05:
@@ -293,7 +303,8 @@ func _validate_homework_and_chase(level: Node) -> void:
 	var player := level.find_child("Player", true, false) as FirstPersonController
 	_check(player != null, "School player is missing.")
 	_check(level.find_children("Homework_*", "", true, false).size() == 7, "Expected one homework station in each subject classroom.")
-	_check(level.find_children("Teacher_*", "", true, false).size() == 7, "Expected seven subject teachers in kabinet.")
+	_check(level.find_children("Teacher_*", "", true, false).size() == 8, "Expected eight teachers in kabinet.")
+	_check(level.find_child("Teacher_08_telocvik", true, false) != null, "Expected Juraj Krajči in kabinet.")
 	_check(level.find_child("Headmistress_Zuzana_Cizmarikova", true, false) != null, "Expected Zuzana Čižmáriková in kabinet.")
 	_check(level.find_children("DeskHiding_*", "Area3D", true, false).size() == 42, "Expected one hiding spot under every student desk.")
 	for teacher_node in level.find_children("Teacher_*", "", true, false):

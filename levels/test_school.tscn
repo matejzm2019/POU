@@ -47,6 +47,9 @@ light_color = Color(1, 0.78, 0.56, 1)
 light_energy = 0.04
 shadow_enabled = true
 
+[node name="EditorPreview" type="Node3D" parent="."]
+editor_description = "Editorový náhľad celej procedurálnej školy. Jeho obsah sa automaticky obnoví po otvorení scény a neukladá sa do hry."
+
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector3(-13, 0.05, 34)
 rotation_degrees = Vector3(0, -90, 0)

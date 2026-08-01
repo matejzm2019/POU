@@ -29,6 +29,7 @@ const TEACHER_PATHS := [
 	"res://data/teachers/teacher_5.tres",
 	"res://data/teachers/teacher_6.tres",
 	"res://data/teachers/teacher_7.tres",
+	"res://data/teachers/teacher_8.tres",
 ]
 const HEADMISTRESS_PATH := "res://data/teachers/headmistress.tres"
 const SETS_PER_SUBJECT := 3

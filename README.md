@@ -6,16 +6,17 @@ Godot 4 first-person horor z trojposchodovej slovenskej školy. Hráč sa môže
 
 - Slovenské hlavné menu, výber noci, načítanie, HUD, obrazovka úloh a dokončenie noci
 - Tri plne priechodné podlažia: prízemie so siedmimi predmetovými učebňami a dve horné poschodia so 16 ďalšími miestnosťami
-- Bočná schodisková veža na južnom konci chodby s 52 normálne dimenzovanými stupňami, vodorovnými medzipodestami, kovovým zábradlím a navigačnými prepojeniami pre hráča aj učiteľov
-- Knižnice, laboratóriá, študovne, výtvarný ateliér, hudobná učebňa, počítačové laboratórium, archív a všeobecné učebne
-- Prepracované interiéry 23 miestností s lavicami, stoličkami, tabuľami, tematickými nápismi, skriňami, policami, radiátormi a stropným osvetlením
-- Zamknutý kabinet so siedmimi konfigurovateľnými učiteľmi a riaditeľkou Zuzanou Čižmárikovou; hráč ho neotvorí ani nevojde za nimi
+- Dve schodiskové veže na severnom a južnom konci chodieb so 104 normálne dimenzovanými stupňami, vodorovnými medzipodestami, kovovým zábradlím a navigačnými prepojeniami pre hráča aj učiteľov
+- Knižnice, laboratóriá, študovne, polytechnická dielňa, hudobná učebňa, počítačové laboratórium, archív, telocvičňa a všeobecné učebne
+- Prepracované interiéry 23 miestností a samostatná prízemná športová hala so športovou podlahou, dvomi basketbalovými košmi, futsalovými bránami, rebrinami a tribúnou
+- Zamknutý kabinet s ôsmimi konfigurovateľnými učiteľmi a riaditeľkou Zuzanou Čižmárikovou; hráč ho neotvorí ani nevojde za nimi
 - Osem dátovo riadených nocí a spoločný školský čas zobrazený v HUD
 - Pohyb z prvej osoby, otáčanie myšou, šprint, výdrž, drep, skok a interakcia
 - Baterka s 30-metrovým tieňovaným kužeľom, mäkkým dosvietením do 36 metrov a vyhladenými tieňmi
-- Osem presne osadených interiérových dverí a ranný východ na konci chodby
+- Dvadsaťštyri presne osadených interiérových dverí — jedny v každej učebni a kabinete — a ranný východ na konci chodby
 - Rámové okná medzi chodbou a triedami aj bežné vonkajšie okná so stenou, parapetom a nadpražím
 - Štyri stropné svetlá v každej učebni a kabinete pre rovnomernejšie osvetlenie
+- Trávnatý školský areál s chodníkmi a 18 stromami okolo budov
 - Spoľahlivé osvetlenie v Compatibility rendereri vďaka lokálne deleným podlahám a rozpočtu 128 vykresľovaných svetiel
 - Tri sady úloh v každej učebni, spolu 21 sád za noc
 - Nesprávna odpoveď vypne školské svetlá, spustí naháňačku a zablokuje danú úlohu na 30 sekúnd
@@ -45,7 +46,7 @@ res://
 |- data/
 |  |- homework/                    7 predmetov, každý s 3 otázkami
 |  |- nights/                      NightData pre noci 1 až 8
-|  |- teachers/                    7 učiteľov a TeacherData riaditeľky
+|  |- teachers/                    8 učiteľov a TeacherData riaditeľky
 |  `- audio/                       centrálna GameAudioData konfigurácia
 |- enemies/                        miesto pre zdedené scény importovaných postáv
 |- levels/                         škola a opakovateľné objekty
@@ -88,15 +89,24 @@ C:\Users\matej\Downloads\godot.exe --path . --editor
 
 Stlač `F5`; projekt spustí `main.tscn`. Hlavná scéna aj autoloady `AudioManager`, `SaveManager`, `NightManager` a `SchoolGameManager` sú už nastavené.
 
+### Zobrazenie školy v Godot 3D editore
+
+Hlavná školská scéna je `res://levels/test_school.tscn`. Po jej otvorení sa pod uzlom `EditorPreview` automaticky vytvorí celý lokálny 3D náhľad budovy; hru netreba spúšťať. Ak bola scéna otvorená počas zmeny skriptu, zavri jej kartu bez uloženia a otvor ju znova. Náhľad možno obnoviť aj vypnutím a zapnutím vlastnosti `Show Editor Preview` na koreni `TestSchool`.
+
+V náhľade sú v kabinete aj všetci ôsmi učitelia a riaditeľka, presne na miestach, odkiaľ štartujú v hre. Rozbaľ `EditorPreview > Kabinet` alebo sa v 3D pohľade presuň približne na `X 13, Y 1.7, Z 28.5`. Každá postava má menovku a načíta model zo svojho `TeacherData`; AI, fyzika a zvuky sú v editore vypnuté. Po úprave modelu obnov náhľad prepínačom `Show Editor Preview`.
+
+Náhľad slúži na prezeranie a meranie. Generované deti sa zámerne neukladajú do `.tscn`, aby sa pri spustení nevytvorila škola dvakrát. Trvalé rozmery a rozloženie sú v `scripts/levels/test_school.gd`, zariadenie tried v `scripts/levels/classroom_decorator.gd` a materiály/dekorácie v `scripts/levels/school_visual_polish.gd`.
+
 ## Herný priebeh
 
 ### Rozloženie školy
 
-- **Prízemie:** sedem predmetových učební, všetkých 21 sád domácich úloh, zamknutý kabinet a ranný východ.
-- **1. poschodie:** osem ďalších učební vrátane knižnice, laboratória a študovne.
-- **2. poschodie:** osem ďalších učební vrátane ateliéru, počítačového laboratória, hudobnej učebne a archívu.
-- Schodisková veža je na bočnom konci chodby. Otvory v stropoch a podlahách sú skutočne vyrezané, takže cez schody neprechádza neviditeľná ani viditeľná podlaha.
-- Učitelia sa pri štarte deterministicky rozdelia medzi podlažia v pomere 3/3/2, striedajú smer hliadky a rezervujú si rôzne ciele. Nezhromažďujú sa preto všetci v jednej triede a cez schodiskovú vežu prechádzajú aj medzi poschodiami.
+- **Prízemie:** sedem predmetových učební, všetkých 21 sád domácich úloh, zamknutý kabinet, chodba do športového pavilónu a ranný východ v severnej schodiskovej veži.
+- **1. poschodie:** osem miestností vrátane všeobecnej učebne F2-01, knižnice, laboratórií a študovne.
+- **2. poschodie:** osem ďalších učební vrátane polytechnickej dielne, počítačového laboratória, hudobnej učebne a archívu.
+- **Športový pavilón:** samostatná hala východne od školy (36 × 46 m, výška 9,5 m) je na prízemí napojená presklenou krytou chodbou z voľnej východnej strany severnej schodiskovej veže. Obsahuje drevené ihrisko, tribúnu, basketbalové koše, futsalové brány, rebriny, oceľové strešné väzníky a svetlá; vstup sa nekrižuje so schodmi.
+- Schodiskové veže sú na oboch koncoch chodieb. Obe majú skutočne vyrezané podlahové otvory, takže cez schody neprechádza neviditeľná ani viditeľná podlaha.
+- Učitelia sa pri štarte deterministicky rozdelia medzi podlažia v pomere 3/3/2, striedajú smer hliadky a rezervujú si rôzne ciele. Nezhromažďujú sa preto všetci v jednej triede a medzi poschodiami môžu použiť severné aj južné schodisko.
 
 V každej učebni je na učiteľskom stole zošit. Interakcia otvorí nasledujúcu z troch sád daného predmetu. Správna odpoveď započíta postup aktuálne spustenej noci. Dokončenie všetkých 21 sád už noc neukončí predčasne.
 
@@ -144,6 +154,8 @@ Godot môže importovať `.glb`, `.gltf` a `.fbx`; odporúčaný je binárny `.g
 
 Nemeň `teacher_scene` v `levels/test_school.tscn` a nemaž `characters/teachers/placeholder_teacher.tscn`. Tento wrapper obsahuje AI, kolíziu a navigáciu. Keď je `model_scene` prázdne, zobrazí sa hotový vstavaný placeholder učiteľa. Keď neskôr priradíš vlastný model, skryje sa iba placeholder vizuál a vlastný model automaticky používa rovnaké prenasledovanie.
 
+Ak chceš upraviť existujúceho učiteľa, stačí zmeniť jeho `.tres` z tabuľky nižšie; jeho model aj štartovacia pozícia sa zobrazia v kabinete v editorovom náhľade. Pridanie úplne nového deviateho predmetového učiteľa nie je iba vloženie modelu: potrebuje nový `SubjectData`, tri sady úloh, `TeacherData`, učebňu, registráciu v `SchoolGameManager` a ID v požadovaných `NightData`. Bez týchto väzieb by sa síce model zobrazil, ale úloha ani naháňačka by nevedeli, koho aktivovať.
+
 ### Animácie
 
 Animácia nie je povinná. Učiteľ sa ako celá postava posúva dopredu aj bez nej. Ak ju model obsahuje, `placeholder_teacher.gd` nájde prvý `AnimationPlayer`. Spoločná konvencia je `Walking` pre hliadku a hľadanie a `RunFast` pre naháňanie; oba klipy sa počas pohybu automaticky prehrávajú v slučke. Voliteľný pokojový klip nastav cez `idle_animation`. Názvy sú case-sensitive a dajú sa pre konkrétny model zmeniť cez `walk_animation` a `run_animation` v jeho `TeacherData`.
@@ -163,6 +175,7 @@ Každý `TeacherData` podporuje meno, predmet, model, automatické prispôsobeni
 | Ekonomika | Marián Kováč | `data/teachers/teacher_5.tres` |
 | Aplikovaná informatika | Miloš Palaj | `data/teachers/teacher_6.tres` |
 | Anglický jazyk | Jana Palajová | `data/teachers/teacher_7.tres` |
+| Telesná a športová výchova | Juraj Krajči | `data/teachers/teacher_8.tres` |
 | Riaditeľka | Zuzana Čižmáriková | `data/teachers/headmistress.tres` |
 
 Zuzana Čižmáriková sa objaví v 8. noci. Kým je aktívna, zvyšuje všetkým predmetovým učiteľom rýchlosť o 20 % a vzdialenosť dohľadu o 25 %. Používa rovnaký vymeniteľný `model_scene` ako ostatné postavy.
@@ -197,7 +210,7 @@ Vlož voliteľné obrázky do `assets/images/jumpscares/` a zvuky do `audio/jump
 | 5 | 4 | nie |
 | 6 | 5 | nie |
 | 7 | 6 | nie |
-| 8 | všetkých 7 predmetových učiteľov | Zuzana Čižmáriková, aktívna |
+| 8 | všetkých 8 učiteľov | Zuzana Čižmáriková, aktívna |
 
 Učitelia aktívni pre danú noc hliadkujú po chodbe aj učebniach a počas cudzej predmetovej naháňačky môžu potichu poslať prenasledovateľovi polohu hráča. Hráč nedostane textové ani zvukové upozornenie. Predmetový učiteľ sa po nesprávnej odpovedi aktivuje aj v noci, v ktorej normálne nehliadkuje, a do konca noci už zostane v škole namiesto návratu do kabinetu.
 
@@ -211,15 +224,25 @@ Vývojový reset: zatvor hru, v Godot zvoľ **Project > Open User Data Folder** 
 
 ## Validácia
 
+Odporúčaný bezpečný príkaz, aj keď je Godot editor otvorený:
+
 ```powershell
-C:\Users\matej\Downloads\godot.exe --headless --path . --editor --quit
-C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase1.tscn -- --phase2-test
-C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase2.tscn -- --phase2-test
-C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase2.tscn -- --phase2-test --phase2-verify
-C:\Users\matej\Downloads\godot.exe --headless --path . res://scripts/validate_phase3.tscn -- --phase2-test
+powershell -ExecutionPolicy Bypass -File scripts\validate_project.ps1
 ```
 
-Phase 1 navyše overuje tri podlažia, dva schodiskové prechody v jednej bočnej veži, 52 viditeľných stupňov, skutočné podlahové otvory, 64 horných triednych svetiel, lokálne delené podlahy chodieb, svetelný rozpočet, 16 horných miestností a 23 zariadených učební. Phase 3 overuje viacposchodovú navigáciu, rozdelenie učiteľov medzi podlažia, rozdielne rezervované ciele a reálny výstup učiteľa po schodoch. Zachované sú aj kontroly 7 predmetov, 7 učiteľov, Zuzany Čižmárikovej a jej boostov, 21 otázok, cooldownu, dverí, fyzického drepu, výpadku, chytenia, jumpscare, ranného východu a resetu noci.
+Skript spustí Phase 1 a Phase 3 postupne v izolovanom používateľskom priečinku, s vlastnými logmi, a po skončení dočasné dáta odstráni. Tým sa automatický test nebije s otvoreným editorom o `user://` save ani log súbory.
+
+```powershell
+C:\Users\matej\Downloads\godot.exe --headless --path . --log-file .godot/editor-headless.log --editor --quit
+C:\Users\matej\Downloads\godot.exe --headless --path . --log-file .godot/phase1-headless.log res://scripts/validate_phase1.tscn -- --phase2-test
+C:\Users\matej\Downloads\godot.exe --headless --path . --log-file .godot/phase2-headless.log res://scripts/validate_phase2.tscn -- --phase2-test
+C:\Users\matej\Downloads\godot.exe --headless --path . --log-file .godot/phase2-verify-headless.log res://scripts/validate_phase2.tscn -- --phase2-test --phase2-verify
+C:\Users\matej\Downloads\godot.exe --headless --path . --log-file .godot/phase3-headless.log res://scripts/validate_phase3.tscn -- --phase2-test
+```
+
+Každý proces používa vlastný `--log-file`. Nespúšťaj prvý editor/import príkaz súčasne s otvoreným GUI editorom; testovacie scény môžu bežať popri ňom, ak majú samostatné logy a spúšťajú sa postupne.
+
+Phase 1 navyše overuje tri podlažia, štyri schodiskové prechody v dvoch koncových vežiach, 104 viditeľných stupňov, otvory oboch schodísk, 24 dverí a navigačných prechodov, prízemný športový pavilón s neblokovaným vstupom, športové vybavenie, 18 športových svetiel, štyri hliadkové body, trávu, 18 stromov, 64 horných triednych svetiel, svetelný rozpočet, 16 horných miestností a 23 zariadených miestností. Phase 3 overuje viacposchodovú navigáciu, osem učiteľov vrátane Juraja Krajčiho, rozdelenie medzi podlažia, rozdielne rezervované ciele a reálny výstup učiteľa po schodoch. Zachované sú aj kontroly 7 predmetov, Zuzany Čižmárikovej a jej boostov, 21 otázok, cooldownu, dverí, fyzického drepu, výpadku, chytenia, jumpscare, ranného východu a resetu noci.
 
 ## Export pre Windows
 

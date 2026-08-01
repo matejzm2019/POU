@@ -1,3 +1,4 @@
+@tool
 class_name PlaceholderTeacher
 extends CharacterBody3D
 
@@ -52,6 +53,9 @@ func _ready() -> void:
 		_home_position = global_position
 	_apply_teacher_data()
 	_build_visual()
+	if Engine.is_editor_hint():
+		set_physics_process(false)
+		return
 	_agent.path_desired_distance = 0.5
 	_agent.target_desired_distance = 0.8
 	_agent.radius = 0.38
@@ -64,6 +68,8 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	if Engine.is_editor_hint():
+		return
 	_steps.stop()
 	SchoolGameManager.unregister_teacher(self)
 
@@ -313,10 +319,12 @@ func _stop_horizontal(delta: float) -> void:
 
 
 func _set_navigation_target(target: Vector3) -> void:
+	var navigation_map := _agent.get_navigation_map()
+	if not navigation_map.is_valid() or NavigationServer3D.map_get_iteration_id(navigation_map) == 0:
+		return
 	if _last_navigation_target.distance_squared_to(target) > 0.25 or _agent.is_navigation_finished():
 		_last_navigation_target = target
-		var navigation_map := _agent.get_navigation_map()
-		_agent.target_position = NavigationServer3D.map_get_closest_point(navigation_map, target) if navigation_map.is_valid() else target
+		_agent.target_position = NavigationServer3D.map_get_closest_point(navigation_map, target)
 
 
 func _update_nearby_doors() -> void:
@@ -367,7 +375,7 @@ func _select_next_patrol_target(advance: bool = true) -> void:
 func _initialize_patrol_phase() -> void:
 	if _patrol_points.is_empty() or teacher_data == null:
 		return
-	var slot := 7 if teacher_data.is_headmistress else maxi(0, teacher_data.teacher_id.get_slice("_", 1).to_int() - 1)
+	var slot := 8 if teacher_data.is_headmistress else maxi(0, teacher_data.teacher_id.get_slice("_", 1).to_int() - 1)
 	var floor_levels := PackedFloat32Array()
 	for point in _patrol_points:
 		var known_floor := false
@@ -412,8 +420,8 @@ func _apply_teacher_data() -> void:
 		return
 	teacher_name = teacher_data.display_name
 	subject_id = teacher_data.subject_id
-	var subject := SchoolGameManager.get_subject(subject_id)
-	subject_name = "Riaditeľka" if teacher_data.is_headmistress else (subject.display_name if subject != null else subject_id)
+	var subject := load("res://data/homework/%s.tres" % subject_id) as SubjectData if Engine.is_editor_hint() else SchoolGameManager.get_subject(subject_id)
+	subject_name = "Riaditeľka" if teacher_data.is_headmistress else (subject.display_name if subject != null else ("Telesná a športová výchova" if subject_id == "telocvik" else subject_id))
 	$Nameplate.text = "%s\n%s" % [teacher_name, subject_name]
 
 

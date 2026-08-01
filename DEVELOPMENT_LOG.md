@@ -619,3 +619,46 @@ C:\Users\matej\Downloads\godot.exe --headless --verbose --path . res://scripts/v
 - Phase 1 kontroluje 52 stupňov, 64 horných svetiel, 12 segmentov chodieb a svetelný rozpočet: `PHASE_1_SCENE_REGRESSION_OK`; exit `0`.
 - Phase 3 fyzicky overuje, že živý učiteľ vyjde po schodoch medzi poschodiami: `PHASE_3_HOMEWORK_CHASE_OK`; exit `0`.
 - GUI kontrola pri 1280 × 720 potvrdila normálne proporcie stupňov, vodorovnú podestu, priechodný otvor a funkčné osvetlenie schodiskovej veže.
+
+## 2026-08-01 - Stabilita editora a navigačný štart
+
+- Učiteľ už neposiela dotaz na najbližší navigačný bod pred prvou synchronizáciou `NavigationServer3D`; tým zmizla aktuálna chyba zo štartovacieho logu.
+- Pád bol reprodukovaný: druhý proces nedokázal otvoriť/rotovať spoločný `user://logs/godot...log` a Godot 4.7.1 následne spadol so signal 11 v natívnom C++ kóde.
+- Všetky dokumentované headless kontroly preto používajú vlastný `--log-file` v `.godot/`; `AGENTS.md` navyše zakazuje súbežný druhý GUI/editor proces a mazanie dočasnej scény, ktorú má živý editor stále otvorenú.
+- Pridaný `scripts/validate_project.ps1`, ktorý dá každému validačnému behu izolované `APPDATA`, `LOCALAPPDATA`, save dáta aj logy a testy spúšťa striktne postupne.
+- README vysvetľuje, že škola je generovaná procedurálne, a uvádza postup zobrazenia celej budovy cez `levels/test_school.tscn` a strom **Remote**.
+- `test_school.gd` je teraz bezpečný `@tool` skript: po otvorení `levels/test_school.tscn` vytvorí pod `EditorPreview` celý lokálny 3D náhľad bez navigačného bake alebo runtime signálov.
+- Koreň `TestSchool` má prepínač `Show Editor Preview`, ktorým sa dá náhľad bez reštartu editora zmazať a znovu vytvoriť.
+
+## 2026-08-01 - Učitelia v 3D náhľade
+
+- Editorový náhľad teraz vytvorí v kabinete všetkých sedem predmetových učiteľov aj riaditeľku na rovnakých domácich pozíciách ako runtime hra.
+- `PlaceholderTeacher` môže v editori bezpečne načítať vlastný `TeacherData.model_scene`, automaticky upraviť veľkosť modelu a zobraziť menovku, ale neregistruje AI, navigáciu, fyziku ani zvuky.
+- Každý náhľad učiteľa nesie popis, cestu k svojmu `.tres` a presnú domácu pozíciu; zmena modelu sa prejaví po obnovení `Show Editor Preview`.
+- Bezpečný validačný skript po zmene prešiel: `PHASE_1_SCENE_REGRESSION_OK` a `PHASE_3_HOMEWORK_CHASE_OK`.
+
+## 2026-08-01 - Telocvičňa a Juraj Krajči
+
+- Pôvodná malá telocvičňa v F2-01 bola nahradená samostatným športovým pavilónom. Po následnej prestavbe je F2-01 opäť všeobecná učebňa a športový pavilón sa pripája na prízemí.
+- Nová hala má pôdorys 36 × 46 m, výšku 9,5 m, drevené ihrisko, tribúnu, basketbalové koše, futsalové brány, rebriny, výsledkovú tabuľu, oceľové väzníky a 12 halových svetiel.
+- Verejné podklady školy potvrdzujú technické zameranie areálu a telocvičňu s bazénom; presné verejné fotografie interiéru haly sa nepodarilo nájsť, preto je pavilón architektonická interpretácia inšpirovaná areálom SOŠ Polytechnickej na SNP 2, nie tvrdená presná replika.
+- Štyri samostatné body hliadky zapájajú krytú chodbu aj halu do trás učiteľov. Telocvičňa nepridáva domácu úlohu, takže noc stále vyžaduje 21 predmetových sád.
+- Pridaný dátovo riadený `teacher_8.tres`: telocvikár Juraj Krajči používa rovnaký vymeniteľný model, animácie, navigáciu, videnie, sluch a jumpscare systém ako ostatní učitelia.
+- Juraj má vlastné miesto v kabinete, hliadkuje počas 8. noci a Night 8 teraz uvádza všetkých osem učiteľov plus riaditeľku.
+- Bezpečný validačný skript po prestavbe prešiel: `PHASE_1_SCENE_REGRESSION_OK` a `PHASE_3_HOMEWORK_CHASE_OK`; kontroluje aj pokrytie haly navigačnou sieťou a prítomnosť jej bodov v trasách každého učiteľa.
+
+## 2026-08-01 - Prízemná telocvičňa a schody na oboch koncoch
+
+- Športový pavilón aj jeho presklená spojovacia chodba boli presunuté na prízemie; odstránené bolo 22-stupňové vnútorné schodisko do haly.
+- Spojovacia chodba vedie z voľnej strany severnej schodiskovej veže priamo do prízemného otvoru haly. Všetky štyri hliadkové body telocvične sú na prízemí.
+- Južná schodisková veža bola zrkadlovo doplnená severnou vežou. Každý koniec chodby tak spája prízemie, 1. poschodie a 2. poschodie; spolu ide o štyri prechody, osem prístupových bodov a 104 viditeľných stupňov.
+- Ranný východ bol premiestnený na vonkajšiu stenu severnej veže. F2-01 je opäť plnohodnotná všeobecná učebňa.
+- Validátor má 60-sekundový limit na každý Godot proces, aby parserová chyba už nenechala headless kontrolu visieť. Výsledok: `PHASE_1_SCENE_REGRESSION_OK` a `PHASE_3_HOMEWORK_CHASE_OK`.
+
+## 2026-08-01 - Dvere, polytechnická dielňa a školský areál
+
+- Všetkých 16 horných učební dostalo vlastné funkčné dvere, zárubňu a obojsmerný navigačný prechod. Škola má spolu 24 interiérových dverí vrátane prízemných učební a kabinetu.
+- Výtvarný ateliér bol odstránený a nahradený polytechnickou dielňou.
+- Telocvičňa bola premiestnená na východnú stranu školy. Jej 41,2-metrová krytá chodba vystupuje z voľnej strany severnej veže, mimo oboch schodiskových ramien.
+- Okolo školy a haly pribudla trávnatá plocha, dva spevnené chodníky a 18 procedurálnych stromov.
+- Izolovaná validácia podľa `AGENTS.md` prešla: `PHASE_1_SCENE_REGRESSION_OK` a `PHASE_3_HOMEWORK_CHASE_OK`.

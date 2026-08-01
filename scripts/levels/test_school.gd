@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 const ROOM_ROWS := [-28.5, -9.5, 9.5, 28.5]
@@ -29,7 +30,7 @@ const UPPER_ROOM_NAMES := {
 	"library": "KNIŽNICA",
 	"science_lab": "PRÍRODOVEDNÉ LABORATÓRIUM",
 	"study_room": "ŠTUDOVŇA",
-	"art_room": "VÝTVARNÝ ATELIÉR",
+	"technical_workshop": "POLYTECHNICKÁ DIELŇA",
 	"computer_lab": "POČÍTAČOVÉ LABORATÓRIUM",
 	"music_room": "HUDOBNÁ UČEBŇA",
 	"archive": "ŠKOLSKÝ ARCHÍV",
@@ -38,6 +39,12 @@ const UPPER_ROOM_NAMES := {
 @export var door_scene: PackedScene
 @export var teacher_scene: PackedScene
 @export var homework_station_scene: PackedScene
+@export_category("Editor Preview")
+@export var show_editor_preview := true:
+	set(value):
+		show_editor_preview = value
+		if Engine.is_editor_hint() and is_inside_tree():
+			call_deferred("_build_editor_preview")
 
 @onready var _school_environment: WorldEnvironment = $WorldEnvironment
 @onready var _sun_light: DirectionalLight3D = $SunLight
@@ -47,11 +54,21 @@ var _upper_patrol_points := PackedVector3Array()
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		if show_editor_preview:
+			call_deferred("_build_editor_preview")
+		return
+	_build_runtime_school()
+
+
+func _build_runtime_school() -> void:
 	add_to_group("school_navigation_source")
 	_build_floor_markers()
+	_build_school_exterior()
 	_build_shell()
 	_build_upper_floors()
 	_build_stairs()
+	_build_sports_complex()
 	_build_corridor()
 	_place_exit_door()
 	_build_subject_classrooms()
@@ -64,12 +81,91 @@ func _ready() -> void:
 	_update_daylight(NightManager.current_in_game_time, NightManager.get_night_progress())
 
 
+func _build_editor_preview() -> void:
+	var preview_root := get_node_or_null("EditorPreview") as Node3D
+	if preview_root == null or not is_inside_tree():
+		return
+	for child in preview_root.get_children():
+		child.free()
+	if not show_editor_preview:
+		return
+	_upper_patrol_points.clear()
+	_materials.clear()
+	var existing_children := get_children()
+	_build_floor_markers()
+	_build_school_exterior()
+	_build_shell()
+	_build_upper_floors()
+	_build_stairs()
+	_build_sports_complex()
+	_build_corridor()
+	_place_exit_door()
+	_build_subject_classrooms()
+	_build_kabinet()
+	_build_lighting()
+	SCHOOL_VISUAL_POLISH.apply(self)
+	for child in get_children():
+		if child != preview_root and not existing_children.has(child):
+			child.reparent(preview_root)
+
+
+func _build_school_exterior() -> void:
+	var exterior := Node3D.new()
+	exterior.name = "SchoolExterior"
+	exterior.add_to_group("school_exterior")
+	add_child(exterior)
+	var grass := _box("SchoolGroundGrass", Vector3(25.0, -0.24, 0), Vector3(160.0, 0.18, 150.0), Color("294b32"), false, 0.0, exterior)
+	grass.add_to_group("school_exterior_ground")
+	_box("NorthEntranceWalk", Vector3(-3.8, -0.12, -60.0), Vector3(4.2, 0.06, 28.0), Color("676b68"), false, 0.0, exterior)
+	_box("SouthCourtyardWalk", Vector3(0, -0.12, 50.0), Vector3(7.0, 0.06, 23.0), Color("676b68"), false, 0.0, exterior)
+	var tree_positions: Array[Vector3] = [
+		Vector3(-38, 0, -30), Vector3(-42, 0, -10), Vector3(-39, 0, 14), Vector3(-43, 0, 34),
+		Vector3(-25, 0, 55), Vector3(-10, 0, 60), Vector3(12, 0, 58), Vector3(30, 0, 53),
+		Vector3(50, 0, 52), Vector3(72, 0, 43), Vector3(92, 0, 24), Vector3(94, 0, 4),
+		Vector3(94, 0, -20), Vector3(94, 0, -44), Vector3(35, 0, -61), Vector3(17, 0, -65),
+		Vector3(-20, 0, -62), Vector3(-40, 0, -55),
+	]
+	for index in tree_positions.size():
+		_add_exterior_tree(exterior, index, tree_positions[index], 0.9 + (index % 4) * 0.08)
+
+
+func _add_exterior_tree(parent: Node3D, index: int, tree_position: Vector3, tree_scale: float) -> void:
+	var tree := Node3D.new()
+	tree.name = "ExteriorTree_%02d" % (index + 1)
+	tree.position = tree_position
+	tree.add_to_group("school_exterior_tree")
+	parent.add_child(tree)
+	var trunk := MeshInstance3D.new()
+	trunk.name = "Trunk"
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.22 * tree_scale
+	trunk_mesh.bottom_radius = 0.36 * tree_scale
+	trunk_mesh.height = 4.4 * tree_scale
+	trunk_mesh.radial_segments = 10
+	trunk_mesh.material = _material(Color("5c4430"), 0.0)
+	trunk.mesh = trunk_mesh
+	trunk.position.y = trunk_mesh.height * 0.5 - 0.1
+	tree.add_child(trunk)
+	for crown_index in 2:
+		var crown := MeshInstance3D.new()
+		crown.name = "Crown_%d" % (crown_index + 1)
+		var crown_mesh := SphereMesh.new()
+		crown_mesh.radius = (1.8 - crown_index * 0.25) * tree_scale
+		crown_mesh.height = crown_mesh.radius * 2.0
+		crown_mesh.radial_segments = 12
+		crown_mesh.rings = 7
+		crown_mesh.material = _material(Color("244f32").lightened(crown_index * 0.08), 0.0)
+		crown.mesh = crown_mesh
+		crown.position = Vector3((crown_index * 2 - 1) * 0.45 * tree_scale, (4.1 + crown_index * 1.05) * tree_scale, 0)
+		tree.add_child(crown)
+
+
 func _build_shell() -> void:
 	var wall := Color("34373a")
 	_box("SchoolFloor", Vector3(0, -0.1, 0), Vector3(46, 0.2, 77), Color("25282a"))
-	_box("NorthExteriorWallLeft", Vector3(-11.95, 2.05, -SCHOOL_HALF_Z), Vector3(22.1, 4.3, 0.3), wall)
-	_box("NorthExteriorWallRight", Vector3(11.95, 2.05, -SCHOOL_HALF_Z), Vector3(22.1, 4.3, 0.3), wall)
-	_box("NorthExitHeader", Vector3(0, 3.55, -SCHOOL_HALF_Z), Vector3(1.8, 1.3, 0.3), wall)
+	_box("NorthExteriorWallLeft", Vector3(-13, 2.05, -SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), wall)
+	_box("NorthExteriorWallRight", Vector3(13, 2.05, -SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), wall)
+	_box("NorthStairPortalHeader", Vector3(0, 3.55, -SCHOOL_HALF_Z), Vector3(6, 1.3, 0.3), Color("445054"))
 	_box("SouthExteriorWallLeft", Vector3(-13, 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), wall)
 	_box("SouthExteriorWallRight", Vector3(13, 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), wall)
 	_box("GroundStairPortalHeader", Vector3(0, 3.55, SCHOOL_HALF_Z), Vector3(6, 1.3, 0.3), Color("445054"))
@@ -100,13 +196,15 @@ func _build_floor_markers() -> void:
 
 
 func _build_upper_floors() -> void:
-	var room_kinds := ["classroom", "library", "science_lab", "study_room", "art_room", "computer_lab", "music_room", "archive"]
+	var room_kinds := ["classroom", "library", "science_lab", "study_room", "technical_workshop", "computer_lab", "music_room", "archive"]
 	for floor_index in range(1, FLOOR_COUNT):
 		var base_y := floor_index * FLOOR_HEIGHT
 		_build_floor_slab(floor_index, base_y)
 		for corridor_index in ROOM_ROWS.size():
 			_box("UpperCorridorFloor_F%d_%02d" % [floor_index + 1, corridor_index + 1], Vector3(0, base_y + 0.015, ROOM_ROWS[corridor_index]), Vector3(5.7, 0.03, 19.1), Color("20292b"), false)
-		_box("UpperNorthWall_F%d" % (floor_index + 1), Vector3(0, base_y + 2.05, -SCHOOL_HALF_Z), Vector3(46, 4.3, 0.3), Color("34373a"))
+		_box("UpperNorthWallLeft_F%d" % (floor_index + 1), Vector3(-13, base_y + 2.05, -SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), Color("34373a"))
+		_box("UpperNorthWallRight_F%d" % (floor_index + 1), Vector3(13, base_y + 2.05, -SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), Color("34373a"))
+		_box("UpperNorthStairPortalHeader_F%d" % (floor_index + 1), Vector3(0, base_y + 3.55, -SCHOOL_HALF_Z), Vector3(6, 1.3, 0.3), Color("445054"))
 		_box("UpperSouthWallLeft_F%d" % (floor_index + 1), Vector3(-13, base_y + 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), Color("34373a"))
 		_box("UpperSouthWallRight_F%d" % (floor_index + 1), Vector3(13, base_y + 2.05, SCHOOL_HALF_Z), Vector3(20, 4.3, 0.3), Color("34373a"))
 		_box("UpperStairPortalHeader_F%d" % (floor_index + 1), Vector3(0, base_y + 3.55, SCHOOL_HALF_Z), Vector3(6, 1.3, 0.3), Color("445054"))
@@ -121,7 +219,8 @@ func _build_upper_floors() -> void:
 				var room_slot := row_index * 2 + side_index
 				_build_upper_facade(floor_index, side, row_index, row_z, base_y)
 				_build_upper_corridor_wall(floor_index, side, row_index, row_z, base_y)
-				_build_upper_room(floor_index, side, row_index, row_z, base_y, room_kinds[room_slot])
+				var room_kind := str(room_kinds[room_slot])
+				_build_upper_room(floor_index, side, row_index, row_z, base_y, room_kind)
 		_add_floor_sign(floor_index, base_y)
 		for marker_index in 4:
 			var side := -13.0 if (marker_index + floor_index) % 2 == 0 else 13.0
@@ -129,21 +228,29 @@ func _build_upper_floors() -> void:
 		for light_index in 8:
 			_add_ceiling_light("UpperCorridorLight_F%d_%02d" % [floor_index + 1, light_index], Vector3(0, base_y + 3.82, -34.0 + light_index * 9.5), 1.2, 7.0, false)
 	_box("SchoolRoof", Vector3(0, FLOOR_COUNT * FLOOR_HEIGHT - 0.1, 0), Vector3(46, 0.2, 77), Color("17191b"))
-	_box("StairTowerRoof", Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, FLOOR_COUNT * FLOOR_HEIGHT - 0.1, (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5), Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 0.2, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), Color("17191b"))
 
 
 func _build_floor_slab(floor_index: int, base_y: float) -> void:
 	var slab_y := base_y - 0.1
 	var color := Color("25282a")
 	_box("FloorSlab_F%d" % (floor_index + 1), Vector3(0, slab_y, 0), Vector3(46, 0.2, 77), color)
+	for stair_data in [["South", 0.0], ["North", PI]]:
+		var root := Node3D.new()
+		root.name = "%sStairFloorSections_F%d" % [str(stair_data[0]), floor_index + 1]
+		root.rotation.y = float(stair_data[1])
+		add_child(root)
+		_build_stair_floor_sections(root, str(stair_data[0]), floor_index, slab_y, color)
+
+
+func _build_stair_floor_sections(parent: Node3D, prefix: String, floor_index: int, slab_y: float, color: Color) -> void:
 	var tower_center_z := (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5
 	var tower_depth := STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z
 	var opening_north := STAIR_FLIGHT_A_Z - STAIR_FLIGHT_WIDTH * 0.5
 	var opening_south := STAIR_FLIGHT_B_Z + STAIR_FLIGHT_WIDTH * 0.5
-	_box("StairFloorWest_F%d" % (floor_index + 1), Vector3((STAIR_TOWER_MIN_X + STAIR_START_X) * 0.5, slab_y, tower_center_z), Vector3(STAIR_START_X - STAIR_TOWER_MIN_X, 0.2, tower_depth), color)
-	_box("StairFloorEast_F%d" % (floor_index + 1), Vector3((STAIR_LANDING_EAST_X + STAIR_TOWER_MAX_X) * 0.5, slab_y, tower_center_z), Vector3(STAIR_TOWER_MAX_X - STAIR_LANDING_EAST_X, 0.2, tower_depth), color)
-	_box("StairFloorNorth_F%d" % (floor_index + 1), Vector3((STAIR_START_X + STAIR_LANDING_EAST_X) * 0.5, slab_y, (STAIR_TOWER_MIN_Z + opening_north) * 0.5), Vector3(STAIR_LANDING_EAST_X - STAIR_START_X, 0.2, opening_north - STAIR_TOWER_MIN_Z), color)
-	_box("StairFloorSouth_F%d" % (floor_index + 1), Vector3((STAIR_START_X + STAIR_LANDING_EAST_X) * 0.5, slab_y, (opening_south + STAIR_TOWER_MAX_Z) * 0.5), Vector3(STAIR_LANDING_EAST_X - STAIR_START_X, 0.2, STAIR_TOWER_MAX_Z - opening_south), color)
+	_box("%sStairFloorWest_F%d" % [prefix, floor_index + 1], Vector3((STAIR_TOWER_MIN_X + STAIR_START_X) * 0.5, slab_y, tower_center_z), Vector3(STAIR_START_X - STAIR_TOWER_MIN_X, 0.2, tower_depth), color, true, 0.0, parent)
+	_box("%sStairFloorEast_F%d" % [prefix, floor_index + 1], Vector3((STAIR_LANDING_EAST_X + STAIR_TOWER_MAX_X) * 0.5, slab_y, tower_center_z), Vector3(STAIR_TOWER_MAX_X - STAIR_LANDING_EAST_X, 0.2, tower_depth), color, true, 0.0, parent)
+	_box("%sStairFloorNorth_F%d" % [prefix, floor_index + 1], Vector3((STAIR_START_X + STAIR_LANDING_EAST_X) * 0.5, slab_y, (STAIR_TOWER_MIN_Z + opening_north) * 0.5), Vector3(STAIR_LANDING_EAST_X - STAIR_START_X, 0.2, opening_north - STAIR_TOWER_MIN_Z), color, true, 0.0, parent)
+	_box("%sStairFloorSouth_F%d" % [prefix, floor_index + 1], Vector3((STAIR_START_X + STAIR_LANDING_EAST_X) * 0.5, slab_y, (opening_south + STAIR_TOWER_MAX_Z) * 0.5), Vector3(STAIR_LANDING_EAST_X - STAIR_START_X, 0.2, STAIR_TOWER_MAX_Z - opening_south), color, true, 0.0, parent)
 
 
 func _build_upper_facade(floor_index: int, side: float, row_index: int, row_z: float, base_y: float) -> void:
@@ -203,6 +310,159 @@ func _build_upper_room(floor_index: int, side: float, row_index: int, row_z: flo
 	for light_x in [-4.0, 4.0]:
 		for light_z in [-4.5, 4.5]:
 			_add_ceiling_light("UpperRoomLight_%s_%s_%s" % [room_id, str(light_x), str(light_z)], center + Vector3(light_x, 3.82, light_z), 1.35, 8.8, false, false)
+	var door_index := 8 + (floor_index - 1) * 8 + row_index * 2 + (1 if side > 0.0 else 0)
+	_place_door(room_id, Vector3(side * 3.0, base_y, row_z), side, room, door_index, false)
+
+
+
+func _build_sports_complex() -> void:
+	var root := Node3D.new()
+	root.name = "SportsComplex"
+	root.add_to_group("school_sports_complex")
+	add_child(root)
+	_build_sports_connector(root)
+	_build_gym_shell(root)
+	_build_gym_interior(root)
+	var patrol_points: Array[Vector3] = [
+		Vector3(10.0, 0.05, -42.125),
+		Vector3(32.0, 0.05, -42.125),
+		Vector3(53.0, 0.05, -42.125),
+		Vector3(70.0, 0.05, -28.5),
+	]
+	for index in patrol_points.size():
+		var marker := Marker3D.new()
+		marker.name = "GymPatrol_%02d" % (index + 1)
+		marker.position = patrol_points[index]
+		marker.add_to_group("gym_patrol_marker")
+		root.add_child(marker)
+		_upper_patrol_points.append(marker.position)
+
+
+func _build_sports_connector(parent: Node3D) -> void:
+	var center_x := 23.4
+	var center_z := -42.125
+	var connector_length := 41.2
+	_box("GymConnectorFloor", Vector3(center_x, -0.08, center_z), Vector3(connector_length, 0.16, 3.6), Color("4d5552"), true, 0.0, parent)
+	_box("GymConnectorRoof", Vector3(center_x, 3.85, center_z), Vector3(connector_length, 0.2, 3.9), Color("c9c8be"), true, 0.0, parent)
+	for side in [-1.0, 1.0]:
+		var wall_z: float = center_z + float(side) * 1.8
+		_box("GymConnectorSill_%s" % str(side), Vector3(center_x, 0.45, wall_z), Vector3(connector_length, 0.9, 0.18), Color("d8d5c9"), true, 0.0, parent)
+		_box("GymConnectorHeader_%s" % str(side), Vector3(center_x, 3.42, wall_z), Vector3(connector_length, 0.86, 0.18), Color("b9bbb4"), true, 0.0, parent)
+		for pane_index in 10:
+			var pane_x := 5.0 + pane_index * 4.1
+			_add_window_pane("GymConnectorGlass_%s_%02d" % [str(side), pane_index + 1], Vector3(pane_x, 1.95, wall_z), Vector3(4.05, 2.0, 0.08), parent)
+		for mullion_index in 11:
+			_box("GymConnectorMullion_%s_%02d" % [str(side), mullion_index + 1], Vector3(2.9 + mullion_index * 4.1, 1.95, wall_z - float(side) * 0.04), Vector3(0.12, 2.1, 0.16), Color("6e7774"), false, 0.0, parent)
+	for light_index in 6:
+		_add_ceiling_light("GymConnectorLight_%02d" % (light_index + 1), Vector3(6.0 + light_index * 7.2, 3.45, center_z), 1.25, 7.5, false)
+
+
+func _build_gym_shell(parent: Node3D) -> void:
+	var center := Vector3(62.0, 0.0, -28.5)
+	var half_x := 18.0
+	var half_z := 23.0
+	var east_x := center.x + half_x
+	var west_x := center.x - half_x
+	var north_z := center.z - half_z
+	var south_z := center.z + half_z
+	var facade := Color("d8d5c9")
+	var lower := Color("526a62")
+	_box("GymFoundation", center + Vector3(0, -0.15, 0), Vector3(36.0, 0.3, 46.0), Color("343937"), true, 0.0, parent)
+	_box("GymRoof", center + Vector3(0, 9.6, 0), Vector3(36.6, 0.28, 46.6), Color("8d918d"), true, 0.0, parent)
+	var portal_width := 3.6
+	var portal_center_z := -42.125
+	var north_segment := portal_center_z - portal_width * 0.5 - north_z
+	var south_segment := south_z - portal_center_z - portal_width * 0.5
+	_box("GymWestWallNorth", Vector3(west_x, 4.75, north_z + north_segment * 0.5), Vector3(0.35, 9.5, north_segment), facade, true, 0.0, parent)
+	_box("GymWestWallSouth", Vector3(west_x, 4.75, portal_center_z + portal_width * 0.5 + south_segment * 0.5), Vector3(0.35, 9.5, south_segment), facade, true, 0.0, parent)
+	_box("GymWestPortalHeader", Vector3(west_x, 6.65, portal_center_z), Vector3(0.35, 5.7, portal_width), facade, true, 0.0, parent)
+	_box("GymEastLowerWall", Vector3(east_x, 2.0, center.z), Vector3(0.35, 4.0, 46.0), lower, true, 0.0, parent)
+	_box("GymEastUpperWall", Vector3(east_x, 8.55, center.z), Vector3(0.35, 1.9, 46.0), facade, true, 0.0, parent)
+	for pane_index in 10:
+		var pane_z := north_z + 2.3 + pane_index * 4.6
+		_add_window_pane("GymEastClerestory_%02d" % (pane_index + 1), Vector3(east_x, 5.85, pane_z), Vector3(0.1, 3.45, 4.35), parent)
+		_box("GymEastMullion_%02d" % (pane_index + 1), Vector3(east_x - 0.04, 5.85, pane_z - 2.25), Vector3(0.18, 3.6, 0.16), facade, false, 0.0, parent)
+	for wall_data in [[north_z, "North"], [south_z, "South"]]:
+		var wall_z := float(wall_data[0])
+		var wall_name := str(wall_data[1])
+		_box("Gym%sLowerWall" % wall_name, Vector3(center.x, 2.0, wall_z), Vector3(36.0, 4.0, 0.35), lower, true, 0.0, parent)
+		_box("Gym%sUpperWall" % wall_name, Vector3(center.x, 8.55, wall_z), Vector3(36.0, 1.9, 0.35), facade, true, 0.0, parent)
+		for pane_index in 8:
+			var pane_x := west_x + 2.25 + pane_index * 4.5
+			_add_window_pane("Gym%sClerestory_%02d" % [wall_name, pane_index + 1], Vector3(pane_x, 5.85, wall_z), Vector3(4.25, 3.45, 0.1), parent)
+			_box("Gym%sMullion_%02d" % [wall_name, pane_index + 1], Vector3(pane_x - 2.2, 5.85, wall_z), Vector3(0.16, 3.6, 0.18), facade, false, 0.0, parent)
+	for truss_index in 9:
+		var truss_z := north_z + 2.5 + truss_index * 5.1
+		_box("GymRoofTruss_%02d" % (truss_index + 1), Vector3(center.x, 8.92, truss_z), Vector3(35.2, 0.18, 0.18), Color("4b5351"), false, 0.0, parent)
+	var facade_sign := Label3D.new()
+	facade_sign.name = "GymFacadeSign"
+	facade_sign.text = "SOŠ POLYTECHNICKÁ\nTELOCVIČŇA • SNP 2 • ZLATÉ MORAVCE"
+	facade_sign.position = Vector3(west_x - 0.2, 8.15, center.z - 5.0)
+	facade_sign.rotation.y = PI * 0.5
+	facade_sign.font_size = 42
+	facade_sign.pixel_size = 0.006
+	facade_sign.outline_size = 7
+	facade_sign.modulate = Color("24453f")
+	parent.add_child(facade_sign)
+
+
+func _build_gym_interior(parent: Node3D) -> void:
+	var center := Vector3(62.0, 0.0, -28.5)
+	_box("GymSportsFloor", center + Vector3(0, 0.035, 0), Vector3(34.8, 0.035, 44.8), Color("9c7145"), false, 0.0, parent)
+	var white := Color("e7e6d9")
+	var blue := Color("2d7080")
+	for x in [center.x - 12.0, center.x + 12.0]:
+		_box("GymSideline_%s" % str(x), Vector3(x, 0.062, center.z), Vector3(0.08, 0.014, 40.0), white, false, 0.0, parent)
+	for z in [center.z - 20.0, center.z + 20.0]:
+		_box("GymBaseline_%s" % str(z), Vector3(center.x, 0.063, z), Vector3(24.0, 0.014, 0.08), white, false, 0.0, parent)
+	_box("GymCenterLine", center + Vector3(0, 0.064, 0), Vector3(24.0, 0.014, 0.08), blue, false, 0.0, parent)
+	var center_circle := MeshInstance3D.new()
+	center_circle.name = "GymCenterCircle"
+	var circle_mesh := CylinderMesh.new()
+	circle_mesh.top_radius = 1.8
+	circle_mesh.bottom_radius = 1.8
+	circle_mesh.height = 0.014
+	circle_mesh.radial_segments = 48
+	circle_mesh.material = _material(blue, 0.0)
+	center_circle.mesh = circle_mesh
+	center_circle.position = center + Vector3(0, 0.066, 0)
+	parent.add_child(center_circle)
+	for z in [center.z - 21.2, center.z + 21.2]:
+		var direction := signf(z - center.z)
+		_box("GymHoopPole_%s" % str(z), Vector3(center.x, 1.6, z), Vector3(0.24, 3.2, 0.24), Color("4b5351"), true, 0.0, parent)
+		_box("GymBasketballBackboard_%s" % str(z), Vector3(center.x, 3.35, z - direction * 0.12), Vector3(4.2, 2.15, 0.16), Color("dfe2dc"), false, 0.0, parent)
+		var rim := MeshInstance3D.new()
+		rim.name = "GymBasketballRim_%s" % str(z)
+		var rim_mesh := CylinderMesh.new()
+		rim_mesh.top_radius = 0.42
+		rim_mesh.bottom_radius = 0.42
+		rim_mesh.height = 0.06
+		rim_mesh.radial_segments = 32
+		rim_mesh.material = _material(Color("d36b24"), 0.0)
+		rim.mesh = rim_mesh
+		rim.position = Vector3(center.x, 2.75, z - direction * 0.62)
+		parent.add_child(rim)
+		for goal_x in [center.x - 3.0, center.x + 3.0]:
+			_box("GymGoalPost_%s_%s" % [str(z), str(goal_x)], Vector3(goal_x, 1.15, z - direction * 0.45), Vector3(0.13, 2.3, 0.13), Color("e8e5d7"), true, 0.0, parent)
+		_box("GymGoalCrossbar_%s" % str(z), Vector3(center.x, 2.28, z - direction * 0.45), Vector3(6.1, 0.13, 0.13), Color("e8e5d7"), true, 0.0, parent)
+	for tier_index in 4:
+		_box("GymBleacherTier_%02d" % (tier_index + 1), Vector3(78.5 - tier_index * 0.9, 0.22 + tier_index * 0.35, center.z), Vector3(0.9, 0.44 + tier_index * 0.7, 18.0), Color("68716d"), true, 0.0, parent)
+	for bar_index in 7:
+		_box("GymWallBarVertical_%02d" % (bar_index + 1), Vector3(45.0, 1.65, -15.0 + bar_index * 0.7), Vector3(0.12, 3.1, 0.12), Color("956d45"), true, 0.0, parent)
+	for rail_index in 9:
+		_box("GymWallBarRail_%02d" % (rail_index + 1), Vector3(45.1, 0.35 + rail_index * 0.34, -12.9), Vector3(0.12, 0.08, 4.4), Color("956d45"), false, 0.0, parent)
+	var scoreboard := Label3D.new()
+	scoreboard.name = "GymScoreboard"
+	scoreboard.text = "DOMÁCI   00 : 00   HOSTIA\nSOŠ POLYTECHNICKÁ"
+	scoreboard.position = Vector3(70.0, 6.9, -51.28)
+	scoreboard.font_size = 44
+	scoreboard.pixel_size = 0.006
+	scoreboard.outline_size = 9
+	scoreboard.modulate = Color("d7eee2")
+	parent.add_child(scoreboard)
+	for x_index in 3:
+		for z_index in 4:
+			_add_ceiling_light("GymHallLight_%d_%d" % [x_index, z_index], Vector3(52.0 + x_index * 10.0, 8.55, -44.0 + z_index * 10.5), 2.2, 14.0, false)
 
 
 func _add_floor_sign(floor_index: int, base_y: float) -> void:
@@ -231,45 +491,72 @@ func _add_upper_patrol_marker(floor_index: int, marker_index: int, marker_positi
 
 
 func _build_stairs() -> void:
-	_build_stair_tower()
-	for from_floor in range(FLOOR_COUNT - 1):
-		_build_stair(from_floor)
+	for stair_data in [["South", 0.0, false], ["North", PI, true]]:
+		var root := Node3D.new()
+		var prefix := str(stair_data[0])
+		root.name = "%sStairTower" % prefix
+		root.rotation.y = float(stair_data[1])
+		add_child(root)
+		_build_stair_tower(root, prefix, bool(stair_data[2]))
+		for from_floor in range(FLOOR_COUNT - 1):
+			_build_stair(root, prefix, from_floor)
 
 
-func _build_stair_tower() -> void:
+func _build_stair_tower(parent: Node3D, prefix: String, has_ground_connector: bool) -> void:
 	var wall := Color("343b3e")
 	var tower_center := Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, -0.1, (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5)
-	_box("StairTowerGroundFloor", tower_center, Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 0.2, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), Color("25282a"))
+	_box("%sStairTowerGroundFloor" % prefix, tower_center, Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 0.2, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), Color("25282a"), true, 0.0, parent)
 	for floor_index in FLOOR_COUNT:
 		var base_y := floor_index * FLOOR_HEIGHT
 		var window_width := 5.4
 		var edge_depth := (STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z - window_width) * 0.5
 		var window_center_z := (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5
-		_box("StairTowerWestWall_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MIN_X, base_y + 2.05, window_center_z), Vector3(0.3, 4.3, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), wall)
-		_box("StairTowerSouthWall_F%d" % (floor_index + 1), Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, base_y + 2.05, STAIR_TOWER_MAX_Z), Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 4.3, 0.3), wall)
-		_box("StairTowerEastBefore_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 2.05, STAIR_TOWER_MIN_Z + edge_depth * 0.5), Vector3(0.3, 4.3, edge_depth), wall)
-		_box("StairTowerEastAfter_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 2.05, STAIR_TOWER_MAX_Z - edge_depth * 0.5), Vector3(0.3, 4.3, edge_depth), wall)
-		_box("StairTowerEastSill_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 0.45, window_center_z), Vector3(0.3, 0.9, window_width), wall)
-		_box("StairTowerEastHeader_F%d" % (floor_index + 1), Vector3(STAIR_TOWER_MAX_X, base_y + 3.75, window_center_z), Vector3(0.3, 0.9, window_width), wall)
-		_build_window_bank("StairTowerWindow", "F%d" % (floor_index + 1), STAIR_TOWER_MAX_X, STAIR_TOWER_MAX_X - 0.12, window_center_z, window_width, base_y + 0.9, base_y + 3.3, 3, self)
-		_add_ceiling_light("StairTowerLight_F%d" % (floor_index + 1), Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, base_y + 3.82, window_center_z), 1.35, 8.0, false)
+		if has_ground_connector and floor_index == 0:
+			var connector_width := 3.6
+			var connector_edge := (STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z - connector_width) * 0.5
+			var connector_offset := connector_width * 0.5 + connector_edge * 0.5
+			_box("NorthGymConnectorWallA", Vector3(STAIR_TOWER_MIN_X, 2.05, window_center_z - connector_offset), Vector3(0.3, 4.3, connector_edge), wall, true, 0.0, parent)
+			_box("NorthGymConnectorWallB", Vector3(STAIR_TOWER_MIN_X, 2.05, window_center_z + connector_offset), Vector3(0.3, 4.3, connector_edge), wall, true, 0.0, parent)
+			_box("NorthGymConnectorHeader", Vector3(STAIR_TOWER_MIN_X, 3.8, window_center_z), Vector3(0.3, 1.0, connector_width), wall, true, 0.0, parent)
+		else:
+			_box("%sStairTowerWestWall_F%d" % [prefix, floor_index + 1], Vector3(STAIR_TOWER_MIN_X, base_y + 2.05, window_center_z), Vector3(0.3, 4.3, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), wall, true, 0.0, parent)
+		_build_stair_exterior_wall(parent, prefix, floor_index, base_y, wall, has_ground_connector)
+		_box("%sStairTowerEastBefore_F%d" % [prefix, floor_index + 1], Vector3(STAIR_TOWER_MAX_X, base_y + 2.05, STAIR_TOWER_MIN_Z + edge_depth * 0.5), Vector3(0.3, 4.3, edge_depth), wall, true, 0.0, parent)
+		_box("%sStairTowerEastAfter_F%d" % [prefix, floor_index + 1], Vector3(STAIR_TOWER_MAX_X, base_y + 2.05, STAIR_TOWER_MAX_Z - edge_depth * 0.5), Vector3(0.3, 4.3, edge_depth), wall, true, 0.0, parent)
+		_box("%sStairTowerEastHeader_F%d" % [prefix, floor_index + 1], Vector3(STAIR_TOWER_MAX_X, base_y + 3.75, window_center_z), Vector3(0.3, 0.9, window_width), wall, true, 0.0, parent)
+		_box("%sStairTowerEastSill_F%d" % [prefix, floor_index + 1], Vector3(STAIR_TOWER_MAX_X, base_y + 0.45, window_center_z), Vector3(0.3, 0.9, window_width), wall, true, 0.0, parent)
+		_build_window_bank("%sStairTowerWindow" % prefix, "F%d" % (floor_index + 1), STAIR_TOWER_MAX_X, STAIR_TOWER_MAX_X - 0.12, window_center_z, window_width, base_y + 0.9, base_y + 3.3, 3, parent)
+		_add_ceiling_light("%sStairTowerLight_F%d" % [prefix, floor_index + 1], Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, base_y + 3.82, window_center_z), 1.35, 8.0, false, true, parent)
 	for floor_index in range(1, FLOOR_COUNT):
 		var floor_y := floor_index * FLOOR_HEIGHT
 		var opening_north := STAIR_FLIGHT_A_Z - STAIR_FLIGHT_WIDTH * 0.5
 		var opening_south := STAIR_FLIGHT_B_Z + STAIR_FLIGHT_WIDTH * 0.5
-		_add_stair_guard(self, "StairwellNorthGuard_F%d" % (floor_index + 1), Vector3(STAIR_START_X, floor_y, opening_north), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_north))
-		_add_stair_guard(self, "StairwellSouthGuard_F%d" % (floor_index + 1), Vector3(STAIR_START_X, floor_y, opening_south), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_south))
-		_add_stair_guard(self, "StairwellEastGuard_F%d" % (floor_index + 1), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_north), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_south))
+		_add_stair_guard(parent, "%sStairwellNorthGuard_F%d" % [prefix, floor_index + 1], Vector3(STAIR_START_X, floor_y, opening_north), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_north))
+		_add_stair_guard(parent, "%sStairwellSouthGuard_F%d" % [prefix, floor_index + 1], Vector3(STAIR_START_X, floor_y, opening_south), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_south))
+		_add_stair_guard(parent, "%sStairwellEastGuard_F%d" % [prefix, floor_index + 1], Vector3(STAIR_LANDING_EAST_X, floor_y, opening_north), Vector3(STAIR_LANDING_EAST_X, floor_y, opening_south))
+	_box("%sStairTowerRoof" % prefix, Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, FLOOR_COUNT * FLOOR_HEIGHT - 0.1, (STAIR_TOWER_MIN_Z + STAIR_TOWER_MAX_Z) * 0.5), Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 0.2, STAIR_TOWER_MAX_Z - STAIR_TOWER_MIN_Z), Color("17191b"), true, 0.0, parent)
 
 
-func _build_stair(from_floor: int) -> void:
+func _build_stair_exterior_wall(parent: Node3D, prefix: String, floor_index: int, base_y: float, wall: Color, has_exit: bool) -> void:
+	if not has_exit or floor_index > 0:
+		_box("%sStairTowerExteriorWall_F%d" % [prefix, floor_index + 1], Vector3((STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, base_y + 2.05, STAIR_TOWER_MAX_Z), Vector3(STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X, 4.3, 0.3), wall, true, 0.0, parent)
+		return
+	var exit_center_x := (STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5
+	var segment_width := (STAIR_TOWER_MAX_X - STAIR_TOWER_MIN_X - 2.0) * 0.5
+	var offset := 1.0 + segment_width * 0.5
+	_box("NorthExitWallLeft", Vector3(exit_center_x - offset, 2.05, STAIR_TOWER_MAX_Z), Vector3(segment_width, 4.3, 0.3), wall, true, 0.0, parent)
+	_box("NorthExitWallRight", Vector3(exit_center_x + offset, 2.05, STAIR_TOWER_MAX_Z), Vector3(segment_width, 4.3, 0.3), wall, true, 0.0, parent)
+	_box("NorthExitWallHeader", Vector3(exit_center_x, 3.55, STAIR_TOWER_MAX_Z), Vector3(2.0, 1.3, 0.3), wall, true, 0.0, parent)
+
+
+func _build_stair(parent: Node3D, prefix: String, from_floor: int) -> void:
 	var base_y := from_floor * FLOOR_HEIGHT
 	var stair := Node3D.new()
-	stair.name = "SchoolStair_%d_to_%d" % [from_floor + 1, from_floor + 2]
+	stair.name = "%sSchoolStair_%d_to_%d" % [prefix, from_floor + 1, from_floor + 2]
 	stair.add_to_group("school_stair")
 	stair.set_meta("from_floor_index", from_floor)
 	stair.set_meta("to_floor_index", from_floor + 1)
-	add_child(stair)
+	parent.add_child(stair)
 	var run := STAIR_END_X - STAIR_START_X
 	var rise := FLOOR_HEIGHT * 0.5
 	var angle := atan(rise / run)
@@ -441,7 +728,7 @@ func _build_corridor() -> void:
 			_box("%sLockerBank_%d" % [side_name, locker_index], Vector3(side * 2.72, 1.15, locker_positions[locker_index]), Vector3(0.38, 2.3, 2.5), Color("35464d"))
 	var directory := Label3D.new()
 	directory.name = "SchoolDirectory"
-	directory.text = "NOČNÁ ŠKOLA\nPRÍZEMIE: PREDMETOVÉ UČEBNE A KABINET\n1. POSCHODIE: KNIŽNICA A LABORATÓRIÁ\n2. POSCHODIE: ATELIÉR, INFORMATIKA A ARCHÍV"
+	directory.text = "NOČNÁ ŠKOLA\nPRÍZEMIE: PREDMETOVÉ UČEBNE, KABINET A TELOCVIČŇA\n1. POSCHODIE: KNIŽNICA A LABORATÓRIÁ\n2. POSCHODIE: POLYTECHNICKÁ DIELŇA, INFORMATIKA A ARCHÍV"
 	directory.font_size = 34
 	directory.pixel_size = 0.0055
 	directory.outline_size = 7
@@ -464,9 +751,10 @@ func _build_subject_classrooms() -> void:
 	]
 	for index in placements.size():
 		var placement: Dictionary = placements[index]
-		var subject := SchoolGameManager.get_subject(str(placement["subject"]))
+		var subject_id := str(placement["subject"])
+		var subject := load("res://data/homework/%s.tres" % subject_id) as SubjectData if Engine.is_editor_hint() else SchoolGameManager.get_subject(subject_id)
 		if subject == null:
-			push_error("Chýbajú údaje predmetu %s." % str(placement["subject"]))
+			push_error("Chýbajú údaje predmetu %s." % subject_id)
 			continue
 		var side := float(placement["side"])
 		var center := Vector3(side * 13.0, 0, float(placement["z"]))
@@ -495,7 +783,8 @@ func _build_classroom(subject: SubjectData, center: Vector3, side: float, index:
 	_build_teacher_desk(subject.subject_id, teacher_desk_position, subject.accent_color, room)
 	_build_subject_props(subject.subject_id, center, subject.accent_color, room)
 	CLASSROOM_DECORATOR.decorate(room, center, subject.subject_id, subject.accent_color, side)
-	_place_homework_station(subject, teacher_desk_position + Vector3(0, 1.0, 0), room)
+	if not Engine.is_editor_hint():
+		_place_homework_station(subject, teacher_desk_position + Vector3(0, 1.0, 0), room)
 	_place_door(subject.subject_id, Vector3(side * 3.0, 0, center.z), side, room, index, false)
 	_place_room_sign("%s  %s" % [subject.room_code, subject.display_name], Vector3(side * 2.82, 3.03, center.z), side, room)
 
@@ -565,19 +854,41 @@ func _place_teachers(parent: Node3D) -> void:
 	if teacher_scene == null:
 		push_error("Škola nemá priradenú scénu učiteľa.")
 		return
+	if Engine.is_editor_hint():
+		for index in 8:
+			var data := load("res://data/teachers/teacher_%d.tres" % (index + 1)) as TeacherData
+			if data == null:
+				continue
+			var subject := load("res://data/homework/%s.tres" % data.subject_id) as SubjectData
+			var color := subject.accent_color.darkened(0.1) if subject != null else Color("315b68")
+			var column := index % 4
+			var row := index / 4
+			var home := Vector3(8.2 + column * 3.0, 0.05, 24.0 + row * 7.0)
+			_spawn_teacher(data, home, PackedVector3Array(), color, "Teacher_%02d_%s" % [index + 1, data.subject_id], parent)
+		var headmistress := load("res://data/teachers/headmistress.tres") as TeacherData
+		if headmistress != null:
+			_spawn_teacher(headmistress, Vector3(8.2, 0.05, 35.0), PackedVector3Array(), Color("552f45"), "Headmistress_Zuzana_Cizmarikova", parent)
+		return
 	var subjects := SchoolGameManager.get_subjects()
-	for index in subjects.size():
-		var subject := subjects[index]
+	var teachers: Array[TeacherData] = []
+	for subject in subjects:
 		var data := SchoolGameManager.get_teacher_data(subject.subject_id)
-		if data == null:
-			continue
+		if data != null:
+			teachers.append(data)
+	var gym_teacher := SchoolGameManager.get_teacher_data("telocvik")
+	if gym_teacher != null:
+		teachers.append(gym_teacher)
+	for index in teachers.size():
+		var data := teachers[index]
+		var subject := SchoolGameManager.get_subject(data.subject_id)
 		var column := index % 4
 		var row := index / 4
 		var home := Vector3(8.2 + column * 3.0, 0.05, 24.0 + row * 7.0)
-		_spawn_teacher(data, home, _school_patrol(index), subject.accent_color.darkened(0.1), "Teacher_%02d_%s" % [index + 1, subject.subject_id], parent)
+		var color := subject.accent_color.darkened(0.1) if subject != null else Color("315b68")
+		_spawn_teacher(data, home, _school_patrol(index), color, "Teacher_%02d_%s" % [index + 1, data.subject_id], parent)
 	var headmistress := SchoolGameManager.get_headmistress_data()
 	if headmistress != null:
-		_spawn_teacher(headmistress, Vector3(17.2, 0.05, 31.0), _school_patrol(subjects.size()), Color("552f45"), "Headmistress_Zuzana_Cizmarikova", parent)
+		_spawn_teacher(headmistress, Vector3(8.2, 0.05, 35.0), _school_patrol(teachers.size()), Color("552f45"), "Headmistress_Zuzana_Cizmarikova", parent)
 
 
 func _spawn_teacher(data: TeacherData, home: Vector3, patrol: PackedVector3Array, color: Color, enemy_name: String, parent: Node3D) -> void:
@@ -590,6 +901,10 @@ func _spawn_teacher(data: TeacherData, home: Vector3, patrol: PackedVector3Array
 	teacher.name = enemy_name
 	teacher.position = home
 	teacher.configure(data, home, patrol, color)
+	if Engine.is_editor_hint():
+		teacher.editor_description = "Náhľad skutočnej štartovacej pozície: %s (%s). AI je v editore vypnutá; údaje a model uprav v %s." % [data.display_name, data.subject_id, data.resource_path]
+		teacher.set_meta("teacher_data_path", data.resource_path)
+		teacher.set_meta("home_position", home)
 	teacher.add_to_group("teacher_enemies")
 	parent.add_child(teacher)
 
@@ -609,9 +924,21 @@ func _school_patrol(offset: int) -> PackedVector3Array:
 	base.append_array(_upper_patrol_points)
 	var patrol := PackedVector3Array()
 	var stride := 1 + posmod(offset * 2, base.size() - 1)
+	while _greatest_common_divisor(stride, base.size()) != 1:
+		stride = 1 if stride + 1 >= base.size() else stride + 1
 	for index in base.size():
 		patrol.append(base[(offset + index * stride) % base.size()])
 	return patrol
+
+
+func _greatest_common_divisor(first: int, second: int) -> int:
+	var a := absi(first)
+	var b := absi(second)
+	while b != 0:
+		var remainder := a % b
+		a = b
+		b = remainder
+	return a
 
 
 func _build_student_desk(prefix: String, index: int, origin: Vector3, accent: Color, parent: Node3D) -> void:
@@ -698,15 +1025,16 @@ func _place_exit_door() -> void:
 		return
 	var door := door_scene.instantiate() as Node3D
 	door.name = "SchoolExitDoor"
-	door.position = Vector3(0.9, 0, -SCHOOL_HALF_Z + 0.15)
+	var exit_center := Vector3(-(STAIR_TOWER_MIN_X + STAIR_TOWER_MAX_X) * 0.5, 0, -STAIR_TOWER_MAX_Z)
+	door.position = exit_center + Vector3(0.9, 0, 0.15)
 	door.set("open_angle_degrees", -105.0)
 	door.set("morning_exit", true)
 	door.set("teacher_can_open", false)
 	add_child(door)
 	var frame := Color("171a1b")
-	_box("ExitDoorFrameLeft", Vector3(-0.96, 1.45, -SCHOOL_HALF_Z + 0.17), Vector3(0.12, 2.9, 0.34), frame, false)
-	_box("ExitDoorFrameRight", Vector3(0.96, 1.45, -SCHOOL_HALF_Z + 0.17), Vector3(0.12, 2.9, 0.34), frame, false)
-	_box("ExitDoorFrameTop", Vector3(0, 2.96, -SCHOOL_HALF_Z + 0.17), Vector3(2.04, 0.12, 0.34), frame, false)
+	_box("ExitDoorFrameLeft", exit_center + Vector3(-0.96, 1.45, 0.17), Vector3(0.12, 2.9, 0.34), frame, false)
+	_box("ExitDoorFrameRight", exit_center + Vector3(0.96, 1.45, 0.17), Vector3(0.12, 2.9, 0.34), frame, false)
+	_box("ExitDoorFrameTop", exit_center + Vector3(0, 2.96, 0.17), Vector3(2.04, 0.12, 0.34), frame, false)
 	var sign := Label3D.new()
 	sign.name = "ExitSign"
 	sign.text = "VÝCHOD"
@@ -714,7 +1042,7 @@ func _place_exit_door() -> void:
 	sign.pixel_size = 0.005
 	sign.outline_size = 7
 	sign.modulate = Color("8fc7a7")
-	sign.position = Vector3(0, 3.3, -SCHOOL_HALF_Z + 0.19)
+	sign.position = exit_center + Vector3(0, 3.3, 0.19)
 	sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(sign)
 
@@ -789,9 +1117,9 @@ func _build_lighting() -> void:
 					_add_ceiling_light("ClassroomLight_%d_%s_%d_%d" % [row_index, str(side_value), x_index, z_index], light_position, 1.35, 8.8, false)
 
 
-func _add_ceiling_light(label: String, light_position: Vector3, energy: float, light_range: float, shadows: bool, create_fixture := true) -> void:
+func _add_ceiling_light(label: String, light_position: Vector3, energy: float, light_range: float, shadows: bool, create_fixture := true, parent: Node3D = null) -> void:
 	if create_fixture:
-		var fixture := _box("%sFixture" % label, light_position + Vector3(0, 0.08, 0), Vector3(2.6, 0.08, 0.34), Color("c6d1c6"), false, 2.1)
+		var fixture := _box("%sFixture" % label, light_position + Vector3(0, 0.08, 0), Vector3(2.6, 0.08, 0.34), Color("c6d1c6"), false, 2.1, parent)
 		fixture.add_to_group("school_light_fixtures")
 	var light := OmniLight3D.new()
 	light.name = label
@@ -801,7 +1129,8 @@ func _add_ceiling_light(label: String, light_position: Vector3, energy: float, l
 	light.omni_range = light_range
 	light.shadow_enabled = shadows
 	light.add_to_group("school_lights")
-	add_child(light)
+	var target: Node3D = parent if parent != null else self
+	target.add_child(light)
 
 
 func _build_navigation() -> void:

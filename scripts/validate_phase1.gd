@@ -1,7 +1,7 @@
 extends Node
 
 const FLOOR_HEIGHT := 4.4
-const STAIR_OPENING_CENTER := Vector3(6.1, 0.0, 43.3)
+const STAIR_OPENING_CENTERS := [Vector3(6.1, 0.0, 43.3), Vector3(-6.1, 0.0, -43.3)]
 const STAIR_STEPS_PER_FLIGHT := 13
 const SCENES := [
 	"res://main.tscn",
@@ -105,7 +105,7 @@ func _validate_school(level: Node) -> void:
 		_check(absf((floor as Node3D).global_position.y - floor_index * FLOOR_HEIGHT) < 0.01, "%s is at the wrong elevation." % floor.name)
 	_check(floor_indices.has(0) and floor_indices.has(1) and floor_indices.has(2), "School floor indices should cover 0 through 2.")
 	var stairs := _nodes_in_level_group(level, &"school_stair")
-	_check(stairs.size() == 2, "School should contain two stair connections.")
+	_check(stairs.size() == 4, "School should contain two stair towers with four floor connections.")
 	var visual_polish := level.get_node_or_null("SchoolVisualPolish")
 	_check(visual_polish is Node3D and visual_polish.is_in_group("school_visual_polish"), "School visual polish was not integrated.")
 	if visual_polish != null:
@@ -115,7 +115,8 @@ func _validate_school(level: Node) -> void:
 	for stair in stairs:
 		var from_floor := int(stair.get_meta("from_floor_index", -1))
 		var to_floor := int(stair.get_meta("to_floor_index", -1))
-		stair_pairs["%d:%d" % [from_floor, to_floor]] = true
+		var pair_key := "%d:%d" % [from_floor, to_floor]
+		stair_pairs[pair_key] = int(stair_pairs.get(pair_key, 0)) + 1
 		_check(to_floor == from_floor + 1, "%s does not connect adjacent floors." % stair.name)
 		for part in ["FlightA", "MidLanding", "FlightB"]:
 			_check(stair.get_node_or_null(part) is StaticBody3D, "%s is missing collidable %s geometry." % [stair.name, part])
@@ -129,30 +130,48 @@ func _validate_school(level: Node) -> void:
 		for access_name in ["BottomAccess", "TopAccess"]:
 			var access := stair.get_node_or_null(access_name)
 			_check(access is Marker3D and access.is_in_group("school_stair_access"), "%s is missing its %s accessibility marker." % [stair.name, access_name])
-	_check(stair_pairs.has("0:1") and stair_pairs.has("1:2"), "Stairs should connect floors 1-2 and 2-3.")
+	_check(stair_pairs == {"0:1": 2, "1:2": 2}, "Both stair towers should connect floors 1-2 and 2-3.")
 	var access_markers := _nodes_in_level_group(level, &"school_stair_access")
-	_check(access_markers.size() == 4, "School stairs should expose four accessibility markers.")
+	_check(access_markers.size() == 8, "Both school stair towers should expose eight accessibility markers.")
 	var access_counts := {0: 0, 1: 0, 2: 0}
 	for marker in access_markers:
 		var floor_index := int(marker.get_meta("floor_index", -1))
 		access_counts[floor_index] = int(access_counts.get(floor_index, 0)) + 1
 		_check(absf((marker as Node3D).global_position.y - (floor_index * FLOOR_HEIGHT + 0.05)) < 0.3, "%s accessibility marker is off its floor." % marker.name)
-	_check(access_counts == {0: 1, 1: 2, 2: 1}, "Stair accessibility markers do not cover all floor transitions.")
+	_check(access_counts == {0: 2, 1: 4, 2: 2}, "Stair accessibility markers do not cover both ends of all floors.")
 	for floor_index in range(1, 3):
-		var opening_point := STAIR_OPENING_CENTER + Vector3.UP * floor_index * FLOOR_HEIGHT
-		var opening_is_visually_clear := true
-		for mesh_node in level.find_children("*", "MeshInstance3D", true, false):
-			var mesh_instance := mesh_node as MeshInstance3D
-			var box := mesh_instance.mesh as BoxMesh
-			if box == null:
-				continue
-			var local_point := mesh_instance.to_local(opening_point)
-			if absf(local_point.x) <= box.size.x * 0.5 and absf(local_point.y) <= box.size.y * 0.5 + 0.02 and absf(local_point.z) <= box.size.z * 0.5:
-				opening_is_visually_clear = false
-				break
-		_check(opening_is_visually_clear, "Floor %d visually covers the stairwell opening." % (floor_index + 1))
+		for opening_center in STAIR_OPENING_CENTERS:
+			var opening_point: Vector3 = opening_center + Vector3.UP * floor_index * FLOOR_HEIGHT
+			var opening_is_visually_clear := true
+			for mesh_node in level.find_children("*", "MeshInstance3D", true, false):
+				var mesh_instance := mesh_node as MeshInstance3D
+				var box := mesh_instance.mesh as BoxMesh
+				if box == null:
+					continue
+				var local_point := mesh_instance.to_local(opening_point)
+				if absf(local_point.x) <= box.size.x * 0.5 and absf(local_point.y) <= box.size.y * 0.5 + 0.02 and absf(local_point.z) <= box.size.z * 0.5:
+					opening_is_visually_clear = false
+					break
+			_check(opening_is_visually_clear, "Floor %d visually covers a stairwell opening." % (floor_index + 1))
 	var upper_rooms := _nodes_in_level_group(level, &"school_upper_room")
 	_check(upper_rooms.size() == 16, "School should contain sixteen upper-floor rooms.")
+	var sports_connectors := upper_rooms.filter(func(room: Node) -> bool: return room.get_meta("room_kind", "") == "sport_connector")
+	_check(sports_connectors.is_empty(), "The gym connector should no longer replace an upper-floor classroom.")
+	var sports_complex := level.find_child("SportsComplex", true, false)
+	_check(sports_complex != null and sports_complex.is_in_group("school_sports_complex"), "Standalone sports complex is missing.")
+	var exterior := level.find_child("SchoolExterior", true, false)
+	_check(exterior != null and exterior.is_in_group("school_exterior"), "Landscaped school exterior is missing.")
+	_check(level.find_child("SchoolGroundGrass", true, false) != null and _nodes_in_level_group(level, &"school_exterior_tree").size() == 18, "School grounds should contain grass and eighteen trees.")
+	_check(level.find_child("GymSportsFloor", true, false) != null, "Standalone gym sports floor is missing.")
+	_check(level.find_children("GymBasketballBackboard_*", "", true, false).size() == 2, "Standalone gym should contain two basketball backboards.")
+	_check(level.find_children("GymWallBar*", "", true, false).size() >= 16 and level.find_children("GymBleacherTier_*", "", true, false).size() == 4, "Standalone gym equipment is incomplete.")
+	var gym_connector_floor := level.find_child("GymConnectorFloor", true, false) as Node3D
+	_check(gym_connector_floor != null and absf(gym_connector_floor.global_position.y) < 0.15 and gym_connector_floor.global_position.x > 0.0, "Covered gym connector should be on the clear east side of the ground floor.")
+	_check(level.find_child("NorthGymConnectorHeader", true, false) != null, "Northern stair tower is missing the relocated unobstructed gym doorway.")
+	_check(level.find_children("GymAccessStep_*", "", true, false).is_empty(), "Ground-floor gym should not retain its former access staircase.")
+	_check(_nodes_in_level_group(level, &"gym_patrol_marker").size() == 4, "Gym should expose four distributed teacher patrol points.")
+	_check(level.find_children("GymHallLight_*", "OmniLight3D", true, false).size() == 12, "Gym hall should contain twelve high-bay lights.")
+	_check(level.find_children("GymConnectorLight_*", "OmniLight3D", true, false).size() == 6, "Long ground-floor gym connector should contain six lights.")
 	var upper_room_lights := level.find_children("UpperRoomLight_*", "OmniLight3D", true, false)
 	_check(upper_room_lights.size() == 64, "Every upper-floor room should have four real ceiling lights.")
 	var upper_room_counts := {1: 0, 2: 0}
@@ -181,8 +200,8 @@ func _validate_school(level: Node) -> void:
 	_check(_nodes_in_level_group(level, &"school_classrooms").size() == 24, "School classroom markers should include seven subjects, kabinet, and sixteen upper rooms.")
 	_check(_nodes_in_level_group(level, &"decorated_classroom").size() == 23, "All seven subject and sixteen upper rooms should be decorated.")
 	_check(level.find_children("*CorridorFloor_*", "MeshInstance3D", true, false).size() == 12, "Corridor floors should be split into local light-safe sections.")
-	_check(get_tree().get_nodes_in_group("teacher_enemies").size() == 8, "School should contain seven subject teachers and one headmistress.")
-	_check(level.find_children("ClassroomDoor_*", "", true, false).size() == 8, "School should contain eight fitted classroom doors.")
+	_check(get_tree().get_nodes_in_group("teacher_enemies").size() == 9, "School should contain eight teachers and one headmistress.")
+	_check(level.find_children("ClassroomDoor_*", "", true, false).size() == 24, "Every classroom and the kabinet should have a fitted door.")
 	_check(level.find_children("DeskHiding_*", "Area3D", true, false).size() == 42, "Every student desk should have a hiding spot.")
 	_check(level.find_children("*ChairBack_*", "StaticBody3D", true, false).size() == 42, "Desk furniture should block teachers physically.")
 	var flashlight := player.find_child("Flashlight", true, false) as SpotLight3D
@@ -226,7 +245,8 @@ func _validate_school(level: Node) -> void:
 		level.call("_update_daylight", 0.0, 0.0)
 		_check(sun.light_energy <= 0.05 and environment_node.environment.ambient_light_energy <= 0.35, "Night lighting did not return after the sunrise test.")
 	_check(not level.has_node("DigitalClock") and not level.has_node("AnalogClock"), "The test school should not contain classroom clocks.")
-	_check(level.find_children("DoorNavigationLink_*", "NavigationLink3D", true, false).size() == 8, "Every classroom door should have a bidirectional teacher navigation link.")
+	_check(level.find_children("DoorNavigationLink_*", "NavigationLink3D", true, false).size() == 24, "Every classroom door should have a bidirectional teacher navigation link.")
+	_check(_nodes_in_level_group(level, &"school_upper_room").all(func(room: Node) -> bool: return room.find_children("ClassroomDoor_*", "", true, false).size() == 1), "Every upper-floor classroom should contain exactly one door.")
 	_check(level.find_children("Homework_*", "", true, false).size() == 7, "School should contain seven homework stations.")
 	_check(level.find_child("Kabinet", true, false) != null, "Kabinet učiteľov is missing.")
 	_check(level.find_child("SchoolDirectory", true, false) != null, "Expanded school directory sign is missing.")
